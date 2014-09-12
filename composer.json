@@ -1,0 +1,29 @@
+{
+    "name": "bolt/jsonaccess",
+    "description": "Provides simple JSON access to Bolt's internal data structures.",
+    "type": "bolt-extension",
+    "keywords": ["json"],
+    "require": {
+        "bolt/bolt": ">=2.0.0,<3.0.0"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Tobias Dammers",
+            "email": "tobias@twokings.nl"
+        }
+    ],
+    "autoload": {
+        "files": [
+            "init.php"
+        ],
+        "psr-4": {
+            "JSONAccess\\": ""
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.7.*"
+        }
+    }
+}
