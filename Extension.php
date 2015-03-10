@@ -88,7 +88,18 @@ class Extension extends \Bolt\BaseExtension
             }
             $options['order'] = $order;
         }
-        $items = $this->app['storage']->getContent($contenttype, $options);
+
+        // Enable pagination
+        $options['paging'] = true;
+        $pager = [];
+        $where = [];
+
+        // Use the where clause defined in the contenttype config
+        if (isset($this->config['contenttypes'][$contenttype]['where-clause'])) {
+            $where = $this->config['contenttypes'][$contenttype]['where-clause'];
+        }
+
+        $items = $this->app['storage']->getContent($contenttype, $options, $pager, $where);
 
         // If we don't have any items, this can mean one of two things: either
         // the content type does not exist (in which case we'll get a non-array
