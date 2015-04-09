@@ -33,6 +33,8 @@ follows:
   overridden in the JSONAccess extension's `config.yml` file.
 - `/json/{contenttype}/{id}` returns one record of the specified contenttype,
   including *all* fields.
+- `/json/{contenttype}/{id}/{relatedContenttype}` returns a list of records of the specified 
+  related contenttype. The data format is the same as in `/json/{contenttype}/`
 
 ## Advanced listing
 
