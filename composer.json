@@ -1,5 +1,5 @@
 {
-    "name": "bolt/jsonaccess",
+    "name": "sgalonska/jsonaccess",
     "description": "Provides simple JSON access to Bolt's internal data structures.",
     "type": "bolt-extension",
     "keywords": ["json"],
