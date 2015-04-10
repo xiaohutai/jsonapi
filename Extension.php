@@ -38,31 +38,11 @@ class Extension extends \Bolt\BaseExtension
     {
         $this->app->get("/json/{contenttype}/", array($this, 'json_list'))
                   ->bind('json_list');
-        $this->app->get("/json/{contenttype}/{slug}", array($this, 'json'))
+        $this->app->get("/json/{contenttype}/{slug}/{relatedContenttype}", array($this, 'json'))
+                  ->value('relatedContenttype', null)
                   ->assert('slug', '[a-zA-Z0-9_\-]+')
                   ->bind('json');
     }
-
-    private function clean_item($item, $type = 'list-fields') {
-        $contenttype = $item->contenttype['slug'];
-        if (isset($this->config['contenttypes'][$contenttype][$type])) {
-            $fields = $this->config['contenttypes'][$contenttype][$type];
-        }
-        else {
-            $fields = array_keys($item->contenttype['fields']);
-        }
-        // Always include the ID in the set of fields
-        array_unshift($fields, 'id');
-        $fields = array_unique($fields);
-        $values = array();
-        foreach ($fields as $field) {
-            $values[$field] = $item->values[$field];
-        }
-        return $values;
-    }
-
-    private function clean_list_item($item) { return $this->clean_item($item, 'list-fields'); }
-    private function clean_full_item($item) { return $this->clean_item($item, 'item-fields'); }
 
     public function json_list(Request $request, $contenttype)
     {
@@ -120,21 +100,60 @@ class Extension extends \Bolt\BaseExtension
         return $response;
     }
 
-    public function json(Request $request, $contenttype, $slug)
+    public function json(Request $request, $contenttype, $slug, $relatedContenttype)
     {
         if (!array_key_exists($contenttype, $this->config['contenttypes'])) {
             return $this->app->abort(404, 'Not found');
         }
+
         $item = $this->app['storage']->getContent("$contenttype/$slug");
         if (!$item) {
             return $this->app->abort(404, 'Not found');
         }
-        $values = $this->clean_full_item($item);
-        $response = $this->app->json($values);
+
+        // If a related entity name is given, we fetch its content instead
+        if ($relatedContenttype !== null)
+        {
+            $items = $item->related($relatedContenttype);
+            if (!$items) {
+                return $this->app->abort(404, 'Not found');
+            }
+            $items = array_map(array($this, 'clean_list_item'), $items);
+            $response = $this->app->json(array($relatedContenttype => $items));
+
+        } else {
+
+            $values = $this->clean_full_item($item);
+            $response = $this->app->json($values);
+        }
+
         if ($callback = $request->get('callback')) {
             $response->setCallback($callback);
         }
         return $response;
     }
+
+    private function clean_item($item, $type = 'list-fields')
+    {
+        $contenttype = $item->contenttype['slug'];
+        if (isset($this->config['contenttypes'][$contenttype][$type])) {
+            $fields = $this->config['contenttypes'][$contenttype][$type];
+        }
+        else {
+            $fields = array_keys($item->contenttype['fields']);
+        }
+        // Always include the ID in the set of fields
+        array_unshift($fields, 'id');
+        $fields = array_unique($fields);
+        $values = array();
+        foreach ($fields as $field) {
+            $values[$field] = $item->values[$field];
+        }
+        return $values;
+    }
+
+    private function clean_list_item($item) { return $this->clean_item($item, 'list-fields'); }
+    private function clean_full_item($item) { return $this->clean_item($item, 'item-fields'); }
+
 }
 
