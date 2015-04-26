@@ -4,14 +4,18 @@
     "type": "bolt-extension",
     "keywords": ["json"],
     "require": {
-        "bolt/bolt": ">=2.0.0,<3.0.0"
+        "bolt/bolt": ">=2.1.6,<3.0.0"
     },
     "license": "MIT",
     "authors": [
         {
             "name": "Tobias Dammers",
             "email": "tobias@twokings.nl"
-        }
+        },
+        {
+            "name": "Bob den Otter",
+            "email": "bob@twokings.nl"
+        },        
     ],
     "autoload": {
         "files": [
