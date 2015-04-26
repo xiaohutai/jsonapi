@@ -8,10 +8,18 @@ contenttypes:
         # The `list-fields` setting allows you to override the fields that
         # appear in listings. Getting individual records will still include
         # all fields.
-        list-fields: [ title, slug ]
+        list-fields: [ title, slug, teaser, image ]
     pages:
         # To use the defaults for a content type, just leave its entry
         # empty.
         # This will include all user-defined fields and the ID in the listing,
         # but not any of the fields Bolt adds to all content types, such as
         # 'datecreated'.
+
+thumbnail:
+    width: 400
+    height: 300
+
+headers:
+    'Access-Control-Allow-Origin': '*'
+    'Content-Type': 'application/json'
