@@ -12,22 +12,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 class Extension extends \Bolt\BaseExtension
 {
-    public function info()
-    {
-        return array(
-            'name' => "JSONAccess",
-            'description' => "Provides JSON access to Bolt data structures",
-            'author' => "Tobias Dammers",
-            'link' => "http://bolt.cm",
-            'version' => "0.1",
-            'required_bolt_version' => "2.0.0",
-            'highest_bolt_version' => "3.0.0",
-            'type' => "General",
-            'first_releasedate' => null,
-            'latest_releasedate' => null,
-            'priority' => 10
-        );
-    }
 
     public function getName()
     {
@@ -36,16 +20,19 @@ class Extension extends \Bolt\BaseExtension
 
     public function initialize()
     {
-        $this->app->get("/json/{contenttype}/", array($this, 'json_list'))
+        $this->app->get("/json/{contenttype}", array($this, 'json_list'))
                   ->bind('json_list');
         $this->app->get("/json/{contenttype}/{slug}/{relatedContenttype}", array($this, 'json'))
                   ->value('relatedContenttype', null)
                   ->assert('slug', '[a-zA-Z0-9_\-]+')
                   ->bind('json');
+
     }
 
     public function json_list(Request $request, $contenttype)
     {
+        $this->request = $request;
+
         if (!array_key_exists($contenttype, $this->config['contenttypes'])) {
             return $this->app->abort(404, 'Not found');
         }
@@ -93,15 +80,15 @@ class Extension extends \Bolt\BaseExtension
 
         $items = array_values($items);
         $items = array_map(array($this, 'clean_list_item'), $items);
-        $response = $this->app->json(array($contenttype => $items));
-        if ($callback = $request->get('callback')) {
-            $response->setCallback($callback);
-        }
-        return $response;
+
+        return $this->response(array($contenttype => $items));
+
     }
 
     public function json(Request $request, $contenttype, $slug, $relatedContenttype)
     {
+        $this->request = $request;
+
         if (!array_key_exists($contenttype, $this->config['contenttypes'])) {
             return $this->app->abort(404, 'Not found');
         }
@@ -119,17 +106,14 @@ class Extension extends \Bolt\BaseExtension
                 return $this->app->abort(404, 'Not found');
             }
             $items = array_map(array($this, 'clean_list_item'), $items);
-            $response = $this->app->json(array($relatedContenttype => $items));
+            $response = $this->response(array($relatedContenttype => $items));
 
         } else {
 
             $values = $this->clean_full_item($item);
-            $response = $this->app->json($values);
+            $response = $this->response($values);
         }
 
-        if ($callback = $request->get('callback')) {
-            $response->setCallback($callback);
-        }
         return $response;
     }
 
@@ -146,14 +130,69 @@ class Extension extends \Bolt\BaseExtension
         array_unshift($fields, 'id');
         $fields = array_unique($fields);
         $values = array();
-        foreach ($fields as $field) {
+        foreach ($fields as $key => $field) {
             $values[$field] = $item->values[$field];
         }
+
+        // Check if we have image or file fields present. If so, see if we need to
+        // use the full URL's for these.
+        foreach($item->contenttype['fields'] as $key => $field) {
+            if (($field['type'] == 'image' || $field['type'] == 'file') && isset($values[$key])) {
+                $values[$key]['url'] = sprintf('%s%s%s',
+                    $this->app['paths']['canonical'],
+                    $this->app['paths']['files'],
+                    $values[$key]['file']
+                    );
+            }
+            if ($field['type'] == 'image' && isset($values[$key]) && is_array($this->config['thumbnail'])) {
+                // dump($this->app['paths']);
+                $values[$key]['thumbnail'] = sprintf('%s/thumbs/%sx%s/%s',
+                    $this->app['paths']['canonical'],
+                    $this->config['thumbnail']['width'],
+                    $this->config['thumbnail']['height'],
+                    $values[$key]['file']
+                    );
+            }
+
+        }
+
         return $values;
+
     }
 
-    private function clean_list_item($item) { return $this->clean_item($item, 'list-fields'); }
-    private function clean_full_item($item) { return $this->clean_item($item, 'item-fields'); }
+    private function clean_list_item($item)
+    {
+        return $this->clean_item($item, 'list-fields');
+    }
+
+    private function clean_full_item($item)
+    {
+        return $this->clean_item($item, 'item-fields');
+    }
+
+    private function response($array)
+    {
+
+        $json = json_encode($array, JSON_PRETTY_PRINT);
+        // $json = json_encode($array, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_PRETTY_PRINT);
+
+        $response = new Response($json, 201);
+
+        if (!empty($this->config['headers']) && is_array($this->config['headers'])) {
+            // dump($this->config['headers']);
+            foreach ($this->config['headers'] as $header => $value) {
+                $response->headers->set($header, $value);
+            }
+        }
+
+        if ($callback = $this->request->get('callback')) {
+            $response->setCallback($callback);
+        }
+
+        return $response;
+
+    }
+
 
 }
 
