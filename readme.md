@@ -51,8 +51,8 @@ parameters appended to the URL):
   the specified field. Only one field is currently supported. The `ordering`
   must be one of `ASC` or `DESC`.
 - `?limit={limit}` - specify the number of items to return.
-- `?page={page}` - to be combined with `limit`: get the n-th page (1-based, so
-  `1` designates the first page.
+- `?page={page}` - to be combined with `limit`: get the n-th page. This is
+  1-based, so `1` designates the first page.
 
 So for example `/json/pages?order=title&limit=10&page=2` sorts all Pages by
 title and returns entries 11 through 20 (inclusive).
