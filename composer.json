@@ -15,7 +15,7 @@
         {
             "name": "Bob den Otter",
             "email": "bob@twokings.nl"
-        },        
+        }
     ],
     "autoload": {
         "files": [
