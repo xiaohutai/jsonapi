@@ -1,11 +1,11 @@
 <?php
 /**
- * JSONAccess extension for Bolt.
+ * JSONAPI extension for Bolt.
  *
  * @author Tobias Dammers <tobias@twokings.nl>
  */
 
-namespace JSONAccess;
+namespace JSONAPI;
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
