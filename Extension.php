@@ -141,7 +141,7 @@ class Extension extends \Bolt\BaseExtension
         {
             $items = $item->related($relatedContenttype);
             if (!$items) {
-                return $this->app->abort(404, 'Not found');
+                return $this->notfound();
             }
             $items = array_map([$this, 'clean_list_item'], $items);
             $response = $this->response([$relatedContenttype => $items]);
@@ -149,7 +149,23 @@ class Extension extends \Bolt\BaseExtension
         } else {
 
             $values = $this->clean_full_item($item);
-            $response = $this->response($values);
+            $prev = $item->previous();
+            $next = $item->next();
+
+            $links = [
+                'self' => $values['links']['self'],
+            ];
+            if ($prev)  {
+                $links['prev'] = sprintf('%s/%s/%d', $this->basePath, $contenttype, $prev->values['id']);
+            }
+            if ($next) {
+                $links['next'] = sprintf('%s/%s/%d', $this->basePath, $contenttype, $next->values['id']);
+            }
+
+            $response = $this->response([
+                'links' => $links,
+                'data' => $values
+            ]);
         }
 
         return $response;
