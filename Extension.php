@@ -15,7 +15,7 @@ class Extension extends \Bolt\BaseExtension
 
     public function getName()
     {
-        return "JSON Access";
+        return "JSON API";
     }
 
     public function initialize()
