@@ -1,5 +1,5 @@
 <?php
 
-use JSONAccess\Extension;
+use JSONAPI\Extension;
 
 $app['extensions']->register(new Extension($app));
