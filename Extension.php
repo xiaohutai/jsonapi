@@ -98,6 +98,11 @@ class Extension extends \Bolt\BaseExtension
             $options['order'] = $order;
         }
 
+        // Enable pagination
+        $options['paging'] = true;
+        $pager = [];
+        $where = [];
+
         // todo: handle "include"
         // $included = [];
         // if ($include = $request->get('include')) {
@@ -107,18 +112,27 @@ class Extension extends \Bolt\BaseExtension
         // todo: handle "fields[]"
         // if ($fields = $request->get('fields')) {
         //     foreach($fields as $key => $value) {
-        //         $fields[$key] = explode($value);
+        //         $fields[$key] = explode(',', $value);
         //     }
         // }
 
-        // Enable pagination
-        $options['paging'] = true;
-        $pager = [];
-        $where = [];
-
-        // Use the where clause defined in the contenttype config
+        // Use the where clause defined in the contenttype config.
         if (isset($this->config['contenttypes'][$contenttype]['where-clause'])) {
             $where = $this->config['contenttypes'][$contenttype]['where-clause'];
+        }
+
+        // Handle "filter[]"
+        $basekeys = \Bolt\Content::getBaseColumns();
+        $definedkeys = array_keys($this->app['config']->get("contenttypes/$contenttype/fields"));
+        $validkeys = array_merge($basekeys, $definedkeys);
+
+        if ($filters = $request->get('filter')) {
+            foreach($filters as $key => $value) {
+                if (!in_array($key, $validkeys)) {
+                    return $this->invalidrequest();
+                }
+                $where[$key] = str_replace(',', ' || ', $value);
+            }
         }
 
         $items = $this->app['storage']->getContent($contenttype, $options, $pager, $where);
@@ -173,7 +187,9 @@ class Extension extends \Bolt\BaseExtension
                 return $this->notfound();
             }
             $items = array_map([$this, 'clean_list_item'], $items);
-            $response = $this->response([$relatedContenttype => $items]);
+            $response = $this->response([
+                'data' => $items
+            ]);
 
         } else {
 
