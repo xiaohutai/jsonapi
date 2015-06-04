@@ -22,7 +22,7 @@ thumbnail:
 
 headers:
     'Access-Control-Allow-Origin': '*'
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/vnd.api+json'
 
 # The base url where the API is accessible.
 base: '/json'
