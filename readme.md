@@ -1,7 +1,8 @@
-JSONAccess
-==========
+JSONAPI
+=======
 
-Provides simple JSON access to Bolt's internal data structures.
+Provides simple JSON access to Bolt's internal data structures. The specification
+of the JSON responses are based on [JSON API](http://jsonapi.org/).
 
 What it does
 ------------
@@ -15,18 +16,15 @@ Configuration
 -------------
 
 In order to enable JSON serving for any content type, it has to be added to the
-extension's configuration file, located at `app/config/extensions/jsonaccess.bolt.yml`.
-
-See the provided `config.yml.dist` for an example configuration with a brief
-explanation.
+extension's configuration file, located at `app/config/extensions/jsonapi.bolt.yml`.
 
 Note in particular that content types that you don't mention in the
-configuration file won't be served by the JSONAccess extension.
+configuration file won't be served by the JSONAPI extension.
 
 Calls
 -----
 
-JSONAccess implements RESTful semantics for all calls, mapping resources as
+JSONAPI implements RESTful semantics for all calls, mapping resources as
 follows:
 
 - `/json/{contenttype}` returns a list of records of the specified contenttype.
@@ -34,7 +32,7 @@ follows:
   The listing contains the 'id' of every record, as well as a configurable
   selection of fields (defaulting to all configurable fields, but none of the
   'meta' fields Bolt introduces itself). The list of fields can be overridden in
-  the JSONAccess extension's `config.yml` file.
+  the JSONAPI extension's `config.yml` file.
 - `/json/{contenttype}/{id}` returns one record of the specified contenttype,
   including *all* fields.
 - `/json/{contenttype}/{id}/{relatedContenttype}` returns a list of records of
