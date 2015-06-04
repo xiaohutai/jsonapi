@@ -22,9 +22,34 @@ class Extension extends \Bolt\BaseExtension
 
     public function getName()
     {
-        return "JSON API";
+        return "JSONAPI";
     }
 
+    //
+    // Examples:
+    //
+    // Basic:
+    //     /{contenttype}
+    //     /{contenttype}/{id}
+    //     /{contenttype}?page={x}&limit={y}
+    //     /{contenttype}?include={relationship1,relationship2}
+    //     /{contenttype}?fields[{contenttype1}]={field1,field2} -- Note: taxonomies and relationships are fields as well.
+    //
+    // Relationships:
+    //     /{contenttype}/{id}/relationships/{relationship} -- Note: this "relationship" is useful for handling the relationship between two instances.
+    //     /{contenttype}/{id}/{relationship} -- Note: this "related resource" is useful for fetching the related data. These are not "self" links.
+    //
+    // Filters:
+    //     /{contenttype}?filter[{contenttype1}]={value1,value2}
+    //     /{contenttype}?filter[{field1}]={value1,value2}&filter[{field2}]={value3,value4} -- For Bolt, this seems the most logical (similar to a `where` clause)
+    //
+    // Search:
+    //     /{contenttype}?q={query} -- search within a contenttype
+    //     /search/q={query} -- search in all contenttypes
+    //
+    // sources: http://jsonapi.org/examples/
+    //          http://jsonapi.org/recommendations/
+    //
     public function initialize()
     {
         if(isset($this->config['base'])) {
@@ -32,13 +57,16 @@ class Extension extends \Bolt\BaseExtension
         }
         $this->basePath = $this->app['paths']['canonical'] . $this->base;
 
-        $this->app->get($this->base."/{contenttype}", [$this, 'json_list'])
-                  ->bind('json_list');
+        $this->app->get($this->base."/search", [$this, 'search'])
+                  ->bind('jsonapi_search_mixed');
+        $this->app->get($this->base."/{contenttype}/search", [$this, 'search'])
+                  ->bind('jsonapi_search');
         $this->app->get($this->base."/{contenttype}/{slug}/{relatedContenttype}", [$this, 'json'])
                   ->value('relatedContenttype', null)
                   ->assert('slug', '[a-zA-Z0-9_\-]+')
-                  ->bind('json');
-
+                  ->bind('jsonapi');
+        $this->app->get($this->base."/{contenttype}", [$this, 'json_list'])
+                  ->bind('jsonapi_list');
     }
 
     public function json_list(Request $request, $contenttype)
@@ -71,6 +99,7 @@ class Extension extends \Bolt\BaseExtension
         }
 
         // todo: handle "include"
+        // $included = [];
         // if ($include = $request->get('include')) {
         //     $where = [];
         // }
@@ -169,6 +198,14 @@ class Extension extends \Bolt\BaseExtension
         }
 
         return $response;
+    }
+
+    // todo: handle search
+    public function search(Request $request, $contenttype = null)
+    {
+        $this->request = $request;
+        // $this->app['storage']
+        return $this->notfound();
     }
 
     private function clean_item($item, $type = 'list-fields')
