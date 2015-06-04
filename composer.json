@@ -1,10 +1,10 @@
 {
-    "name": "bolt/jsonaccess",
+    "name": "bolt/jsonapi",
     "description": "Provides simple JSON access to Bolt's internal data structures.",
     "type": "bolt-extension",
     "keywords": ["json"],
     "require": {
-        "bolt/bolt": ">=2.1.6,<3.0.0"
+        "bolt/bolt": ">=2.3.0,<3.0.0"
     },
     "license": "MIT",
     "authors": [
@@ -22,12 +22,7 @@
             "init.php"
         ],
         "psr-4": {
-            "JSONAccess\\": ""
-        }
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-master": "1.7.*"
+            "JSONAPI\\": ""
         }
     }
 }
