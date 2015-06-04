@@ -3,6 +3,8 @@
  * JSONAPI extension for Bolt.
  *
  * @author Tobias Dammers <tobias@twokings.nl>
+ * @author Bob den Otter <bob@twokings.nl>
+ * @author Xiao-Hu Tai <xiao@twokings.nl>
  */
 
 namespace JSONAPI;
@@ -13,6 +15,8 @@ use Symfony\Component\HttpFoundation\Response;
 class Extension extends \Bolt\BaseExtension
 {
 
+    private $base = '/json';
+
     public function getName()
     {
         return "JSON API";
@@ -20,9 +24,13 @@ class Extension extends \Bolt\BaseExtension
 
     public function initialize()
     {
-        $this->app->get("/json/{contenttype}", array($this, 'json_list'))
+        if(isset($this->config['base'])) {
+            $this->base = $this->config['base'];
+        }
+
+        $this->app->get($this->base."/{contenttype}", array($this, 'json_list'))
                   ->bind('json_list');
-        $this->app->get("/json/{contenttype}/{slug}/{relatedContenttype}", array($this, 'json'))
+        $this->app->get($this->base."/{contenttype}/{slug}/{relatedContenttype}", array($this, 'json'))
                   ->value('relatedContenttype', null)
                   ->assert('slug', '[a-zA-Z0-9_\-]+')
                   ->bind('json');

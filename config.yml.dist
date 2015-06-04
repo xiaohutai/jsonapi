@@ -23,3 +23,6 @@ thumbnail:
 headers:
     'Access-Control-Allow-Origin': '*'
     'Content-Type': 'application/json'
+
+# The base url where the API is accessible.
+base: '/json'

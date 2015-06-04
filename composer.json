@@ -15,6 +15,10 @@
         {
             "name": "Bob den Otter",
             "email": "bob@twokings.nl"
+        },
+        {
+            "name": "Xiao-Hu Tai",
+            "email": "xiao@twokings.nl"
         }
     ],
     "autoload": {
