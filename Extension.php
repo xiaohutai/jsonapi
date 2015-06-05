@@ -37,7 +37,6 @@ use Symfony\Component\HttpFoundation\Response;
  * [todo]
  * This extension is a work in progress. Simple features are available. However,
  * the following features are not implemented yet:
- * - include / relationships.
  * - handling / taxonomies.
  * - sorting
  * - handling json fields -> json decode these values?
@@ -189,7 +188,6 @@ class Extension extends \Bolt\BaseExtension
 
         $items = array_values($items);
 
-        // -- included
         // Handle "include" and fetch related relationships in current query.
         try {
             $included = $this->fetchIncludedContent($contenttype, $items);
@@ -198,17 +196,6 @@ class Extension extends \Bolt\BaseExtension
                 'detail' => $e->getMessage()
             ]);
         }
-
-        $included = array_values($included);
-        foreach($included as $key => $item) {
-            // todo: optimize dynamically!
-            $ct = $item->contenttype['slug'];
-            $ctAllFields = $this->getAllFieldNames($ct);
-            $ctFields = $this->getFields($ct, $ctAllFields, 'list-fields');
-
-            $included[$key] = $this->cleanItem($item, $ctFields);
-        }
-        // -- /included
 
         foreach($items as $key => $item) {
             $items[$key] = $this->cleanItem($item, $fields);
@@ -313,6 +300,14 @@ class Extension extends \Bolt\BaseExtension
                 $links[$ct] = $link;
             }
 
+            try {
+                $included = $this->fetchIncludedContent($contenttype, [ $item ]);
+            } catch(\Exception $e) {
+                return $this->responseInvalidRequest([
+                    'detail' => $e->getMessage()
+                ]);
+            }
+
             if ($prev)  {
                 $links['prev'] = sprintf('%s/%s/%d%s', $this->basePath, $contenttype, $prev->values['id'], $defaultQuerystring);
             }
@@ -320,10 +315,16 @@ class Extension extends \Bolt\BaseExtension
                 $links['next'] = sprintf('%s/%s/%d%s', $this->basePath, $contenttype, $next->values['id'], $defaultQuerystring);
             }
 
-            $response = $this->response([
+            $response = [
                 'links' => $links,
                 'data' => $values,
-            ]);
+            ];
+
+            if (!empty($included)) {
+                $response['included'] = $included;
+            }
+
+            $response = $this->response($response);
         }
 
         return $response;
@@ -394,7 +395,19 @@ class Extension extends \Bolt\BaseExtension
             $related = array_merge($related, $items);
         }
 
-        return $related;
+        // return array_values($related);
+
+        $included = [];
+
+        foreach(array_values($related) as $key => $item) {
+            // todo: optimize dynamically!
+            $ct = $item->contenttype['slug'];
+            $ctAllFields = $this->getAllFieldNames($ct);
+            $ctFields = $this->getFields($ct, $ctAllFields, 'list-fields');
+            $included[$key] = $this->cleanItem($item, $ctFields);
+        }
+
+        return $included;
     }
 
     /**
