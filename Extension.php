@@ -74,7 +74,7 @@ class Extension extends \Bolt\BaseExtension
         $this->request = $request;
 
         if (!array_key_exists($contenttype, $this->config['contenttypes'])) {
-            return $this->notfound();
+            return $this->responseNotFound();
         }
         $options = [];
         // if ($limit = $request->get('page')['size']) { // breaks things in src/Storage.php at executeGetContentQueries
@@ -93,44 +93,75 @@ class Extension extends \Bolt\BaseExtension
         }
         if ($order = $request->get('order')) {
             if (!preg_match('/^([a-zA-Z][a-zA-Z0-9_\\-]*)\\s*(ASC|DESC)?$/', $order, $matches)) {
-                $this->invalidrequest();
+                $this->responseInvalidRequest();
             }
             $options['order'] = $order;
         }
 
         // Enable pagination
         $options['paging'] = true;
-        $pager = [];
-        $where = [];
+        $pager  = [];
+        $where  = [];
+        $fields = [];
 
-        // todo: handle "include"
+        // Contenttype fields
+        $contenttypeBaseFields = \Bolt\Content::getBaseColumns();
+        $contenttypeDefinedFields = array_keys($this->app['config']->get("contenttypes/$contenttype/fields"));
+        $contenttypeAllFields = array_merge($contenttypeBaseFields, $contenttypeDefinedFields);
+        $contenttypeAllowedFields = isset($this->config['contenttypes'][$contenttype]['allowed-fields']) ? $this->config['contenttypes'][$contenttype]['allowed-fields'] : [];
+
+        // todo: handle "include" / relationships
         // $included = [];
         // if ($include = $request->get('include')) {
         //     $where = [];
         // }
 
-        // todo: handle "fields[]"
-        // if ($fields = $request->get('fields')) {
-        //     foreach($fields as $key => $value) {
-        //         $fields[$key] = explode(',', $value);
-        //     }
-        // }
+        // Handle $fields[], e.g. $fields['pages'] = [ 'teaser', 'body', 'image']
+        // Note: `id` and `type` (`contenttype`) are always required.
+        if ($fields = $request->get('fields')) {
+            foreach($fields as $key => $value) {
+                $fields[$key] = [];
+                $values = explode(',', $value);
 
-        // Use the where clause defined in the contenttype config.
+                // All existing fields are allowed, if no `allowed-fields` is defined.
+                if ($contenttypeAllowedFields) {
+                    $contenttypeAllowedFields = $contenttypeAllFields;
+                }
+
+                // filtered fields need to be allowed and need to exist.
+                foreach ($values as $v) {
+                    if (in_array($v, $contenttypeAllowedFields)) {
+                        $fields[$key][] = $v;
+                    }
+                }
+            }
+        }
+
+        if (!isset($fields[$contenttype]) || empty($fields[$contenttype])) {
+            $fields[$contenttype] = $this->config['contenttypes'][$contenttype]['list-fields'];
+        }
+
+        //
+        // how does this work with the fields in defined in config????
+        // does a list of allowedfields need to be defined ??
+        //
+        // every contenttype has `allowed-fields` in the `config.yml`
+        // through which the fields get filtered (if it exists), otherwise,
+        // use `item-fields` or `list-fields` if they exists
+        //
+
+        // Use the `where-clause` defined in the contenttype config.
         if (isset($this->config['contenttypes'][$contenttype]['where-clause'])) {
             $where = $this->config['contenttypes'][$contenttype]['where-clause'];
         }
 
-        // Handle "filter[]"
-        $basekeys = \Bolt\Content::getBaseColumns();
-        $definedkeys = array_keys($this->app['config']->get("contenttypes/$contenttype/fields"));
-        $validkeys = array_merge($basekeys, $definedkeys);
-
+        // Handle $filter[], this modifies the $where[] clause.
         if ($filters = $request->get('filter')) {
             foreach($filters as $key => $value) {
-                if (!in_array($key, $validkeys)) {
-                    return $this->invalidrequest();
+                if (!in_array($key, $contenttypeAllFields)) {
+                    return $this->responseInvalidRequest();
                 }
+                // A bit crude for now.
                 $where[$key] = str_replace(',', ' || ', $value);
             }
         }
@@ -141,8 +172,10 @@ class Extension extends \Bolt\BaseExtension
         // the content type does not exist (in which case we'll get a non-array
         // response), or it exists, but no content has been added yet.
         if (!is_array($items)) {
+            // todo
             throw new \Exception("Configuration error: $contenttype is configured as a JSON end-point, but doesn't exist as a content type.");
         }
+
         if (empty($items)) {
             $items = [];
         }
@@ -159,8 +192,7 @@ class Extension extends \Bolt\BaseExtension
             'links' => $this->makeLinks($contenttype, $pager['current'], intval($pager['totalpages']), $limit),
             'meta' => $meta,
             'data' => $items,
-            'related' => [],
-            'jsonapi' => $this->makeJsonapi(),
+            // 'related' => [],
             // 'included' => $included // included related objects
         ]);
 
@@ -171,12 +203,12 @@ class Extension extends \Bolt\BaseExtension
         $this->request = $request;
 
         if (!array_key_exists($contenttype, $this->config['contenttypes'])) {
-            return $this->notfound();
+            return $this->responseNotFound();
         }
 
         $item = $this->app['storage']->getContent("$contenttype/$slug");
         if (!$item) {
-            return $this->notfound();
+            return $this->responseNotFound();
         }
 
         // If a related entity name is given, we fetch its content instead
@@ -184,7 +216,7 @@ class Extension extends \Bolt\BaseExtension
         {
             $items = $item->related($relatedContenttype);
             if (!$items) {
-                return $this->notfound();
+                return $this->responseNotFound();
             }
             $items = array_map([$this, 'clean_list_item'], $items);
             $response = $this->response([
@@ -209,7 +241,7 @@ class Extension extends \Bolt\BaseExtension
 
             $response = $this->response([
                 'links' => $links,
-                'data' => $values
+                'data' => $values,
             ]);
         }
 
@@ -221,7 +253,7 @@ class Extension extends \Bolt\BaseExtension
     {
         $this->request = $request;
         // $this->app['storage']
-        return $this->notfound();
+        return $this->responseNotFound();
     }
 
     private function clean_item($item, $type = 'list-fields')
@@ -314,6 +346,12 @@ class Extension extends \Bolt\BaseExtension
      * - cursor-based : page[cursor]
      *
      * source: http://jsonapi.org/format/#fetching-pagination
+     *
+     * @param string $contenttype The name of the contenttype.
+     * @param int $currentPage The current page number.
+     * @param int $totalPages The total number of pages.
+     * @param int $pageSize The number of items per page.
+     * @return mixed[] An array with URLs for the current page and related pages.
      */
     private function makeLinks($contenttype, $currentPage, $totalPages, $pageSize)
     {
@@ -350,29 +388,49 @@ class Extension extends \Bolt\BaseExtension
         return $links;
     }
 
-    private function makeJsonapi()
+    /**
+     * Respond with a 404 Not Found.
+     *
+     * @param array $data Optional data to pass on through the response.
+     * @return Symfony\Component\HttpFoundation\Response
+     */
+    private function responseNotFound($data = [])
     {
-        return [
-            "version" => "1.0"
-        ];
+        return $this->responseError('404', 'Not Found', $data);
     }
 
-    private function notfound()
+    /**
+     * Respond with a simple 400 Invalid Request.
+     *
+     * @param array $data Optional data to pass on through the response.
+     * @return Symfony\Component\HttpFoundation\Response
+     */
+    private function responseInvalidRequest($data = [])
     {
-        return $this->response([
-            'status' => 404,
-            'title' => 'Not found'
-        ]);
+        return $this->responseError('400', 'Invalid Request', $data);
     }
 
-    private function invalidrequest()
+    /**
+     * Make a response with an error.
+     *
+     * @param string $status HTTP status code.
+     * @param string $title Human-readable summary of the problem.
+     * @param array $data Optional data to pass on through the response.
+     * @return Symfony\Component\HttpFoundation\Response
+     */
+    private function responseError($status, $title, $data = [])
     {
-        return $this->response([
-            'status' => 400,
-            'title' => 'Invalid request'
-        ]);
+        // todo: filter unnecessary fields.
+        // $allowedErrorFields = [ 'id', 'links', 'about', 'status', 'code', 'title', 'detail', 'source', 'meta' ];
+        return $this->response($data);
     }
 
+    /**
+     * Makes a JSON response, with either data or an error, never both.
+     *
+     * @param array $array The data to wrap in the response.
+     * @return Symfony\Component\HttpFoundation\Response
+     */
     private function response($array)
     {
 
@@ -380,8 +438,6 @@ class Extension extends \Bolt\BaseExtension
         // $json = json_encode($array, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_PRETTY_PRINT);
 
         if (isset($array['errors'])) {
-            // 400 Bad Request
-            // 500 Internal Server Error
             $status = isset($array['errors']['status']) ? $array['errors']['status'] : 400;
             $response = new Response($json, $status);
         } else {
