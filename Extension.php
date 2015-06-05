@@ -39,9 +39,8 @@ use Symfony\Component\HttpFoundation\Response;
  * the following features are not implemented yet:
  * - include / relationships
  * - handling / taxonomies
- * - handling json fields
- * - handling select contenttype fields
- * - preserve all request params
+ * - handling json fields -> json decode these values?
+ * - handling select contenttype fields -> handle them as has-one relationships?
  * - search
  * - i18n for error detail messages
  *
@@ -215,7 +214,7 @@ class Extension extends \Bolt\BaseExtension
      * Fetches a single item or all related items — of which their contenttype is
      * defined in $relatedContenttype — of that single item.
      *
-     * @todo split up fetching single item and fetching of related items.
+     * @todo split up fetching single item and fetching of related items?
      *
      * @param Request $request
      * @param string $contenttype The name of the contenttype.
@@ -241,20 +240,40 @@ class Extension extends \Bolt\BaseExtension
             ]);
         }
 
-        // If a related entity name is given, we fetch its content instead
         if ($relatedContenttype !== null)
         {
-            /*
+
+            // If a $relatedContenttype is set, fetch the related items.
+
             $items = $item->related($relatedContenttype);
             if (!$items) {
-                return $this->responseNotFound();
+                return $this->responseNotFound([
+                    'detail' => "No related items of type [$relatedContenttype] found for [$contenttype] with id/slug: [$slug]."
+                ]);
             }
-            // $items = array_map([$this, 'clean_list_item'], $items); // REFACTOR!
+
+            $allFields = $this->getAllFieldNames($relatedContenttype);
+            $fields = $this->getFields($relatedContenttype, $allFields, 'list-fields');
+
+            $items = array_values($items);
+            foreach($items as $key => $item) {
+                $items[$key] = $this->cleanItem($item, $fields);
+            }
+
             $response = $this->response([
+                'links' => [
+                    'self' => "$this->basePath/$contenttype/$slug/$relatedContenttype" . $this->makeQueryParameters()
+                ],
+                'meta' => [
+                    "count" => count($items),
+                    "total" => count($items)
+                ],
                 'data' => $items
             ]);
-            */
+
         } else {
+
+            // Fetch a single item only.
 
             $allFields = $this->getAllFieldNames($contenttype);
             $fields = $this->getFields($contenttype, $allFields, 'item-fields');
@@ -264,8 +283,16 @@ class Extension extends \Bolt\BaseExtension
 
             $defaultQuerystring = $this->makeQueryParameters();
             $links = [
-                'self' => $values['links']['self'] . $defaultQuerystring,
+                'self' => $values['links']['self'] . $defaultQuerystring
             ];
+
+            // optional: This adds additional relationships links in the root
+            //           variable 'links'.
+            $related = $this->makeRelatedLinks($item);
+            foreach ($related as $ct => $link) {
+                $links[$ct] = $link;
+            }
+
             if ($prev)  {
                 $links['prev'] = sprintf('%s/%s/%d%s', $this->basePath, $contenttype, $prev->values['id'], $defaultQuerystring);
             }
@@ -310,6 +337,20 @@ class Extension extends \Bolt\BaseExtension
     // -------------------------------------------------------------------------
     // -- HELPER FUNCTIONS                                                    --
     // -------------------------------------------------------------------------
+
+    /**
+     * @param \Bolt\Content $item
+     * @param string $relatedContenttype The name of the related contenttype to
+     *                                   fetch. If null, fetches all related
+     *                                   content disregarding any contenttype.
+     * @return mixed
+     *
+     * @see \Bolt\Content::related()
+     */
+    // private function fetchRelatedItems($item, $relatedContenttype)
+    // {
+    //     return $item->related($relatedContenttype);
+    // }
 
     /**
      * Returns all field names for the given contenttype.
@@ -399,8 +440,9 @@ class Extension extends \Bolt\BaseExtension
             unset($fields[$key]);
         }
 
+        $id = $item->values['id'];
         $values = [
-            'id' => $item->values['id'],
+            'id' => $id,
             'type' => $contenttype,
         ];
         $attributes = [];
@@ -436,26 +478,44 @@ class Extension extends \Bolt\BaseExtension
 
         // todo: add "links"
         $values['links'] = [
-            'self' => sprintf('%s/%s/%s', $this->basePath, $contenttype, $item->values['id']),
+            'self' => sprintf('%s/%s/%s', $this->basePath, $contenttype, $id),
         ];
 
-        // todo: taxonomy
-        // todo: tags
-        // todo: categories
-        // todo: groupings
+        // todo: Handle taxonomies
+        // todo: 1. tags
+        // todo: 2. categories
+        // todo: 3. groupings
         if ($item->taxonomy) {
             foreach($item->taxonomy as $key => $value) {
                 // $values['attributes']['taxonomy'] = [];
             }
         }
 
-        // todo: "relationships"
+        // todo: Since Bolt relationships are a bit _different_ than the ones in
+        //       relational databases, I am not sure if we need to do an
+        //       additional check for `multiple` = true|false in the definitions
+        //       in `contenttypes.yml`.
         if ($item->relation) {
-            $values['relationships'] = [];
-        }
+            $relationships = [];
+            foreach ($item->relation as $ct => $ids) {
+                $data = [];
+                foreach($ids as $i) {
+                    $data[] = [
+                        'type' => $ct,
+                        'id' => $i
+                    ];
+                }
 
-        // todo: "meta"
-        // todo: "links"
+                $relationships[$ct] = [
+                    'links' => [
+                        // 'self' -- this is irrelevant for now
+                        'related' => "$this->basePath/$contenttype/$id/$ct"
+                    ],
+                    'data' => $data
+                ];
+            }
+            $values['relationships'] = $relationships;
+        }
 
         return $values;
     }
@@ -467,7 +527,8 @@ class Extension extends \Bolt\BaseExtension
      * @param int $currentPage The current page number.
      * @param int $totalPages The total number of pages.
      * @param int $pageSize The number of items per page.
-     * @return mixed[] An array with URLs for the current page and related pages.
+     * @return mixed[] An array with URLs for the current page and related
+     *                 pagination pages.
      */
     private function makeLinks($contenttype, $currentPage, $totalPages, $pageSize)
     {
@@ -507,6 +568,32 @@ class Extension extends \Bolt\BaseExtension
         // $links["related"]
 
         return $links;
+    }
+
+    /**
+     * Make related links for a singular item.
+     *
+     * @param \Bolt\Content $item
+     * @return mixed[] An array with URLs for the relationships.
+     */
+    private function makeRelatedLinks($item)
+    {
+        $related = [];
+        $contenttype = $item->contenttype['slug'];
+        $id = $item->values['id'];
+
+        if ($item->relation) {
+            foreach ($item->relation as $ct => $ids) {
+                $related[$ct] = [
+                    'href' => "$this->basePath/$contenttype/$id/$ct",
+                    'meta' => [
+                        'count' => count($ids)
+                    ]
+                ];
+            }
+        }
+
+        return $related;
     }
 
     /**
