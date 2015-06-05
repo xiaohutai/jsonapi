@@ -43,6 +43,7 @@ use Symfony\Component\HttpFoundation\Response;
  * - handling select contenttype fields
  * - preserve all request params
  * - search
+ * - i18n for error detail messages
  *
  */
 class Extension extends \Bolt\BaseExtension
@@ -116,7 +117,9 @@ class Extension extends \Bolt\BaseExtension
         $this->request = $request;
 
         if (!array_key_exists($contenttype, $this->config['contenttypes'])) {
-            return $this->responseNotFound();
+            return $this->responseNotFound([
+                'detail' => "Contenttype with name [$contenttype] not found."
+            ]);
         }
         $options = [];
         // if ($limit = $request->get('page')['size']) { // breaks things in src/Storage.php at executeGetContentQueries
@@ -134,8 +137,11 @@ class Extension extends \Bolt\BaseExtension
             }
         }
         if ($order = $request->get('order')) {
+            // todo: Validate order parameter. Taken from JSONAccess, does nothing really.
             if (!preg_match('/^([a-zA-Z][a-zA-Z0-9_\\-]*)\\s*(ASC|DESC)?$/', $order, $matches)) {
-                $this->responseInvalidRequest();
+                $this->responseInvalidRequest([
+                    'detail' => "The order parameter is incorrect: [$order]."
+                ]);
             }
             $options['order'] = $order;
         }
@@ -163,10 +169,12 @@ class Extension extends \Bolt\BaseExtension
         if ($filters = $request->get('filter')) {
             foreach($filters as $key => $value) {
                 if (!in_array($key, $allFields)) {
-                    return $this->responseInvalidRequest();
+                    return $this->responseInvalidRequest([
+                        'detail' => "Parameter [$key] does not exist for contenttype with name [$contenttype]."
+                    ]);
                 }
                 // A bit crude for now.
-                $where[$key] = str_replace(',', '||', $value);
+                $where[$key] = str_replace(',', ' || ', $value);
             }
         }
 
@@ -177,7 +185,7 @@ class Extension extends \Bolt\BaseExtension
         // response), or it exists, but no content has been added yet.
         if (!is_array($items)) {
             $this->responseInvalidRequest([
-                'detail' => "Configuration error: $contenttype is configured as a JSON end-point, but doesn't exist as a content type."
+                'detail' => "Configuration error: [$contenttype] is configured as a JSON end-point, but doesn't exist as a contenttype."
             ]);
         }
 
@@ -221,12 +229,16 @@ class Extension extends \Bolt\BaseExtension
         $this->request = $request;
 
         if (!array_key_exists($contenttype, $this->config['contenttypes'])) {
-            return $this->responseNotFound();
+            return $this->responseNotFound([
+                'detail' => "Contenttype with name [$contenttype] not found."
+            ]);
         }
 
         $item = $this->app['storage']->getContent("$contenttype/$slug");
         if (!$item) {
-            return $this->responseNotFound();
+            return $this->responseNotFound([
+                'detail' => "No [$contenttype] found with id/slug: [$slug]."
+            ]);
         }
 
         // If a related entity name is given, we fetch its content instead
@@ -279,16 +291,20 @@ class Extension extends \Bolt\BaseExtension
      */
     public function jsonapi_search(Request $request, $contenttype = null)
     {
+        $this->request = $request;
+
         if ($contenttype !== null) {
             // search in $contenttype.
         } else {
             // search all searchable contenttypes.
         }
 
-        $this->request = $request;
         // $this->app['storage']
         // make a filter query
-        return $this->responseNotFound();
+
+        return $this->responseInvalidRequest([
+            'detail' => "This feature is not yet implemented."
+        ]);
     }
 
     // -------------------------------------------------------------------------
@@ -563,6 +579,8 @@ class Extension extends \Bolt\BaseExtension
     {
         // todo: filter unnecessary fields.
         // $allowedErrorFields = [ 'id', 'links', 'about', 'status', 'code', 'title', 'detail', 'source', 'meta' ];
+        $data['status'] = $status;
+        $data['title'] = $title;
         return $this->response($data);
     }
 
