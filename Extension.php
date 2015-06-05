@@ -37,12 +37,13 @@ use Symfony\Component\HttpFoundation\Response;
  * [todo]
  * This extension is a work in progress. Simple features are available. However,
  * the following features are not implemented yet:
- * - include / relationships
- * - handling / taxonomies
+ * - include / relationships.
+ * - handling / taxonomies.
+ * - sorting
  * - handling json fields -> json decode these values?
  * - handling select contenttype fields -> handle them as has-one relationships?
- * - search
- * - i18n for error detail messages
+ * - search.
+ * - i18n for error 'detail' messages.
  *
  */
 class Extension extends \Bolt\BaseExtension
@@ -121,27 +122,27 @@ class Extension extends \Bolt\BaseExtension
             ]);
         }
         $options = [];
-        // if ($limit = $request->get('page')['size']) { // breaks things in src/Storage.php at executeGetContentQueries
+        // if ($limit = $request->get('page')['size']) { // todo: breaks things in src/Storage.php at executeGetContentQueries
         if ($limit = $request->get($this->paginationSizeKey)) {
             $limit = intval($limit);
             if ($limit >= 1) {
                 $options['limit'] = $limit;
             }
         }
-        // if ($page = $request->get('page')['number']) { // breaks things in src/Storage.php at executeGetContentQueries
+        // if ($page = $request->get('page')['number']) { // todo: breaks things in src/Storage.php at executeGetContentQueries
         if ($page = $request->get($this->paginationNumberKey)) {
             $page = intval($page);
             if ($page >= 1) {
                 $options['page'] = $page;
             }
         }
-        if ($order = $request->get('order')) {
-            // todo: Validate order parameter. Taken from JSONAccess, does nothing really.
-            if (!preg_match('/^([a-zA-Z][a-zA-Z0-9_\\-]*)\\s*(ASC|DESC)?$/', $order, $matches)) {
-                $this->responseInvalidRequest([
-                    'detail' => "The order parameter is incorrect: [$order]."
-                ]);
-            }
+        if ($order = $request->get('sort')) {
+            // todo: comma-separated list with a minus prefix for descending
+            // if (!preg_match('/^([a-zA-Z][a-zA-Z0-9_\\-]*)\\s*(ASC|DESC)?$/', $order, $matches)) {
+            //     return $this->responseInvalidRequest([
+            //         'detail' => "The sort parameter is incorrect: [$order]."
+            //     ]);
+            // }
             $options['order'] = $order;
         }
 
@@ -152,12 +153,6 @@ class Extension extends \Bolt\BaseExtension
 
         $allFields = $this->getAllFieldNames($contenttype);
         $fields = $this->getFields($contenttype, $allFields, 'list-fields');
-
-        // todo: handle "include" / relationships
-        // $included = [];
-        // if ($include = $request->get('include')) {
-        //     $where = [];
-        // }
 
         // Use the `where-clause` defined in the contenttype config.
         if (isset($this->config['contenttypes'][$contenttype]['where-clause'])) {
@@ -183,7 +178,7 @@ class Extension extends \Bolt\BaseExtension
         // the content type does not exist (in which case we'll get a non-array
         // response), or it exists, but no content has been added yet.
         if (!is_array($items)) {
-            $this->responseInvalidRequest([
+            return $this->responseInvalidRequest([
                 'detail' => "Configuration error: [$contenttype] is configured as a JSON end-point, but doesn't exist as a contenttype."
             ]);
         }
@@ -192,22 +187,47 @@ class Extension extends \Bolt\BaseExtension
             $items = [];
         }
 
-        // todo: relationships
         $items = array_values($items);
+
+        // -- included
+        // Handle "include" and fetch related relationships in current query.
+        try {
+            $included = $this->fetchIncludedContent($contenttype, $items);
+        } catch(\Exception $e) {
+            return $this->responseInvalidRequest([
+                'detail' => $e->getMessage()
+            ]);
+        }
+
+        $included = array_values($included);
+        foreach($included as $key => $item) {
+            // todo: optimize dynamically!
+            $ct = $item->contenttype['slug'];
+            $ctAllFields = $this->getAllFieldNames($ct);
+            $ctFields = $this->getFields($ct, $ctAllFields, 'list-fields');
+
+            $included[$key] = $this->cleanItem($item, $ctFields);
+        }
+        // -- /included
+
         foreach($items as $key => $item) {
             $items[$key] = $this->cleanItem($item, $fields);
         }
 
-        return $this->response([
+        $response = [
             'links' => $this->makeLinks($contenttype, $pager['current'], intval($pager['totalpages']), $limit),
             'meta' => [
                 "count" => count($items),
                 "total" => intval($pager['count'])
             ],
             'data' => $items,
-            // 'related' => [],
-            // 'included' => $included // included related objects
-        ]);
+        ];
+
+        if (!empty($included)) {
+            $response['included'] = $included;
+        }
+
+        return $this->response($response);
     }
 
     /**
@@ -339,18 +359,68 @@ class Extension extends \Bolt\BaseExtension
     // -------------------------------------------------------------------------
 
     /**
-     * @param \Bolt\Content $item
-     * @param string $relatedContenttype The name of the related contenttype to
-     *                                   fetch. If null, fetches all related
-     *                                   content disregarding any contenttype.
-     * @return mixed
+     * Globally fetch all related content.
      *
-     * @see \Bolt\Content::related()
+     * @param string $contenttype The name of the contenttype.
+     * @param \Bolt\Content[] $items
+     * @return \Bolt\Content[]
      */
-    // private function fetchRelatedItems($item, $relatedContenttype)
-    // {
-    //     return $item->related($relatedContenttype);
-    // }
+    private function fetchIncludedContent($contenttype, $items)
+    {
+        $include = $this->getContenttypesToInclude();
+        $related = [];
+        $tofetch = [];
+
+        // Collect all ids per contenttype and then fetch em.
+        foreach($include as $ct) {
+            // Check if the include exists in the contenttypes definition.
+            $exists = $this->app['config']->get("contenttypes/$contenttype/relations/$ct", false);
+            if ($exists !== false) {
+                $tofetch[$ct] = [];
+
+                foreach ($items as $item) {
+                    if ($item->relation && isset($item->relation[$ct])) {
+                        $tofetch[$ct] = array_merge($tofetch[$ct], $item->relation[$ct]);
+                    }
+                }
+            }
+        }
+
+        // ... and fetch!
+        foreach ($tofetch as $ct => $ids) {
+            $ids = implode(' || ', $ids);
+            $pager = [];
+            $items = $this->app['storage']->getContent($ct, [ 'paging' => false ], $pager, [ 'id' => $ids ]);
+            $related = array_merge($related, $items);
+        }
+
+        return $related;
+    }
+
+    /**
+     * Handles the include request parameter. Only contenttypes defined in the
+     * configuration is allowed.
+     *
+     * @return string[] A list of names of contenttypes to include.
+     */
+    private function getContenttypesToInclude()
+    {
+        $include = [];
+
+        if ($requestedContenttypes = $this->request->get('include')) {
+            // These are the related contenttypes to include.
+            $requestedContenttypes = explode(',', $requestedContenttypes);
+            foreach($requestedContenttypes as $ct) {
+                if (isset($this->config['contenttypes'][$ct])) {
+                    $include[] = $ct;
+                } else {
+                    throw new \Exception("Contenttype with name [$ct] requested in include not found.");
+                }
+            }
+        }
+
+        return $include;
+    }
 
     /**
      * Returns all field names for the given contenttype.
@@ -476,15 +546,14 @@ class Extension extends \Bolt\BaseExtension
             $values['attributes'] = $attributes;
         }
 
-        // todo: add "links"
         $values['links'] = [
             'self' => sprintf('%s/%s/%s', $this->basePath, $contenttype, $id),
         ];
 
         // todo: Handle taxonomies
-        // todo: 1. tags
-        // todo: 2. categories
-        // todo: 3. groupings
+        //       1. tags
+        //       2. categories
+        //       3. groupings
         if ($item->taxonomy) {
             foreach($item->taxonomy as $key => $value) {
                 // $values['attributes']['taxonomy'] = [];
@@ -495,6 +564,9 @@ class Extension extends \Bolt\BaseExtension
         //       relational databases, I am not sure if we need to do an
         //       additional check for `multiple` = true|false in the definitions
         //       in `contenttypes.yml`.
+        //
+        // todo: Depending on multiple, empty relationships need a null or [],
+        //       if they don't exist.
         if ($item->relation) {
             $relationships = [];
             foreach ($item->relation as $ct => $ids) {
@@ -563,9 +635,6 @@ class Extension extends \Bolt\BaseExtension
             $params = $this->makeQueryParameters([$this->paginationNumberKey => $nextPage]);
             $links["next"] = $basePathContenttype.$params;
         }
-
-        // todo: use "related" for additional related links.
-        // $links["related"]
 
         return $links;
     }
@@ -664,7 +733,7 @@ class Extension extends \Bolt\BaseExtension
      */
     private function responseError($status, $title, $data = [])
     {
-        // todo: filter unnecessary fields.
+        // todo: (optional) filter unnecessary fields.
         // $allowedErrorFields = [ 'id', 'links', 'about', 'status', 'code', 'title', 'detail', 'source', 'meta' ];
         $data['status'] = $status;
         $data['title'] = $title;
@@ -690,7 +759,6 @@ class Extension extends \Bolt\BaseExtension
         }
 
         if (!empty($this->config['headers']) && is_array($this->config['headers'])) {
-            // dump($this->config['headers']);
             foreach ($this->config['headers'] as $header => $value) {
                 $response->headers->set($header, $value);
             }
