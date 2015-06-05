@@ -35,7 +35,8 @@ use Symfony\Component\HttpFoundation\Response;
  *
  * ---
  * [todo]
- * This extension is a work in progress. Simple features are available
+ * This extension is a work in progress. Simple features are available. However,
+ * the following features are not implemented yet:
  * - include / relationships
  * - handling / taxonomies
  * - handling json fields
@@ -165,7 +166,7 @@ class Extension extends \Bolt\BaseExtension
                     return $this->responseInvalidRequest();
                 }
                 // A bit crude for now.
-                $where[$key] = str_replace(',', ' || ', $value);
+                $where[$key] = str_replace(',', '||', $value);
             }
         }
 
@@ -202,6 +203,19 @@ class Extension extends \Bolt\BaseExtension
         ]);
     }
 
+    /**
+     * Fetches a single item or all related items — of which their contenttype is
+     * defined in $relatedContenttype — of that single item.
+     *
+     * @todo split up fetching single item and fetching of related items.
+     *
+     * @param Request $request
+     * @param string $contenttype The name of the contenttype.
+     * @param string $slug The slug, preferably a numeric id, but Bolt allows
+     *                     slugs in the form of strings as well.
+     * @param string $relatedContenttype The name of the related contenttype
+     *                                   that is related to $contenttype.
+     */
     public function jsonapi(Request $request, $contenttype, $slug, $relatedContenttype)
     {
         $this->request = $request;
@@ -218,6 +232,7 @@ class Extension extends \Bolt\BaseExtension
         // If a related entity name is given, we fetch its content instead
         if ($relatedContenttype !== null)
         {
+            /*
             $items = $item->related($relatedContenttype);
             if (!$items) {
                 return $this->responseNotFound();
@@ -226,7 +241,7 @@ class Extension extends \Bolt\BaseExtension
             $response = $this->response([
                 'data' => $items
             ]);
-
+            */
         } else {
 
             $allFields = $this->getAllFieldNames($contenttype);
@@ -235,14 +250,15 @@ class Extension extends \Bolt\BaseExtension
             $prev = $item->previous();
             $next = $item->next();
 
+            $defaultQuerystring = $this->makeQueryParameters();
             $links = [
-                'self' => $values['links']['self'],
+                'self' => $values['links']['self'] . $defaultQuerystring,
             ];
             if ($prev)  {
-                $links['prev'] = sprintf('%s/%s/%d', $this->basePath, $contenttype, $prev->values['id']);
+                $links['prev'] = sprintf('%s/%s/%d%s', $this->basePath, $contenttype, $prev->values['id'], $defaultQuerystring);
             }
             if ($next) {
-                $links['next'] = sprintf('%s/%s/%d', $this->basePath, $contenttype, $next->values['id']);
+                $links['next'] = sprintf('%s/%s/%d%s', $this->basePath, $contenttype, $next->values['id'], $defaultQuerystring);
             }
 
             $response = $this->response([
@@ -254,13 +270,19 @@ class Extension extends \Bolt\BaseExtension
         return $response;
     }
 
-    // todo: handle search
+    /**
+     * @todo: Handle search, because it's going to be useful (e.g. ajax search).
+     *
+     * @param Request $request
+     * @param string $contenttype The name of the specific $contenttype to search
+     *                             in, otherwise search all contenttypes.
+     */
     public function jsonapi_search(Request $request, $contenttype = null)
     {
         if ($contenttype !== null) {
-            // search in $contenttype
+            // search in $contenttype.
         } else {
-            // search all contenttypes
+            // search all searchable contenttypes.
         }
 
         $this->request = $request;
@@ -434,6 +456,7 @@ class Extension extends \Bolt\BaseExtension
     private function makeLinks($contenttype, $currentPage, $totalPages, $pageSize)
     {
         $basePath = $this->basePath;
+        $basePathContenttype = $basePath . '/' . $contenttype;
         $prevPage = max($currentPage - 1, 1);
         $nextPage = min($currentPage + 1, $totalPages);
         $firstPage = 1;
@@ -444,22 +467,24 @@ class Extension extends \Bolt\BaseExtension
         $defaultQuerystring = $this->makeQueryParameters();
 
         $params = $pagination ? $this->makeQueryParameters([$this->paginationNumberKey => $currentPage]) : $defaultQuerystring;
-        $links["self"] = "$basePath/$contenttype?$params";
+        $links["self"] = $basePathContenttype.$params;
+
+        // The following links only exists if a query was made using pagination.
         if ($currentPage != $firstPage) {
-            $params = $pagination ? $this->makeQueryParameters([$this->paginationNumberKey => $firstPage]) : $defaultQuerystring;
-            $links["first"] = "$basePath/$contenttype?$params";
+            $params = $this->makeQueryParameters([$this->paginationNumberKey => $firstPage]);
+            $links["first"] = $basePathContenttype.$params;
         }
         if ($currentPage != $totalPages) {
-            $params = $pagination ? $this->makeQueryParameters([$this->paginationNumberKey => $totalPages]) : $defaultQuerystring;
-            $links["last"] = "$basePath/$contenttype?$params";
+            $params = $this->makeQueryParameters([$this->paginationNumberKey => $totalPages]);
+            $links["last"] = $basePathContenttype.$params;
         }
         if ($currentPage != $prevPage) {
-            $params = $pagination ? $this->makeQueryParameters([$this->paginationNumberKey => $prevPage]) : $defaultQuerystring;
-            $links["prev"] = "$basePath/$contenttype?$params";
+            $params = $this->makeQueryParameters([$this->paginationNumberKey => $prevPage]);
+            $links["prev"] = $basePathContenttype.$params;
         }
         if ($currentPage != $nextPage) {
-            $params = $pagination ? $this->makeQueryParameters([$this->paginationNumberKey => $nextPage]) : $defaultQuerystring;
-            $links["next"] = "$basePath/$contenttype?$params";
+            $params = $this->makeQueryParameters([$this->paginationNumberKey => $nextPage]);
+            $links["next"] = $basePathContenttype.$params;
         }
 
         // todo: use "related" for additional related links.
@@ -491,7 +516,11 @@ class Extension extends \Bolt\BaseExtension
         $queryParameters = Arr::mergeRecursiveDistinct($queryParameters, $overrides);
         if ($buildQuery) {
             // No need to urlencode these, afaik.
-            return  urldecode(http_build_query($queryParameters));
+            $querystring =  urldecode(http_build_query($queryParameters));
+            if (!empty($querystring)) {
+                $querystring = '?' . $querystring;
+            }
+            return $querystring;
         }
         return $queryParameters;
     }
