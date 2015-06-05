@@ -1,6 +1,6 @@
 <?php
 /**
- * JSONAPI extension for Bolt.
+ * JSONAPI extension for Bolt. Forked from the JSONAccess extension.
  *
  * @author Tobias Dammers <tobias@twokings.nl>
  * @author Bob den Otter <bob@twokings.nl>
@@ -9,6 +9,7 @@
 
 namespace JSONAPI;
 
+use \Bolt\Helpers\Arr;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -432,35 +433,67 @@ class Extension extends \Bolt\BaseExtension
      */
     private function makeLinks($contenttype, $currentPage, $totalPages, $pageSize)
     {
-
         $basePath = $this->basePath;
         $prevPage = max($currentPage - 1, 1);
         $nextPage = min($currentPage + 1, $totalPages);
         $firstPage = 1;
         $pagination = $firstPage != $totalPages;
-        $paginationNumberQuery = sprintf('?%s', $this->paginationNumberKey);
-        $paginationSizeQuery  = sprintf('&%s=%d', $this->paginationSizeKey, $pageSize);
-        $paginationQuery = $paginationNumberQuery . '%s' . $paginationSizeQuery;
 
         $links = [];
-        $links["self"] = "$basePath/$contenttype" . ($pagination ? sprintf($paginationQuery, $currentPage) : '');
+        $querystring = '';
+        $defaultQuerystring = $this->makeQueryParameters();
+
+        $params = $pagination ? $this->makeQueryParameters([$this->paginationNumberKey => $currentPage]) : $defaultQuerystring;
+        $links["self"] = "$basePath/$contenttype?$params";
         if ($currentPage != $firstPage) {
-            $links["first"] = "$basePath/$contenttype" . ($pagination ? sprintf($paginationQuery, $firstPage) : '');
+            $params = $pagination ? $this->makeQueryParameters([$this->paginationNumberKey => $firstPage]) : $defaultQuerystring;
+            $links["first"] = "$basePath/$contenttype?$params";
         }
         if ($currentPage != $totalPages) {
-            $links["last"] = "$basePath/$contenttype" . ($pagination ? sprintf($paginationQuery, $totalPages) : '');
+            $params = $pagination ? $this->makeQueryParameters([$this->paginationNumberKey => $totalPages]) : $defaultQuerystring;
+            $links["last"] = "$basePath/$contenttype?$params";
         }
         if ($currentPage != $prevPage) {
-            $links["prev"] = "$basePath/$contenttype" . ($pagination ? sprintf($paginationQuery, $prevPage) : '');
+            $params = $pagination ? $this->makeQueryParameters([$this->paginationNumberKey => $prevPage]) : $defaultQuerystring;
+            $links["prev"] = "$basePath/$contenttype?$params";
         }
         if ($currentPage != $nextPage) {
-            $links["next"] = "$basePath/$contenttype" . ($pagination ? sprintf($paginationQuery, $nextPage) : '');
+            $params = $pagination ? $this->makeQueryParameters([$this->paginationNumberKey => $nextPage]) : $defaultQuerystring;
+            $links["next"] = "$basePath/$contenttype?$params";
         }
 
         // todo: use "related" for additional related links.
         // $links["related"]
 
         return $links;
+    }
+
+    /**
+     * Make a new querystring while preserving current query parameters with the
+     * option to override values.
+     *
+     * @param array $overrides A (key,value)-array with elements to override in
+     *                         the current query string.
+     * @param bool $buildQuery Returns a querystring if set to true, otherwise
+     *                          returns the array with (key,value)-pairs.
+     * @return mixed query parameters in either array or string form.
+     *
+     * @see \Bolt\Helpers\Arr::mergeRecursiveDistinct()
+     */
+    private function makeQueryParameters($overrides = [], $buildQuery = true)
+    {
+        $queryParameters = $this->request->query->all();
+        // todo: (optional) cleanup. There is a default set of fields we can
+        //       expect using this Extension and jsonapi. Or we could ignore
+        //       them like we already do.
+
+        // Using Bolt's Helper Arr class for merging and overriding values.
+        $queryParameters = Arr::mergeRecursiveDistinct($queryParameters, $overrides);
+        if ($buildQuery) {
+            // No need to urlencode these, afaik.
+            return  urldecode(http_build_query($queryParameters));
+        }
+        return $queryParameters;
     }
 
     // -------------------------------------------------------------------------
