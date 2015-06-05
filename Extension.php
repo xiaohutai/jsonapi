@@ -12,6 +12,37 @@ namespace JSONAPI;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ *
+ * This extension tries to return JSON responses according to the specifications
+ * on jsonapi.org as much as possible. This extension is originally based on the
+ * `bolt/jsonaccess` extension.
+ *
+ * ---
+ * [Pagination]
+ * Bolt uses the page-based pagination strategy.
+ *
+ * Recommended pagination strategies according to jsonapi are:
+ * - page-based   : page[number] and page[size]
+ * - offset-based : page[offset] and page[limit]
+ * - cursor-based : page[cursor]
+ *
+ * source: http://jsonapi.org/format/#fetching-pagination
+ *
+ * Note: Since Bolt breaks when using page[number] and page[size],
+ * we're currently using $page and $limit respectively.
+ *
+ * ---
+ * [todo]
+ * This extension is a work in progress. Simple features are available
+ * - include / relationships
+ * - handling / taxonomies
+ * - handling json fields
+ * - handling select contenttype fields
+ * - preserve all request params
+ * - search
+ *
+ */
 class Extension extends \Bolt\BaseExtension
 {
 
@@ -20,6 +51,11 @@ class Extension extends \Bolt\BaseExtension
     private $paginationNumberKey = 'page'; // todo: page[number]
     private $paginationSizeKey = 'limit';  // todo: page[size]
 
+    /**
+     * Returns the name of this extension.
+     *
+     * @return string The name of this extension.
+     */
     public function getName()
     {
         return "JSONAPI";
@@ -57,19 +93,23 @@ class Extension extends \Bolt\BaseExtension
         }
         $this->basePath = $this->app['paths']['canonical'] . $this->base;
 
-        $this->app->get($this->base."/search", [$this, 'search'])
+        $this->app->get($this->base."/search", [$this, 'jsonapi_search']) // todo: "jsonapi_search_mixed"
                   ->bind('jsonapi_search_mixed');
-        $this->app->get($this->base."/{contenttype}/search", [$this, 'search'])
+        $this->app->get($this->base."/{contenttype}/search", [$this, 'jsonapi_search'])
                   ->bind('jsonapi_search');
-        $this->app->get($this->base."/{contenttype}/{slug}/{relatedContenttype}", [$this, 'json'])
+        $this->app->get($this->base."/{contenttype}/{slug}/{relatedContenttype}", [$this, 'jsonapi'])
                   ->value('relatedContenttype', null)
                   ->assert('slug', '[a-zA-Z0-9_\-]+')
                   ->bind('jsonapi');
-        $this->app->get($this->base."/{contenttype}", [$this, 'json_list'])
+        $this->app->get($this->base."/{contenttype}", [$this, 'jsonapi_list'])
                   ->bind('jsonapi_list');
     }
 
-    public function json_list(Request $request, $contenttype)
+    // -------------------------------------------------------------------------
+    // -- FUNCTIONS HANDLING REQUESTS                                         --
+    // -------------------------------------------------------------------------
+
+    public function jsonapi_list(Request $request, $contenttype)
     {
         $this->request = $request;
 
@@ -102,53 +142,15 @@ class Extension extends \Bolt\BaseExtension
         $options['paging'] = true;
         $pager  = [];
         $where  = [];
-        $fields = [];
 
-        // Contenttype fields
-        $contenttypeBaseFields = \Bolt\Content::getBaseColumns();
-        $contenttypeDefinedFields = array_keys($this->app['config']->get("contenttypes/$contenttype/fields"));
-        $contenttypeAllFields = array_merge($contenttypeBaseFields, $contenttypeDefinedFields);
-        $contenttypeAllowedFields = isset($this->config['contenttypes'][$contenttype]['allowed-fields']) ? $this->config['contenttypes'][$contenttype]['allowed-fields'] : [];
+        $allFields = $this->getAllFieldNames($contenttype);
+        $fields = $this->getFields($contenttype, $allFields, 'list-fields');
 
         // todo: handle "include" / relationships
         // $included = [];
         // if ($include = $request->get('include')) {
         //     $where = [];
         // }
-
-        // Handle $fields[], e.g. $fields['pages'] = [ 'teaser', 'body', 'image']
-        // Note: `id` and `type` (`contenttype`) are always required.
-        if ($fields = $request->get('fields')) {
-            foreach($fields as $key => $value) {
-                $fields[$key] = [];
-                $values = explode(',', $value);
-
-                // All existing fields are allowed, if no `allowed-fields` is defined.
-                if ($contenttypeAllowedFields) {
-                    $contenttypeAllowedFields = $contenttypeAllFields;
-                }
-
-                // filtered fields need to be allowed and need to exist.
-                foreach ($values as $v) {
-                    if (in_array($v, $contenttypeAllowedFields)) {
-                        $fields[$key][] = $v;
-                    }
-                }
-            }
-        }
-
-        if (!isset($fields[$contenttype]) || empty($fields[$contenttype])) {
-            $fields[$contenttype] = $this->config['contenttypes'][$contenttype]['list-fields'];
-        }
-
-        //
-        // how does this work with the fields in defined in config????
-        // does a list of allowedfields need to be defined ??
-        //
-        // every contenttype has `allowed-fields` in the `config.yml`
-        // through which the fields get filtered (if it exists), otherwise,
-        // use `item-fields` or `list-fields` if they exists
-        //
 
         // Use the `where-clause` defined in the contenttype config.
         if (isset($this->config['contenttypes'][$contenttype]['where-clause'])) {
@@ -158,7 +160,7 @@ class Extension extends \Bolt\BaseExtension
         // Handle $filter[], this modifies the $where[] clause.
         if ($filters = $request->get('filter')) {
             foreach($filters as $key => $value) {
-                if (!in_array($key, $contenttypeAllFields)) {
+                if (!in_array($key, $allFields)) {
                     return $this->responseInvalidRequest();
                 }
                 // A bit crude for now.
@@ -172,33 +174,34 @@ class Extension extends \Bolt\BaseExtension
         // the content type does not exist (in which case we'll get a non-array
         // response), or it exists, but no content has been added yet.
         if (!is_array($items)) {
-            // todo
-            throw new \Exception("Configuration error: $contenttype is configured as a JSON end-point, but doesn't exist as a content type.");
+            $this->responseInvalidRequest([
+                'detail' => "Configuration error: $contenttype is configured as a JSON end-point, but doesn't exist as a content type."
+            ]);
         }
 
         if (empty($items)) {
             $items = [];
         }
 
-        $meta = [
-            "count" => count($items),
-            "total" => intval($pager['count'])
-        ];
-
+        // todo: relationships
         $items = array_values($items);
-        $items = array_map([$this, 'clean_list_item'], $items); // todo: relationships are lost
+        foreach($items as $key => $item) {
+            $items[$key] = $this->cleanItem($item, $fields);
+        }
 
         return $this->response([
             'links' => $this->makeLinks($contenttype, $pager['current'], intval($pager['totalpages']), $limit),
-            'meta' => $meta,
+            'meta' => [
+                "count" => count($items),
+                "total" => intval($pager['count'])
+            ],
             'data' => $items,
             // 'related' => [],
             // 'included' => $included // included related objects
         ]);
-
     }
 
-    public function json(Request $request, $contenttype, $slug, $relatedContenttype)
+    public function jsonapi(Request $request, $contenttype, $slug, $relatedContenttype)
     {
         $this->request = $request;
 
@@ -218,14 +221,16 @@ class Extension extends \Bolt\BaseExtension
             if (!$items) {
                 return $this->responseNotFound();
             }
-            $items = array_map([$this, 'clean_list_item'], $items);
+            // $items = array_map([$this, 'clean_list_item'], $items); // REFACTOR!
             $response = $this->response([
                 'data' => $items
             ]);
 
         } else {
 
-            $values = $this->clean_full_item($item);
+            $allFields = $this->getAllFieldNames($contenttype);
+            $fields = $this->getFields($contenttype, $allFields, 'item-fields');
+            $values = $this->cleanItem($item, $fields);
             $prev = $item->previous();
             $next = $item->next();
 
@@ -249,54 +254,145 @@ class Extension extends \Bolt\BaseExtension
     }
 
     // todo: handle search
-    public function search(Request $request, $contenttype = null)
+    public function jsonapi_search(Request $request, $contenttype = null)
     {
+        if ($contenttype !== null) {
+            // search in $contenttype
+        } else {
+            // search all contenttypes
+        }
+
         $this->request = $request;
         // $this->app['storage']
+        // make a filter query
         return $this->responseNotFound();
     }
 
-    private function clean_item($item, $type = 'list-fields')
+    // -------------------------------------------------------------------------
+    // -- HELPER FUNCTIONS                                                    --
+    // -------------------------------------------------------------------------
+
+    /**
+     * Returns all field names for the given contenttype.
+     *
+     * @param string $contenttype The name of the contenttype.
+     * @return string[] An array with all field definitions for the given
+     *                  contenttype. This includes the base columns as well.
+     */
+    private function getAllFieldNames($contenttype)
     {
+        $baseFields = \Bolt\Content::getBaseColumns();
+        $definedFields = array_keys($this->app['config']->get("contenttypes/$contenttype/fields"));
+        return array_merge($baseFields, $definedFields);
+    }
 
+    /**
+     * Returns an array with the field names to be shown in the JSON response.
+     *
+     * @param string $contenttype The name of the contenttype.
+     * @param array $allFields An array with all existing fields of the given
+     *                         contenttype. This functions as an allowed fields
+     *                         list if there is none defined.
+     * @param string $defaultFieldsKey A string that is either 'list-fields' or
+     *                                 'item-fields' that defines the default
+     *                                 fallback fields in the config.
+     * @return string[] An array with field names to be shown. It is possible that
+     *                  this function returns an empty array.
+     */
+    private function getFields($contenttype, $allFields = [], $defaultFieldsKey = 'list-fields')
+    {
+        $fields = [];
+
+        if (isset($this->config['contenttypes'][$contenttype]['allowed-fields'])) {
+            $allowedFields = $this->config['contenttypes'][$contenttype]['allowed-fields'];
+        } else {
+            $allowedFields = $allFields;
+        }
+
+        // Check if there are any fields requested.
+        if ($requestFields = $this->request->get('fields')) {
+            if (isset($requestFields[$contenttype])) {
+                $values = explode(',', $requestFields[$contenttype]);
+                foreach ($values as $v) {
+                    if (in_array($v, $allowedFields)) {
+                        $fields[] = $v;
+                    }
+                }
+            }
+        }
+
+        // Default on the default/fallback fields defined in the config.
+        if (empty($fields)) {
+            if (isset($this->config['contenttypes'][$contenttype][$defaultFieldsKey])) {
+                $fields = $this->config['contenttypes'][$contenttype][$defaultFieldsKey];
+            }
+        }
+
+        return $fields;
+    }
+
+    /**
+     * Returns a suitable format for a given $item, where only the given $fields
+     * (i.e 'attributes') are shown. If no $fields are defined, all the fields
+     * defined in `contenttypes.yml` are used instead. This means that base
+     * columns (set by Bolt), such as `datepublished`, are not shown.
+     *
+     * @param \Bolt\Content $item The item to be projected.
+     * @param string[] $fields A list of fieldnames to be shown in the eventual
+     *                         response. This may be empty, but will always
+     *                         default on defined fields in `contenttypes.yml`.
+     * @return mixed[] An array with data with $fields under 'attributes'.
+     *                 Suitable for json encoding.
+     *
+     * @see Extension::getFields()
+     */
+    private function cleanItem($item, $fields = [])
+    {
         $contenttype = $item->contenttype['slug'];
-        if (isset($this->config['contenttypes'][$contenttype][$type])) {
-            $fields = $this->config['contenttypes'][$contenttype][$type];
-        }
-        else {
-            $fields = array_keys($item->contenttype['fields']);
+
+        if (empty($fields)) {
+           $fields = array_keys($item->contenttype['fields']);
         }
 
-        // Both 'id' and 'type' are required.
+        // Both 'id' and 'type' are always required. So remove them from $fields.
+        // The remaining $fields go into 'attributes'.
+        if(($key = array_search('id', $fields)) !== false) {
+            unset($fields[$key]);
+        }
+
         $values = [
             'id' => $item->values['id'],
             'type' => $contenttype,
-            'attributes' => []
         ];
+        $attributes = [];
         $fields = array_unique($fields);
+
         foreach ($fields as $key => $field) {
-            $values['attributes'][$field] = $item->values[$field];
+            $attributes[$field] = $item->values[$field];
         }
 
-        // Check if we have image or file fields present. If so, see if we need to
-        // use the full URL's for these.
+        // Check if we have image or file fields present. If so, see if we need
+        // to use the full URL's for these.
         foreach($item->contenttype['fields'] as $key => $field) {
-            if (($field['type'] == 'image' || $field['type'] == 'file') && isset($values['attributes'][$key])) {
-                $values['attributes'][$key]['url'] = sprintf('%s%s%s',
+            if (($field['type'] == 'image' || $field['type'] == 'file') && isset($attributes[$key])) {
+                $attributes[$key]['url'] = sprintf('%s%s%s',
                     $this->app['paths']['canonical'],
                     $this->app['paths']['files'],
-                    $values['attributes'][$key]['file']
+                    $attributes[$key]['file']
                     );
             }
-            if ($field['type'] == 'image' && isset($values['attributes'][$key]) && is_array($this->config['thumbnail'])) {
-                // dump($this->app['paths']);
-                $values['attributes'][$key]['thumbnail'] = sprintf('%s/thumbs/%sx%s/%s',
+            if ($field['type'] == 'image' && isset($attributes[$key]) && is_array($this->config['thumbnail'])) {
+                $attributes[$key]['thumbnail'] = sprintf('%s/thumbs/%sx%s/%s',
                     $this->app['paths']['canonical'],
                     $this->config['thumbnail']['width'],
                     $this->config['thumbnail']['height'],
-                    $values['attributes'][$key]['file']
+                    $attributes[$key]['file']
                     );
             }
+        }
+
+        if (!empty($attributes)) {
+            $values['attributes'] = $attributes;
         }
 
         // todo: add "links"
@@ -323,29 +419,10 @@ class Extension extends \Bolt\BaseExtension
         // todo: "links"
 
         return $values;
-
-    }
-
-    private function clean_list_item($item)
-    {
-        return $this->clean_item($item, 'list-fields');
-    }
-
-    private function clean_full_item($item)
-    {
-        return $this->clean_item($item, 'item-fields');
     }
 
     /**
      * Returns the values for the "links" object in a listing response.
-     * Bolt uses the page-based pagination strategy.
-     *
-     * Recommended pagination strategies, according to jsonapi are:
-     * - page-based   : page[number] and page[size]
-     * - offset-based : page[offset] and page[limit]
-     * - cursor-based : page[cursor]
-     *
-     * source: http://jsonapi.org/format/#fetching-pagination
      *
      * @param string $contenttype The name of the contenttype.
      * @param int $currentPage The current page number.
@@ -357,8 +434,6 @@ class Extension extends \Bolt\BaseExtension
     {
 
         $basePath = $this->basePath;
-        // $totalPages = intval($pager['totalpages']);
-        // $currentPage = $pager['current'];
         $prevPage = max($currentPage - 1, 1);
         $nextPage = min($currentPage + 1, $totalPages);
         $firstPage = 1;
@@ -387,6 +462,10 @@ class Extension extends \Bolt\BaseExtension
 
         return $links;
     }
+
+    // -------------------------------------------------------------------------
+    // -- RESPONSES                                                           --
+    // -------------------------------------------------------------------------
 
     /**
      * Respond with a 404 Not Found.
@@ -433,7 +512,6 @@ class Extension extends \Bolt\BaseExtension
      */
     private function response($array)
     {
-
         $json = json_encode($array, JSON_PRETTY_PRINT);
         // $json = json_encode($array, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_PRETTY_PRINT);
 
@@ -456,7 +534,6 @@ class Extension extends \Bolt\BaseExtension
         }
 
         return $response;
-
     }
 
 }
