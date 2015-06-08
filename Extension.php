@@ -128,12 +128,12 @@ class Extension extends \Bolt\BaseExtension
             }
         }
         if ($order = $request->get('sort')) {
-            // todo: comma-separated list with a minus prefix for descending
-            // if (!preg_match('/^([a-zA-Z][a-zA-Z0-9_\\-]*)\\s*(ASC|DESC)?$/', $order, $matches)) {
-            //     return $this->responseInvalidRequest([
-            //         'detail' => "The sort parameter is incorrect: [$order]."
-            //     ]);
-            // }
+            // $order = explode(',' $order);
+            // Bolt currently does NOT support multiple sortorders:
+            //
+            // @see \Bolt\Storage::decodeContentQuery()
+            // @see \Bolt\Storage::getEscapedSortorder()
+            // @see \Bolt\Storage::getSortOrder()
             $options['order'] = $order;
         }
 
@@ -327,7 +327,7 @@ class Extension extends \Bolt\BaseExtension
     }
 
     /**
-     * @todo: Handle search, because it's going to be useful (e.g. ajax search).
+     * @todo links, meta etc.
      *
      * @param Request $request
      * @param string $contenttype The name of the specific $contenttype to search
@@ -335,36 +335,54 @@ class Extension extends \Bolt\BaseExtension
      */
     public function jsonapi_search(Request $request, $contenttype = null)
     {
-        // return $this->responseInvalidRequest([
-        //     'detail' => "This feature is not yet implemented."
-        // ]);
-
         $this->request = $request;
+        $this->fixBoltStorageRequest();
+
+        $options = [];
         $options['paging'] = true;
         $pager = [];
-        $where = [];
-        $where['returnsingle'] = false;
 
-        if ($contenttype === null) {
-            // search all searchable contenttypes.
-            $allcontenttypes = array_keys($this->app['config']->get('contenttypes'));
-            $allcontenttypes = implode(',', $allcontenttypes);
-            $contenttype = "($allcontenttypes)";
-            // todo: searchables and allowed.
+        if ($limit = $request->get($this->paginationSizeKey)) {
+            $limit = intval($limit);
+            if ($limit >= 1) {
+                $options['limit'] = $limit;
+            }
         }
 
-        // todo: check if $contenttype exists and is searchable.
-        // todo: add pagination, links, etc.
+        if ($page = $request->get($this->paginationNumberKey)) {
+            $page = intval($page);
+        }
+        if (!$page) {
+            $page = 1;
+        }
+
+        // If no $contenttype is set, search all 'searchable' contenttypes.
+        $baselink = "$contenttype/search";
+        if ($contenttype === null) {
+            $allcontenttypes = array_keys($this->config['contenttypes']);
+            // This also fetches unallowed ones:
+            // $allcontenttypes = array_keys($this->app['config']->get('contenttypes'));
+            $allcontenttypes = implode(',', $allcontenttypes);
+            $contenttype = "($allcontenttypes)";
+            $baselink = 'search';
+        }
 
         if ($q = $request->get('q')) {
-            $where['filter'] = $q;
+            $options['filter'] = $q;
         } else {
             return $this->responseInvalidRequest([
                 'detail' => "No query parameter q specified."
             ]);
         }
 
-        $items = $this->app['storage']->getContent($contenttype, $options, $pager, $where);
+        // This 'page' part somehow messses with the getContent query. The
+        // fetched results get sliced one time too much when using pagination.
+        // So we unset it here, and then use array_slice.
+        $all = $request->query->all();
+        unset($all['page']);
+        $request->query->replace($all);
+
+        $items = $this->app['storage']->getContent($contenttype.'/search', [ 'filter' => $q ], $pager, [ 'returnsingle' => false ]);
 
         if (!is_array($items)) {
             return $this->responseInvalidRequest([
@@ -373,19 +391,40 @@ class Extension extends \Bolt\BaseExtension
         }
 
         if (empty($items)) {
-            $items = [];
+            return $this->responseNotFound([
+                'detail' => "No search results found for query [$q]"
+            ]);
         }
 
-        $items = array_values($items);
+        $total = count($items);
+        $totalpages = $limit > 0 ? intval(ceil($total / $limit )) : 1;
+
+        if ($limit && $page) {
+            $items = array_slice($items, $limit * ($page - 1), $limit);
+        }
+
+        // Reset it again...
+        $all = $request->query->all();
+        if ($page != $totalpages) {
+            $all['page'] = $page;
+        }
+        $request->query->replace($all);
+
         foreach ($items as $key => $item) {
             $ct = $item->contenttype['slug'];
+            // optimize this part...
             $ctAllFields = $this->getAllFieldNames($ct);
             $ctFields = $this->getFields($ct, $ctAllFields, 'list-fields');
             $items[$key] = $this->cleanItem($item, $ctFields);
         }
 
         return $this->response([
-            'data' => $items
+            'links' => $this->makeLinks($baselink, $page, $totalpages, $limit),
+            'meta' => [
+                "count" => count($items),
+                "total" => $total
+            ],
+            'data' => $items,
         ]);
     }
 
@@ -880,8 +919,10 @@ class Extension extends \Bolt\BaseExtension
     {
         // todo: (optional) filter unnecessary fields.
         // $allowedErrorFields = [ 'id', 'links', 'about', 'status', 'code', 'title', 'detail', 'source', 'meta' ];
+
         $data['status'] = $status;
         $data['title'] = $title;
+
         return $this->response([
             'errors' => $data
         ]);

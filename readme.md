@@ -106,14 +106,14 @@ where `{ct}` means `{contenttype}`, the name of the specified contenttype.
 The list call accepts some extra parameters (in the form of query string
 parameters appended to the URL):
 
-| Option   | Description                                                       |
-|----------|-------------------------------------------------------------------|
-|`sort`    | Order the list by the specified field. Prefix the fieldname with a minus/hyphen to set the orderering to descending. Example `sort=id` or `sort=-id`. |
-|`limit`   | Specify the number of items to return. Example: `limit=10` |
-|`page`    | To be combined with `limit`: get the n-th page. This is 1-based, so `1` designates the first page. Example: `page=1&limit=10`. |
-|`include` | Fetches all the related records of the specified contenttype(s) of the record(s) in the `included` field of the JSON response. Separate multiple contenttypes with a comma. Example: `include=pages`. |
-|`fields[]`| Set the fields that are shown in the response per specified contenttype. Separate multiple fields with commas. Multiple `fields[]` parameters are possible. Example: `fields[entries]=slug,teaser`. |
-|`filter[]`| Filter records where a certain field must be equal to the specified `{value}`. Multiple `filter[]` parameters are possible. Example: `filter[id]=1,2`. |
+| Option       | Description                                                       |
+|--------------|-------------------------------------------------------------------|
+|`sort`        | Order the list by the specified field. Prefix the fieldname with a minus/hyphen to set the orderering to descending. Example `sort=id` or `sort=-id`. Note: Bolt currently does not support sorting on multiple fields. |
+|`page[size]`  | Specify the number of items to return. Example: `page[size]=10` |
+|`page[number]`| To be combined with `page[size]`: get the n-th page. This is 1-based, so `1` designates the first page. Example: `page[number]=1&page[size]=10`. |
+|`include`     | Fetches all the related records of the specified contenttype(s) of the record(s) in the `included` field of the JSON response. Separate multiple contenttypes with a comma. Example: `include=pages`. |
+|`fields[]`    | Set the fields that are shown in the response per specified contenttype. Separate multiple fields with commas. Multiple `fields[]` parameters are possible. Example: `fields[entries]=slug,teaser`. |
+|`filter[]`    | Filter records where a certain field must be equal to the specified `{value}`. Multiple `filter[]` parameters are possible. Example: `filter[id]=1,2`. |
 
 
 ### Additional Queries
@@ -134,18 +134,17 @@ queries that you may find useful:
 
 Must-haves for version `1.0`:
 
- *  `[x]` Use `page[number]` and `page[size]` instead of `$page` and `$limit` respectively.
- *  `[ ]` Handle sorting (i.e. validation, ASC, DESC, multiple keys).
- *  `[ ]` Handle taxonomies.
- *  `[x]` Handle menus.
- *  `[ ]` Handle search.
+  *  `[ ]` Handle taxonomies.
 
 #### Future
 
   * More documentation.
+  * Optimize queries.
+  * Better search.
   * Split the `Extension.php` in multiple classes (i.e. `Helper`, `Response`).
   * Handle specific fieldtypes:
     * Handle JSON fields.
     * Handle select-contenttype fields.
   * Add hooks for handling specific fieldtypes.
   * Add i18n for `detail` field in error messages.
+  * Add integration/hooks with other extensions, such as [`RelatedContentByTags`](https://github.com/xiaohutai/bolt-relatedcontentbytags).
