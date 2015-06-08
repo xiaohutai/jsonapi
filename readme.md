@@ -134,7 +134,7 @@ queries that you may find useful:
 
 Must-haves for version `1.0`:
 
- *  `[ ]` Use `page[number]` and `page[size]` instead of `$page` and `$limit` respectively.
+ *  `[x]` Use `page[number]` and `page[size]` instead of `$page` and `$limit` respectively.
  *  `[ ]` Handle sorting (i.e. validation, ASC, DESC, multiple keys).
  *  `[ ]` Handle taxonomies.
  *  `[x]` Handle menus.

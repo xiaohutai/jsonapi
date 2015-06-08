@@ -107,6 +107,7 @@ class Extension extends \Bolt\BaseExtension
     public function jsonapi_list(Request $request, $contenttype)
     {
         $this->request = $request;
+        $this->fixBoltStorageRequest();
 
         if (!array_key_exists($contenttype, $this->config['contenttypes'])) {
             return $this->responseNotFound([
@@ -114,14 +115,12 @@ class Extension extends \Bolt\BaseExtension
             ]);
         }
         $options = [];
-        // if ($limit = $request->get('page')['size']) { // todo: breaks things in src/Storage.php at executeGetContentQueries
         if ($limit = $request->get($this->paginationSizeKey)) {
             $limit = intval($limit);
             if ($limit >= 1) {
                 $options['limit'] = $limit;
             }
         }
-        // if ($page = $request->get('page')['number']) { // todo: breaks things in src/Storage.php at executeGetContentQueries
         if ($page = $request->get($this->paginationNumberKey)) {
             $page = intval($page);
             if ($page >= 1) {
@@ -424,6 +423,69 @@ class Extension extends \Bolt\BaseExtension
     // -------------------------------------------------------------------------
     // -- HELPER FUNCTIONS                                                    --
     // -------------------------------------------------------------------------
+
+    /**
+     * Bolt uses `page` and `limit` instead of `page[number]` and `page[size]`
+     * respectively. Currently, Bolt breaks if the `page` request parameter is
+     * an array.
+     *
+     * A function that is going to handle pagination needs to call this function
+     * before the Bolt's Storage::getContent() is called.
+     *
+     * @todo Bolt's Storage needs fixes.
+     */
+    private function fixBoltStorageRequest()
+    {
+        $originalParameters = $this->app['request']->query->all();
+
+        // Write `page[size]` to `limit`.
+        if (isset($originalParameters['page']['size'])) {
+            $originalParameters['limit'] = $originalParameters['page']['size'];
+        }
+
+        // Write `page[number]` to `page`.
+        if (isset($originalParameters['page']['number'])) {
+            $originalParameters['page'] = $originalParameters['page']['number'];
+        } else {
+            unset($originalParameters['page']);
+        }
+
+        $this->app['request']->query->replace($originalParameters);
+    }
+
+    /**
+     * Rewrites Bolt's `page` and `limit` back into `page[number]` and
+     * `page[size]`. This function is useful for retaining the correct
+     * parameters.
+     *
+     * @todo Bolt's Storage needs fixes.
+     *
+     * @param array $queryParameters A key,value-array with query parameters.
+     *                               Usually obtained from something like
+     *                               $request->query->all().
+     * @return array Same as $queryParameters, but with page and limit variables
+     *               rewritten to page[number] and page[size] respectively.
+     */
+    private function unfixBoltStorageRequest($queryParameters)
+    {
+        // Rewrite `page` back to `page['number']`.
+        if (isset($queryParameters['page'])) {
+            $page = $queryParameters['page'];
+            $queryParameters['page'] = [];
+            $queryParameters['page']['number'] = $page;
+        }
+
+        // Rewrite `limit` back to `page[size]`.
+        if (isset($queryParameters['limit'])) {
+            if (!isset($queryParameters['page']) || !is_array($queryParameters['page'])) {
+                $queryParameters['page'] = [];
+            }
+            $queryParameters['page']['size'] = $queryParameters['limit'];
+            unset($queryParameters['limit']);
+        }
+
+        return $queryParameters;
+    }
 
     /**
      * Globally fetch all related content.
@@ -759,12 +821,16 @@ class Extension extends \Bolt\BaseExtension
     private function makeQueryParameters($overrides = [], $buildQuery = true)
     {
         $queryParameters = $this->request->query->all();
+
         // todo: (optional) cleanup. There is a default set of fields we can
         //       expect using this Extension and jsonapi. Or we could ignore
         //       them like we already do.
 
         // Using Bolt's Helper Arr class for merging and overriding values.
         $queryParameters = Arr::mergeRecursiveDistinct($queryParameters, $overrides);
+
+        $queryParameters = $this->unfixBoltStorageRequest($queryParameters);
+
         if ($buildQuery) {
             // No need to urlencode these, afaik.
             $querystring =  urldecode(http_build_query($queryParameters));
