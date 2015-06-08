@@ -80,6 +80,8 @@ class Extension extends \Bolt\BaseExtension
         }
         $this->basePath = $this->app['paths']['canonical'] . $this->base;
 
+        $this->app->get($this->base."/menu", [$this, 'jsonapi_menu'])
+                  ->bind('jsonapi_menu');
         $this->app->get($this->base."/search", [$this, 'jsonapi_search']) // todo: "jsonapi_search_mixed"
                   ->bind('jsonapi_search_mixed');
         $this->app->get($this->base."/{contenttype}/search", [$this, 'jsonapi_search'])
@@ -96,6 +98,12 @@ class Extension extends \Bolt\BaseExtension
     // -- FUNCTIONS HANDLING REQUESTS                                         --
     // -------------------------------------------------------------------------
 
+    /**
+     * Fetches records of the specified $contenttype.
+     *
+     * @param Request $request
+     * @param string $contenttype The name of the contenttype.
+     */
     public function jsonapi_list(Request $request, $contenttype)
     {
         $this->request = $request;
@@ -328,19 +336,88 @@ class Extension extends \Bolt\BaseExtension
      */
     public function jsonapi_search(Request $request, $contenttype = null)
     {
-        $this->request = $request;
+        // return $this->responseInvalidRequest([
+        //     'detail' => "This feature is not yet implemented."
+        // ]);
 
-        if ($contenttype !== null) {
-            // search in $contenttype.
-        } else {
+        $this->request = $request;
+        $options['paging'] = true;
+        $pager = [];
+        $where = [];
+        $where['returnsingle'] = false;
+
+        if ($contenttype === null) {
             // search all searchable contenttypes.
+            $allcontenttypes = array_keys($this->app['config']->get('contenttypes'));
+            $allcontenttypes = implode(',', $allcontenttypes);
+            $contenttype = "($allcontenttypes)";
+            // todo: searchables and allowed.
         }
 
-        // $this->app['storage']
-        // make a filter query
+        // todo: check if $contenttype exists and is searchable.
+        // todo: add pagination, links, etc.
 
-        return $this->responseInvalidRequest([
-            'detail' => "This feature is not yet implemented."
+        if ($q = $request->get('q')) {
+            $where['filter'] = $q;
+        } else {
+            return $this->responseInvalidRequest([
+                'detail' => "No query parameter q specified."
+            ]);
+        }
+
+        $items = $this->app['storage']->getContent($contenttype, $options, $pager, $where);
+
+        if (!is_array($items)) {
+            return $this->responseInvalidRequest([
+                'detail' => "Configuration error: [$contenttype] is configured as a JSON end-point, but doesn't exist as a contenttype."
+            ]);
+        }
+
+        if (empty($items)) {
+            $items = [];
+        }
+
+        $items = array_values($items);
+        foreach ($items as $key => $item) {
+            $ct = $item->contenttype['slug'];
+            $ctAllFields = $this->getAllFieldNames($ct);
+            $ctFields = $this->getFields($ct, $ctAllFields, 'list-fields');
+            $items[$key] = $this->cleanItem($item, $ctFields);
+        }
+
+        return $this->response([
+            'data' => $items
+        ]);
+    }
+
+    /**
+     * Fetches menus. Either a list of menus, or a single menu defined by the
+     * query string `q`.
+     *
+     * @todo fetch all the records from the database.
+     *
+     * @param Request $request
+     */
+    public function jsonapi_menu(Request $request)
+    {
+        $this->request = $request;
+
+        $name = '';
+
+        if ($q = $request->get('q')) {
+            $name = "/$q";
+        }
+
+        $menu = $this->app['config']->get('menu'.$name, false);
+
+        if ($menu) {
+            return $this->response([
+                'data' => $menu
+            ]);
+        }
+
+        return $this->responseNotFound([
+            'detail' => "Menu with name [$q] not found."
         ]);
     }
 
@@ -527,7 +604,7 @@ class Extension extends \Bolt\BaseExtension
         // Check if we have image or file fields present. If so, see if we need
         // to use the full URL's for these.
         foreach($item->contenttype['fields'] as $key => $field) {
-            if (($field['type'] == 'image' || $field['type'] == 'file') && isset($attributes[$key])) {
+            if (($field['type'] == 'image' || $field['type'] == 'file') && isset($attributes[$key]) && isset($attributes[$key]['file'])) {
                 $attributes[$key]['url'] = sprintf('%s%s%s',
                     $this->app['paths']['canonical'],
                     $this->app['paths']['files'],
@@ -739,7 +816,9 @@ class Extension extends \Bolt\BaseExtension
         // $allowedErrorFields = [ 'id', 'links', 'about', 'status', 'code', 'title', 'detail', 'source', 'meta' ];
         $data['status'] = $status;
         $data['title'] = $title;
-        return $this->response($data);
+        return $this->response([
+            'errors' => $data
+        ]);
     }
 
     /**

@@ -123,7 +123,7 @@ queries that you may find useful:
 
 | URL                     | Description                                        |
 |-------------------------|----------------------------------------------------|
-|`/{ct}/search?q={query}` | Search for `{query}` in a specific `contenttype`.  |
+|`/{ct}/search?q={query}` | Searches for `{query}` in a specific `contenttype`.  |
 |`/search?q={query}`      | Searches for `{query}` in all contenttypes.        |
 |`/menu`                  | Returns a list of all menus defined in `menu.yml`. |
 |`/menu?q={name}`         | Returns the menu with the specified name.          |
@@ -134,11 +134,11 @@ queries that you may find useful:
 
 Must-haves for version `1.0`:
 
-  * Use `page[number]` and `page[size]` instead of `$page` and `$limit` respectively.
-  * Handle sorting (i.e. validation, ASC, DESC, multiple keys).
-  * Handle taxonomies.
-  * Handle menus.
-  * Handle search.
+ *  `[ ]` Use `page[number]` and `page[size]` instead of `$page` and `$limit` respectively.
+ *  `[ ]` Handle sorting (i.e. validation, ASC, DESC, multiple keys).
+ *  `[ ]` Handle taxonomies.
+ *  `[x]` Handle menus.
+ *  `[ ]` Handle search.
 
 #### Future
 
