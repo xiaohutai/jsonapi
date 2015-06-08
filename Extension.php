@@ -19,7 +19,6 @@ use Symfony\Component\HttpFoundation\Response;
  * on jsonapi.org as much as possible. This extension is originally based on the
  * `bolt/jsonaccess` extension.
  *
- * ---
  * [Pagination]
  * Bolt uses the page-based pagination strategy.
  *
@@ -29,20 +28,6 @@ use Symfony\Component\HttpFoundation\Response;
  * - cursor-based : page[cursor]
  *
  * source: http://jsonapi.org/format/#fetching-pagination
- *
- * Note: Since Bolt breaks when using page[number] and page[size],
- * we're currently using $page and $limit respectively.
- *
- * ---
- * [todo]
- * This extension is a work in progress. Simple features are available. However,
- * the following features are not implemented yet:
- * - handling / taxonomies.
- * - sorting
- * - handling json fields -> json decode these values?
- * - handling select contenttype fields -> handle them as has-one relationships?
- * - search.
- * - i18n for error 'detail' messages.
  *
  */
 class Extension extends \Bolt\BaseExtension
@@ -83,7 +68,7 @@ class Extension extends \Bolt\BaseExtension
     //
     // Search:
     //     /{contenttype}?q={query} -- search within a contenttype
-    //     /search/q={query} -- search in all contenttypes
+    //     /search?q={query} -- search in all contenttypes
     //
     // sources: http://jsonapi.org/examples/
     //          http://jsonapi.org/recommendations/
