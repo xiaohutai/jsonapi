@@ -1,6 +1,6 @@
 <?php
 /**
- * JSONAPI extension for Bolt. Forked from the JSONAccess extension.
+ * JSON API extension for Bolt. Forked from the JSONAccess extension.
  *
  * @author Tobias Dammers <tobias@twokings.nl>
  * @author Bob den Otter <bob@twokings.nl>
@@ -60,7 +60,7 @@ class Extension extends \Bolt\BaseExtension
      */
     public function getName()
     {
-        return "JSONAPI";
+        return "JSON API";
     }
 
     //
@@ -171,11 +171,15 @@ class Extension extends \Bolt\BaseExtension
             }
         }
 
+        // If `returnsingle` is not set to false, then a single result will not
+        // result in an array.
+        $where['returnsingle'] = false;
         $items = $this->app['storage']->getContent($contenttype, $options, $pager, $where);
 
         // If we don't have any items, this can mean one of two things: either
-        // the content type does not exist (in which case we'll get a non-array
+        // the contenttype does not exist (in which case we'll get a non-array
         // response), or it exists, but no content has been added yet.
+
         if (!is_array($items)) {
             return $this->responseInvalidRequest([
                 'detail' => "Configuration error: [$contenttype] is configured as a JSON end-point, but doesn't exist as a contenttype."

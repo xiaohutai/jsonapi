@@ -1,5 +1,5 @@
-JSONAPI
-=======
+JSON API
+========
 
 Provides simple JSON access to Bolt's internal data structures. The specification
 of the JSON responses are based on [JSON API](http://jsonapi.org/).
@@ -19,12 +19,12 @@ In order to enable JSON serving for any content type, it has to be added to the
 extension's configuration file, located at `app/config/extensions/jsonapi.bolt.yml`.
 
 Note in particular that content types that you don't mention in the
-configuration file won't be served by the JSONAPI extension.
+configuration file won't be served by the JSON API extension.
 
 Calls
 -----
 
-JSONAPI implements RESTful semantics for all calls, mapping resources as
+JSON API implements RESTful semantics for all calls, mapping resources as
 follows:
 
 - `/json/{contenttype}` returns a list of records of the specified contenttype.
@@ -32,7 +32,7 @@ follows:
   The listing contains the 'id' of every record, as well as a configurable
   selection of fields (defaulting to all configurable fields, but none of the
   'meta' fields Bolt introduces itself). The list of fields can be overridden in
-  the JSONAPI extension's `config.yml` file.
+  the JSON API extension's `config.yml` file.
 - `/json/{contenttype}/{id}` returns one record of the specified contenttype,
   including *all* fields.
 - `/json/{contenttype}/{id}/{relatedContenttype}` returns a list of records of
@@ -45,15 +45,17 @@ Advanced listing
 The list call accepts some extra parameters (in the form of query string
 parameters appended to the URL):
 
-- `?order={fieldname}` and `?order={fieldname} {ordering}` - Order the list by
-  the specified field. Only one field is currently supported. The `ordering`
-  must be one of `ASC` or `DESC`.
+- `?sort={fieldname}` and `?sort=-{fieldname}` - Order the list by
+  the specified field. Only one field is currently supported. Use a minus (`-`)
+  to set the orderering to descending.
 - `?limit={limit}` - specify the number of items to return.
 - `?page={page}` - to be combined with `limit`: get the n-th page. This is
   1-based, so `1` designates the first page.
 
 So for example `/json/pages?order=title&limit=10&page=2` sorts all Pages by
 title and returns entries 11 through 20 (inclusive).
+
+**TODO** Add all the features here.
 
 Sending headers
 ---------------
@@ -69,3 +71,9 @@ headers:
 ```
 
 You can define additional headers as required, or tweak the existing ones.
+
+TODO
+----
+In the future, the `page` and `limit` may be replaced by `page[number]`
+and `page[size]` respectively, according the JSON API specification.
+Using `page[number]` and `page[size]` currently breaks the Bolt core internals.
