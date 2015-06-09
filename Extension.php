@@ -14,21 +14,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- *
  * This extension tries to return JSON responses according to the specifications
  * on jsonapi.org as much as possible. This extension is originally based on the
  * `bolt/jsonaccess` extension.
- *
- * [Pagination]
- * Bolt uses the page-based pagination strategy.
- *
- * Recommended pagination strategies according to jsonapi are:
- * - page-based   : page[number] and page[size]
- * - offset-based : page[offset] and page[limit]
- * - cursor-based : page[cursor]
- *
- * source: http://jsonapi.org/format/#fetching-pagination
- *
  */
 class Extension extends \Bolt\BaseExtension
 {
@@ -48,31 +36,6 @@ class Extension extends \Bolt\BaseExtension
         return "JSON API";
     }
 
-    //
-    // Examples:
-    //
-    // Basic:
-    //     /{contenttype}
-    //     /{contenttype}/{id}
-    //     /{contenttype}?page={x}&limit={y}
-    //     /{contenttype}?include={relationship1,relationship2}
-    //     /{contenttype}?fields[{contenttype1}]={field1,field2} -- Note: taxonomies and relationships are fields as well.
-    //
-    // Relationships:
-    //     /{contenttype}/{id}/relationships/{relationship} -- Note: this "relationship" is useful for handling the relationship between two instances.
-    //     /{contenttype}/{id}/{relationship} -- Note: this "related resource" is useful for fetching the related data. These are not "self" links.
-    //
-    // Filters:
-    //     /{contenttype}?filter[{contenttype1}]={value1,value2}
-    //     /{contenttype}?filter[{field1}]={value1,value2}&filter[{field2}]={value3,value4} -- For Bolt, this seems the most logical (similar to a `where` clause)
-    //
-    // Search:
-    //     /{contenttype}?q={query} -- search within a contenttype
-    //     /search?q={query} -- search in all contenttypes
-    //
-    // sources: http://jsonapi.org/examples/
-    //          http://jsonapi.org/recommendations/
-    //
     public function initialize()
     {
         if(isset($this->config['base'])) {
@@ -82,7 +45,7 @@ class Extension extends \Bolt\BaseExtension
 
         $this->app->get($this->base."/menu", [$this, 'jsonapi_menu'])
                   ->bind('jsonapi_menu');
-        $this->app->get($this->base."/search", [$this, 'jsonapi_search']) // todo: "jsonapi_search_mixed"
+        $this->app->get($this->base."/search", [$this, 'jsonapi_search'])
                   ->bind('jsonapi_search_mixed');
         $this->app->get($this->base."/{contenttype}/search", [$this, 'jsonapi_search'])
                   ->bind('jsonapi_search');
