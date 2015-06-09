@@ -612,8 +612,30 @@ class Extension extends \Bolt\BaseExtension
     private function getAllFieldNames($contenttype)
     {
         $baseFields = \Bolt\Content::getBaseColumns();
-        $definedFields = array_keys($this->app['config']->get("contenttypes/$contenttype/fields"));
+        $definedFields = $this->app['config']->get("contenttypes/$contenttype/fields", []);
+        $taxonomyFields = $this->getAllTaxonomies($contenttype);
+
+        // Fields could be empty, although it's a rare case.
+        if (!empty($definedFields)) {
+            $definedFields = array_keys($definedFields);
+        }
+
+        $definedFields = array_merge($definedFields, $taxonomyFields);
+
         return array_merge($baseFields, $definedFields);
+    }
+
+    /**
+     * Returns all taxonomy names for the given contenttype.
+     *
+     * @param string $contenttype The name of the contenttype.
+     * @return string[] An array with all taxonomy names for the given
+     *                  contenttype.
+     */
+    private function getAllTaxonomies($contenttype)
+    {
+        $taxonomyFields = $this->app['config']->get("contenttypes/$contenttype/taxonomy", []);
+        return $taxonomyFields;
     }
 
     /**
@@ -655,6 +677,7 @@ class Extension extends \Bolt\BaseExtension
         if (empty($fields)) {
             if (isset($this->config['contenttypes'][$contenttype][$defaultFieldsKey])) {
                 $fields = $this->config['contenttypes'][$contenttype][$defaultFieldsKey];
+                // todo: do we need to filter these through 'allowed-fields'?
             }
         }
 
@@ -682,6 +705,7 @@ class Extension extends \Bolt\BaseExtension
 
         if (empty($fields)) {
            $fields = array_keys($item->contenttype['fields']);
+           $fields = array_merge($fields, array_keys($item->taxonomy));
         }
 
         // Both 'id' and 'type' are always required. So remove them from $fields.
@@ -699,7 +723,22 @@ class Extension extends \Bolt\BaseExtension
         $fields = array_unique($fields);
 
         foreach ($fields as $key => $field) {
-            $attributes[$field] = $item->values[$field];
+
+            if (isset($item->values[$field])) {
+                $attributes[$field] = $item->values[$field];
+            }
+
+            if (isset($item->taxonomy[$field])) {
+                if (!isset($attributes['taxonomy'])) {
+                    $attributes['taxonomy'] = [];
+                }
+                // Perhaps, do something interesting with these values in the future...
+                // $taxonomy = $this->app['config']->get("taxonomy/$field");
+                // $multiple = $this->app['config']->get("taxonomy/$field/multiple");
+                // $behavesLike = $this->app['config']->get("taxonomy/$field/behaves_like");
+                $attributes['taxonomy'][$field] = $item->taxonomy[$field];
+            }
+
         }
 
         // Check if we have image or file fields present. If so, see if we need

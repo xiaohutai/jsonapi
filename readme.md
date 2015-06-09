@@ -34,7 +34,8 @@ any other contenttype, the API will return 404 errors.
 
 Besides errors, there are two types of responses you can receive, a `list` of
 items or single `item`. You can customize the fields shown in the responses with
-`list-fields` and `item-fields` respectively.
+`list-fields` and `item-fields` respectively. Both field names and taxonomy
+names are supported.
 
 To use the defaults for a contenttype, just leave its entry empty. This will
 include all user-defined fields (fields in `contenttypes.yml`), the ID and its
@@ -43,7 +44,8 @@ contenttypes, such as 'datecreated'.
 
 With JSON API, you can also request which fields are to be returned with
 `?fields[<contenttype>]=<field1>,<field2>`. To limit the options, you can set
-`allowed-fields` in order to filter these.
+`allowed-fields` in order to filter these. At the moment, `list-fields` and
+`item-fields` ignore the `allowed-fields` setting.
 
 The `where-clause` setting allows you to set additional conditions that are
 always set by default.
@@ -59,6 +61,11 @@ contenttypes:
     pages:
         # use 'default' settings
 ```
+
+#### A Note on Taxonomies
+
+While _normal_ fields are found under 'attributes' in the response. Taxonomy
+values can be found under 'attributes/taxonomy'.
 
 ### Images
 
@@ -129,14 +136,6 @@ queries that you may find useful:
 |`/menu?q={name}`         | Returns the menu with the specified name.          |
 
 ### Road Map
-
-#### Version 1.0
-
-Must-haves for version `1.0`:
-
-  *  `[ ]` Handle taxonomies.
-
-#### Future
 
   * More documentation.
   * Optimize queries.
