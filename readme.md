@@ -36,7 +36,7 @@ Besides errors, there are two types of responses you can receive, a `list` of
 items or single `item`. You can customize the fields shown in the responses with
 `list-fields` and `item-fields` respectively.
 
-Both field names and taxonomy names are supported. If a field an a taxonomy
+Both field names and taxonomy names are supported. If a field and a taxonomy
 share the same names, both will be included. Taxonomy values are always under
 the `taxonomy` property under `attributes`, whereas _normal_ fields can be found
 directly under `attributes`.
@@ -44,7 +44,7 @@ directly under `attributes`.
 To use the defaults for a contenttype, just leave its entry empty. This will
 include all user-defined fields (fields and taxonomies in `contenttypes.yml`),
 the ID and its contenttype in the listing, but not any of the base fields that
-Bolt adds to all contenttypes, such as 'datecreated'.
+Bolt adds to all contenttypes, such as `datecreated`.
 
 With JSON API, you can also request which fields are to be returned with
 `?fields[<contenttype>]=<field1>,<field2>`. To limit the options, you can set
