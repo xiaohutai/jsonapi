@@ -129,13 +129,15 @@ queries that you may find useful:
 
 | URL                     | Description                                        |
 |-------------------------|----------------------------------------------------|
-|`/{ct}/search?q={query}` | Searches for `{query}` in a specific `contenttype`.  |
+|`/{ct}/search?q={query}` | Searches for `{query}` in a specific `contenttype`.|
 |`/search?q={query}`      | Searches for `{query}` in all contenttypes.        |
 |`/menu`                  | Returns a list of all menus defined in `menu.yml`. |
 |`/menu?q={name}`         | Returns the menu with the specified name.          |
 
 ### Road Map
 
+  * Better handling of menus.
+  * Better handling of taxonomies.
   * More documentation.
   * Optimize queries.
   * Better search.
