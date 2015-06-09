@@ -42,9 +42,9 @@ the `taxonomy` property under `attributes`, whereas _normal_ fields can be found
 directly under `attributes`.
 
 To use the defaults for a contenttype, just leave its entry empty. This will
-include all user-defined fields (fields in `contenttypes.yml`), the ID and its
-contenttype in the listing, but not any of the base fields that Bolt adds to all
-contenttypes, such as 'datecreated'.
+include all user-defined fields (fields and taxonomies in `contenttypes.yml`),
+the ID and its contenttype in the listing, but not any of the base fields that
+Bolt adds to all contenttypes, such as 'datecreated'.
 
 With JSON API, you can also request which fields are to be returned with
 `?fields[<contenttype>]=<field1>,<field2>`. To limit the options, you can set
