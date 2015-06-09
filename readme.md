@@ -34,8 +34,12 @@ any other contenttype, the API will return 404 errors.
 
 Besides errors, there are two types of responses you can receive, a `list` of
 items or single `item`. You can customize the fields shown in the responses with
-`list-fields` and `item-fields` respectively. Both field names and taxonomy
-names are supported.
+`list-fields` and `item-fields` respectively.
+
+Both field names and taxonomy names are supported. If a field an a taxonomy
+share the same names, both will be included. Taxonomy values are always under
+the `taxonomy` property under `attributes`, whereas _normal_ fields can be found
+directly under `attributes`.
 
 To use the defaults for a contenttype, just leave its entry empty. This will
 include all user-defined fields (fields in `contenttypes.yml`), the ID and its
@@ -61,11 +65,6 @@ contenttypes:
     pages:
         # use 'default' settings
 ```
-
-#### A Note on Taxonomies
-
-While _normal_ fields are found under 'attributes' in the response. Taxonomy
-values can be found under 'attributes/taxonomy'.
 
 ### Images
 
