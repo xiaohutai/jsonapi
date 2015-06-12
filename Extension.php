@@ -716,7 +716,15 @@ class Extension extends \Bolt\BaseExtension
                     $attributes[$key]['file']
                     );
             }
-            if ($field['type'] == 'image' && isset($attributes[$key]['thumbnail']) && is_array($this->config['thumbnail'])) {
+            if ($field['type'] == 'image' && !empty($attributes[$key]) && is_array($this->config['thumbnail'])) {
+
+                // Take 'old-school' image field into account, that are plain strings.
+                if (!is_array($attributes[$key])) {
+                    $attributes[$key] = array(
+                        'file' => $attributes[$key]
+                    );
+                }
+
                 $attributes[$key]['thumbnail'] = sprintf('%s/thumbs/%sx%s/%s',
                     $this->app['paths']['canonical'],
                     $this->config['thumbnail']['width'],
