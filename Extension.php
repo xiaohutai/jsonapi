@@ -667,8 +667,10 @@ class Extension extends \Bolt\BaseExtension
         $contenttype = $item->contenttype['slug'];
 
         if (empty($fields)) {
-           $fields = array_keys($item->contenttype['fields']);
-           $fields = array_merge($fields, array_keys($item->taxonomy));
+            $fields = array_keys($item->contenttype['fields']);
+            if (!empty($item->taxonomy)) {
+                $fields = array_merge($fields, array_keys($item->taxonomy));
+            }
         }
 
         // Both 'id' and 'type' are always required. So remove them from $fields.
