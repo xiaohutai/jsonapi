@@ -719,7 +719,7 @@ class Extension extends \Bolt\BaseExtension
                     $this->app['paths']['canonical'],
                     $this->config['thumbnail']['width'],
                     $this->config['thumbnail']['height'],
-       	       	    !empty($attributes[$key]['file']) ?	$attributes[$key]['file'] : ''
+                    !empty($attributes[$key]['file']) ? $attributes[$key]['file'] : ''
                     );
             }
         }
