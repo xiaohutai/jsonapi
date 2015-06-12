@@ -35,3 +35,6 @@ headers:
 
 # The base url where the API is accessible.
 base: '/json'
+
+# If you set this to 'true', all datetime fields will be formatted as ISO 8601 dates
+date-iso-8601: true
