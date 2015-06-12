@@ -714,12 +714,12 @@ class Extension extends \Bolt\BaseExtension
                     $attributes[$key]['file']
                     );
             }
-            if ($field['type'] == 'image' && isset($attributes[$key]) && is_array($this->config['thumbnail'])) {
+            if ($field['type'] == 'image' && isset($attributes[$key]['thumbnail']) && is_array($this->config['thumbnail'])) {
                 $attributes[$key]['thumbnail'] = sprintf('%s/thumbs/%sx%s/%s',
                     $this->app['paths']['canonical'],
                     $this->config['thumbnail']['width'],
                     $this->config['thumbnail']['height'],
-                    $attributes[$key]['file']
+                    !empty($attributes[$key]['file']) ? $attributes[$key]['file'] : ''
                     );
             }
         }
