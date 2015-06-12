@@ -732,6 +732,15 @@ class Extension extends \Bolt\BaseExtension
                     !empty($attributes[$key]['file']) ? $attributes[$key]['file'] : ''
                     );
             }
+
+            if (in_array($field['type'], array('date', 'datetime')) && $this->config['date-iso-8601'] && !empty($attributes[$key])) {
+                $date = \DateTime::createFromFormat('Y-m-d H:i:s', $attributes[$key]);
+                // dump($values);
+                $attributes[$key] = $date->format('c');
+            }
+
+
+
         }
 
         if (!empty($attributes)) {
