@@ -4,7 +4,7 @@
     "type": "bolt-extension",
     "keywords": ["json"],
     "require": {
-        "bolt/bolt": ">=2.3.0,<3.0.0"
+        "bolt/bolt": ">=2.2.0,<3.0.0"
     },
     "license": "MIT",
     "authors": [
