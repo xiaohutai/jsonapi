@@ -667,8 +667,10 @@ class Extension extends \Bolt\BaseExtension
         $contenttype = $item->contenttype['slug'];
 
         if (empty($fields)) {
-           $fields = array_keys($item->contenttype['fields']);
-           $fields = array_merge($fields, array_keys($item->taxonomy));
+            $fields = array_keys($item->contenttype['fields']);
+            if (!empty($item->taxonomy)) {
+                $fields = array_merge($fields, array_keys($item->taxonomy));
+            }
         }
 
         // Both 'id' and 'type' are always required. So remove them from $fields.
@@ -714,7 +716,15 @@ class Extension extends \Bolt\BaseExtension
                     $attributes[$key]['file']
                     );
             }
-            if ($field['type'] == 'image' && isset($attributes[$key]['thumbnail']) && is_array($this->config['thumbnail'])) {
+            if ($field['type'] == 'image' && !empty($attributes[$key]) && is_array($this->config['thumbnail'])) {
+
+                // Take 'old-school' image field into account, that are plain strings.
+                if (!is_array($attributes[$key])) {
+                    $attributes[$key] = array(
+                        'file' => $attributes[$key]
+                    );
+                }
+
                 $attributes[$key]['thumbnail'] = sprintf('%s/thumbs/%sx%s/%s',
                     $this->app['paths']['canonical'],
                     $this->config['thumbnail']['width'],
@@ -722,6 +732,15 @@ class Extension extends \Bolt\BaseExtension
                     !empty($attributes[$key]['file']) ? $attributes[$key]['file'] : ''
                     );
             }
+
+            if (in_array($field['type'], array('date', 'datetime')) && $this->config['date-iso-8601'] && !empty($attributes[$key])) {
+                $date = \DateTime::createFromFormat('Y-m-d H:i:s', $attributes[$key]);
+                // dump($values);
+                $attributes[$key] = $date->format('c');
+            }
+
+
+
         }
 
         if (!empty($attributes)) {
