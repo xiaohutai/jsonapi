@@ -957,8 +957,8 @@ class Extension extends \Bolt\BaseExtension
      */
     private function response($array)
     {
-        $json = json_encode($array, JSON_PRETTY_PRINT);
-        // $json = json_encode($array, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_PRETTY_PRINT);
+        $json_encodeOptions = isset($this->config['jsonoptions']) ? $this->config['jsonoptions'] : JSON_PRETTY_PRINT;
+        $json = json_encode($array, $json_encodeOptions);
 
         if (isset($array['errors'])) {
             $status = isset($array['errors']['status']) ? $array['errors']['status'] : 400;
