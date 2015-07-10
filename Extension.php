@@ -704,6 +704,10 @@ class Extension extends \Bolt\BaseExtension
                 $attributes['taxonomy'][$field] = $item->taxonomy[$field];
             }
 
+            if (in_array($field, ['datepublish', 'datecreated', 'datechanged', 'datedepublish']) && $this->config['date-iso-8601']) {
+                $attributes[$field] = $this->dateISO($attributes[$field]);
+            }
+
         }
 
         // Check if we have image or file fields present. If so, see if we need
@@ -734,12 +738,8 @@ class Extension extends \Bolt\BaseExtension
             }
 
             if (in_array($field['type'], array('date', 'datetime')) && $this->config['date-iso-8601'] && !empty($attributes[$key])) {
-                $date = \DateTime::createFromFormat('Y-m-d H:i:s', $attributes[$key]);
-                // dump($values);
-                $attributes[$key] = $date->format('c');
+                $attributes[$key] = $this->dateISO($attributes[$key]);
             }
-
-
 
         }
 
@@ -978,6 +978,12 @@ class Extension extends \Bolt\BaseExtension
         }
 
         return $response;
+    }
+
+    private function dateISO($date)
+    {
+        $dateObject = \DateTime::createFromFormat('Y-m-d H:i:s', $date);
+        return($dateObject->format('c'));
     }
 
 }
