@@ -713,12 +713,19 @@ class Extension extends \Bolt\BaseExtension
         // Check if we have image or file fields present. If so, see if we need
         // to use the full URL's for these.
         foreach($item->contenttype['fields'] as $key => $field) {
+
+            if ($field['type'] == 'imagelist' && !empty($attributes[$key])) {
+                foreach ($attributes[$key] as &$value) {
+                    $value['url'] = $this->makeAbsolutePathToImage($value['filename']);
+
+                    if (is_array($this->config['thumbnail'])) {
+                        $value['thumbnail'] = $this->makeAbsolutePathToThumbnail($value['filename']);
+                    }
+                }
+            }
+
             if (($field['type'] == 'image' || $field['type'] == 'file') && isset($attributes[$key]) && isset($attributes[$key]['file'])) {
-                $attributes[$key]['url'] = sprintf('%s%s%s',
-                    $this->app['paths']['canonical'],
-                    $this->app['paths']['files'],
-                    $attributes[$key]['file']
-                    );
+                $attributes[$key]['url'] = $this->makeAbsolutePathToImage($attributes[$key]['file']);
             }
             if ($field['type'] == 'image' && !empty($attributes[$key]) && is_array($this->config['thumbnail'])) {
 
@@ -729,12 +736,7 @@ class Extension extends \Bolt\BaseExtension
                     );
                 }
 
-                $attributes[$key]['thumbnail'] = sprintf('%s/thumbs/%sx%s/%s',
-                    $this->app['paths']['canonical'],
-                    $this->config['thumbnail']['width'],
-                    $this->config['thumbnail']['height'],
-                    !empty($attributes[$key]['file']) ? $attributes[$key]['file'] : ''
-                    );
+                $attributes[$key]['thumbnail'] = $this->makeAbsolutePathToThumbnail($attributes[$key]['file']);
             }
 
             if (in_array($field['type'], array('date', 'datetime')) && $this->config['date-iso-8601'] && !empty($attributes[$key])) {
@@ -980,10 +982,33 @@ class Extension extends \Bolt\BaseExtension
         return $response;
     }
 
+    // -------------------------------------------------------------------------
+    // -- UTILITY FUNCTIONS                                                   --
+    // -------------------------------------------------------------------------
+
     private function dateISO($date)
     {
         $dateObject = \DateTime::createFromFormat('Y-m-d H:i:s', $date);
         return($dateObject->format('c'));
+    }
+
+    private function makeAbsolutePathToImage($filename = '')
+    {
+        return sprintf('%s%s%s',
+            $this->app['paths']['canonical'],
+            $this->app['paths']['files'],
+            $filename
+            );
+    }
+
+    private function makeAbsolutePathToThumbnail($filename = '')
+    {
+        return sprintf('%s/thumbs/%sx%s/%s',
+            $this->app['paths']['canonical'],
+            $this->config['thumbnail']['width'],
+            $this->config['thumbnail']['height'],
+            $filename
+            );
     }
 
 }
