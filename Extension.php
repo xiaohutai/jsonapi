@@ -715,11 +715,11 @@ class Extension extends \Bolt\BaseExtension
         foreach($item->contenttype['fields'] as $key => $field) {
 
             if ($field['type'] == 'imagelist' && !empty($attributes[$key])) {
-                foreach ($attributes[$key] as &$value) {
-                    $value['url'] = $this->makeAbsolutePathToImage($value['filename']);
+                foreach ($attributes[$key] as &$image) {
+                    $image['url'] = $this->makeAbsolutePathToImage($image['filename']);
 
                     if (is_array($this->config['thumbnail'])) {
-                        $value['thumbnail'] = $this->makeAbsolutePathToThumbnail($value['filename']);
+                        $image['thumbnail'] = $this->makeAbsolutePathToThumbnail($image['filename']);
                     }
                 }
             }
