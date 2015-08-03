@@ -747,13 +747,22 @@ class Extension extends \Bolt\BaseExtension
 
         if (!empty($attributes)) {
 
-            // Recursively walk the array, make sure that any \Twig_Markup objects are cast to plain strings.
+            // Recursively walk the array..
             array_walk_recursive($attributes, function(&$item) {
+                // Make sure that any \Twig_Markup objects are cast to plain strings.
                 if ($item instanceof \Twig_Markup) {
                     $item = $item->__toString();
                 }
+
+                // Handle replacements.
+                if (!empty($this->config['replacements'])) {
+                    foreach ($this->config['replacements'] as $from => $to) {
+                        $item = str_replace($from, $to, $item);
+                    }
+                }
+
             });
-            
+
             $values['attributes'] = $attributes;
         }
 
