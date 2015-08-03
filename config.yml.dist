@@ -33,6 +33,10 @@ headers:
     'Access-Control-Allow-Origin': '*'
     'Content-Type': 'application/vnd.api+json'
 
+replacements:
+    'src="//': 'src="http://'
+    'href="//': 'href="http://'
+    
 # The base url where the API is accessible.
 base: '/json'
 
