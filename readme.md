@@ -120,6 +120,7 @@ parameters appended to the URL):
 |`include`     | Fetches all the related records of the specified contenttype(s) of the record(s) in the `included` field of the JSON response. Separate multiple contenttypes with a comma. Example: `include=pages`. |
 |`fields[]`    | Set the fields that are shown in the response per specified contenttype. Separate multiple fields with commas. Multiple `fields[]` parameters are possible. Example: `fields[entries]=slug,teaser`. |
 |`filter[]`    | Filter records where a certain field must be equal to the specified `{value}`. Multiple `filter[]` parameters are possible. Example: `filter[id]=1,2`. |
+|`contains[]`  | Filter records where a certain field must contain the specified `{value}`. Multiple `contains[]` parameters are possible. Example: `contains[id]=1,2`. |
 
 
 ### Additional Queries
