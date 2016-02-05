@@ -44,17 +44,17 @@ class Extension extends \Bolt\BaseExtension
         $this->basePath = $this->app['paths']['canonical'] . $this->base;
 
         $this->app->get($this->base."/menu", [$this, 'jsonapi_menu'])
-                  ->bind('jsonapi_menu');
+            ->bind('jsonapi_menu');
         $this->app->get($this->base."/search", [$this, 'jsonapi_search'])
-                  ->bind('jsonapi_search_mixed');
+            ->bind('jsonapi_search_mixed');
         $this->app->get($this->base."/{contenttype}/search", [$this, 'jsonapi_search'])
-                  ->bind('jsonapi_search');
+            ->bind('jsonapi_search');
         $this->app->get($this->base."/{contenttype}/{slug}/{relatedContenttype}", [$this, 'jsonapi'])
-                  ->value('relatedContenttype', null)
-                  ->assert('slug', '[a-zA-Z0-9_\-]+')
-                  ->bind('jsonapi');
+            ->value('relatedContenttype', null)
+            ->assert('slug', '[a-zA-Z0-9_\-]+')
+            ->bind('jsonapi');
         $this->app->get($this->base."/{contenttype}", [$this, 'jsonapi_list'])
-                  ->bind('jsonapi_list');
+            ->bind('jsonapi_list');
     }
 
     // -------------------------------------------------------------------------
@@ -123,6 +123,25 @@ class Extension extends \Bolt\BaseExtension
                 }
                 // A bit crude for now.
                 $where[$key] = str_replace(',', ' || ', $value);
+            }
+        }
+
+        // Handle $contains[], this modifies the $where[] clause to search using Like.
+        if ($contains = $request->get('contains')) {
+            foreach ($contains as $key => $value) {
+                if (!in_array($key, $allFields)) {
+                    return $this->responseInvalidRequest([
+                        'detail' => "Parameter [$key] does not exist for contenttype with name [$contenttype]."
+                    ]);
+                }
+
+                $values = explode(",", $value);
+
+                foreach ($values as $i => $item) {
+                    $values[$i] = '%"' . $item .'"%';
+                }
+
+                $where[$key] = implode(' || ', $values);
             }
         }
 
@@ -715,11 +734,11 @@ class Extension extends \Bolt\BaseExtension
         foreach($item->contenttype['fields'] as $key => $field) {
 
             if ($field['type'] == 'imagelist' && !empty($attributes[$key])) {
-                foreach ($attributes[$key] as &$image) {
-                    $image['url'] = $this->makeAbsolutePathToImage($image['filename']);
+                foreach ($attributes[$key] as &$value) {
+                    $value['url'] = $this->makeAbsolutePathToImage($value['filename']);
 
                     if (is_array($this->config['thumbnail'])) {
-                        $image['thumbnail'] = $this->makeAbsolutePathToThumbnail($image['filename']);
+                        $value['thumbnail'] = $this->makeAbsolutePathToThumbnail($value['filename']);
                     }
                 }
             }
@@ -746,23 +765,6 @@ class Extension extends \Bolt\BaseExtension
         }
 
         if (!empty($attributes)) {
-
-            // Recursively walk the array..
-            array_walk_recursive($attributes, function(&$item) {
-                // Make sure that any \Twig_Markup objects are cast to plain strings.
-                if ($item instanceof \Twig_Markup) {
-                    $item = $item->__toString();
-                }
-
-                // Handle replacements.
-                if (!empty($this->config['replacements'])) {
-                    foreach ($this->config['replacements'] as $from => $to) {
-                        $item = str_replace($from, $to, $item);
-                    }
-                }
-
-            });
-
             $values['attributes'] = $attributes;
         }
 
@@ -1015,7 +1017,7 @@ class Extension extends \Bolt\BaseExtension
             $this->app['paths']['canonical'],
             $this->app['paths']['files'],
             $filename
-            );
+        );
     }
 
     private function makeAbsolutePathToThumbnail($filename = '')
@@ -1025,7 +1027,7 @@ class Extension extends \Bolt\BaseExtension
             $this->config['thumbnail']['width'],
             $this->config['thumbnail']['height'],
             $filename
-            );
+        );
     }
 
 }
