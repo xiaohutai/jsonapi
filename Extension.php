@@ -128,7 +128,7 @@ class Extension extends \Bolt\BaseExtension
 
         // Handle $contains[], this modifies the $where[] clause to search using Like.
         if ($contains = $request->get('contains')) {
-            foreach($contains as $key => $value) {
+            foreach ($contains as $key => $value) {
                 if (!in_array($key, $allFields)) {
                     return $this->responseInvalidRequest([
                         'detail' => "Parameter [$key] does not exist for contenttype with name [$contenttype]."
@@ -137,8 +137,8 @@ class Extension extends \Bolt\BaseExtension
 
                 $values = explode(",", $value);
 
-                foreach($values as $i => $item) {
-                    $values[$i] = '%"' . $item .'"%';
+                foreach ($values as $i => $item) {
+                    $values[$i] = '%' . $item .'%';
                 }
 
                 $where[$key] = implode(' || ', $values);
