@@ -19,6 +19,10 @@
         {
             "name": "Xiao-Hu Tai",
             "email": "xiao@twokings.nl"
+        },
+        {
+            "name": "Dennis Snijder",
+            "email": "Dennissnijder97@gmail.com"
         }
     ],
     "autoload": {
