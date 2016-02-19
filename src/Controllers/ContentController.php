@@ -1,6 +1,7 @@
 <?php
 namespace JSONAPI\Controllers;
 
+use Bolt\Content;
 use JSONAPI\Config\Config;
 use JSONAPI\Helpers\APIHelper;
 use Silex\Application;
@@ -105,8 +106,8 @@ class ContentController extends APIController implements ControllerProviderInter
 
         // Enable pagination
         $options['paging'] = true;
-        $pager  = [];
-        $where  = [];
+        $pager = [];
+        $where = [];
 
         $allFields = $this->APIHelper->getAllFieldNames($contenttype);
         $fields = $this->APIHelper->getFields($contenttype, $allFields, 'list-fields');
@@ -118,7 +119,7 @@ class ContentController extends APIController implements ControllerProviderInter
 
         // Handle $filter[], this modifies the $where[] clause.
         if ($filters = $request->get('filter')) {
-            foreach($filters as $key => $value) {
+            foreach ($filters as $key => $value) {
                 if (!in_array($key, $allFields)) {
                     return new JsonResponse([
                         'detail' => "Parameter [$key] does not exist for contenttype with name [$contenttype]."
@@ -141,7 +142,7 @@ class ContentController extends APIController implements ControllerProviderInter
                 $values = explode(",", $value);
 
                 foreach ($values as $i => $item) {
-                    $values[$i] = '%' . $item .'%';
+                    $values[$i] = '%' . $item . '%';
                 }
 
                 $where[$key] = implode(' || ', $values);
@@ -172,13 +173,13 @@ class ContentController extends APIController implements ControllerProviderInter
         // Handle "include" and fetch related relationships in current query.
         try {
             $included = $this->APIHelper->fetchIncludedContent($contenttype, $items);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return new JsonResponse([
                 'detail' => $e->getMessage()
             ]);
         }
 
-        foreach($items as $key => $item) {
+        foreach ($items as $key => $item) {
             $items[$key] = $this->APIHelper->cleanItem($item, $fields);
         }
 
@@ -251,7 +252,7 @@ class ContentController extends APIController implements ControllerProviderInter
         unset($all['page']);
         $request->query->replace($all);
 
-        $items = $this->app['storage']->getContent($contenttype.'/search', [ 'filter' => $q ], $pager, [ 'returnsingle' => false ]);
+        $items = $this->app['storage']->getContent($contenttype . '/search', ['filter' => $q], $pager, ['returnsingle' => false]);
 
         if (!is_array($items)) {
             return new JsonResponse([
@@ -266,7 +267,7 @@ class ContentController extends APIController implements ControllerProviderInter
         }
 
         $total = count($items);
-        $totalpages = $limit > 0 ? intval(ceil($total / $limit )) : 1;
+        $totalpages = $limit > 0 ? intval(ceil($total / $limit)) : 1;
 
         if ($limit && $page) {
             $items = array_slice($items, $limit * ($page - 1), $limit);
@@ -308,6 +309,7 @@ class ContentController extends APIController implements ControllerProviderInter
             ]);
         }
 
+        /** @var Content $item */
         $item = $this->app['storage']->getContent("$contenttype/$slug");
         if (!$item) {
             return new JsonResponse([
@@ -315,11 +317,7 @@ class ContentController extends APIController implements ControllerProviderInter
             ]);
         }
 
-        if ($relatedContenttype !== null)
-        {
-
-            // If a $relatedContenttype is set, fetch the related items.
-
+        if ($relatedContenttype !== null) {
             $items = $item->related($relatedContenttype);
             if (!$items) {
                 return new JsonResponse([
@@ -331,13 +329,13 @@ class ContentController extends APIController implements ControllerProviderInter
             $fields = $this->APIHelper->getFields($relatedContenttype, $allFields, 'list-fields');
 
             $items = array_values($items);
-            foreach($items as $key => $item) {
+            foreach ($items as $key => $item) {
                 $items[$key] = $this->APIHelper->cleanItem($item, $fields);
             }
 
             $response = new JsonResponse([
                 'links' => [
-                    'self' => $this->config->getBasePath()."/$contenttype/$slug/$relatedContenttype" . $this->APIHelper->makeQueryParameters()
+                    'self' => $this->config->getBasePath() . "/$contenttype/$slug/$relatedContenttype" . $this->APIHelper->makeQueryParameters()
                 ],
                 'meta' => [
                     "count" => count($items),
@@ -367,14 +365,14 @@ class ContentController extends APIController implements ControllerProviderInter
             }
 
             try {
-                $included = $this->APIHelper->fetchIncludedContent($contenttype, [ $item ]);
-            } catch(\Exception $e) {
+                $included = $this->APIHelper->fetchIncludedContent($contenttype, [$item]);
+            } catch (\Exception $e) {
                 return new JsonResponse([
                     'detail' => $e->getMessage()
                 ]);
             }
 
-            if ($prev)  {
+            if ($prev) {
                 $links['prev'] = sprintf('%s/%s/%d%s', $this->config->getBasePath(),
                     $contenttype, $prev->values['id'], $defaultQuerystring);
             }

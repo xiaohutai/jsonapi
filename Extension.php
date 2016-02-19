@@ -10,7 +10,9 @@
 namespace JSONAPI;
 
 use \Bolt\Helpers\Arr;
+use Bolt\Helpers\Menu;
 use JSONAPI\Controllers\ContentController;
+use JSONAPI\Controllers\MenuController;
 use JSONAPI\Helpers\APIHelper;
 use JSONAPI\Helpers\ConfigHelper;
 use JSONAPI\Provider\APIProvider;
@@ -47,74 +49,20 @@ class Extension extends \Bolt\BaseExtension
         return "JSON API";
     }
 
+    /**
+     * Initializes the extension and mounts the endpoints
+     */
     public function initialize()
     {
 
         $this->app->register(new APIProvider($this->config));
 
+        $this->app->mount($this->app['jsonapi.config']->getBase()."/menu",
+            new MenuController($this->app['jsonapi.config'], $this->app['jsonapi.apihelper'], $this->app));
 
-        $this->app->mount($this->app['jsonapi.config']->getBase()."/{contenttype}",
-            new ContentController($this->app['jsonapi.config'], $this->app['jsonapi.apihelper'], $this->app));
-
-
-        /*
-        $this->app->get($this->base."/{contenttype}/{slug}/{relatedContenttype}", [$this, 'jsonapi'])
-                  ->value('relatedContenttype', null)
-                  ->assert('slug', '[a-zA-Z0-9_\-]+')
-                  ->bind('jsonapi');
-        $this->app->get($this->base."/{contenttype}", [$this, 'jsonapi_list'])
-                  ->bind('jsonapi_list');*/
+       $this->app->mount($this->app['jsonapi.config']->getBase()."/{contenttype}",
+           new ContentController($this->app['jsonapi.config'], $this->app['jsonapi.apihelper'], $this->app));
     }
 
-
-    /**
-     * Fetches a single item or all related items — of which their contenttype is
-     * defined in $relatedContenttype — of that single item.
-     *
-     * @todo split up fetching single item and fetching of related items?
-     *
-     * @param Request $request
-     * @param string $contenttype The name of the contenttype.
-     * @param string $slug The slug, preferably a numeric id, but Bolt allows
-     *                     slugs in the form of strings as well.
-     * @param string $relatedContenttype The name of the related contenttype
-     *                                   that is related to $contenttype.
-     */
-    public function jsonapi(Request $request, $contenttype, $slug, $relatedContenttype)
-    {
-
-    }
-
-    /**
-     * Fetches menus. Either a list of menus, or a single menu defined by the
-     * query string `q`.
-     *
-     * @todo fetch all the records from the database.
-     *
-     * @param Request $request
-     * @return Symfony\Component\HttpFoundation\Response
-     */
-    public function jsonapi_menu(Request $request)
-    {
-        $this->request = $request;
-
-        $name = '';
-
-        if ($q = $request->get('q')) {
-            $name = "/$q";
-        }
-
-        $menu = $this->app['config']->get('menu'.$name, false);
-
-        if ($menu) {
-            return $this->response([
-                'data' => $menu
-            ]);
-        }
-
-        return $this->responseNotFound([
-            'detail' => "Menu with name [$q] not found."
-        ]);
-    }
 
 }
