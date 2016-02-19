@@ -54,7 +54,7 @@ class MenuController extends APIController implements ControllerProviderInterfac
          */
         $ctr = $app['controllers_factory'];
 
-        $app->get("", [$this, "listMenus"]);
+            $app->get($this->config->getBase()."/menu", [$this, "listMenus"])->bind('jsonapi.menu');
 
         return $ctr;
     }

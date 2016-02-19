@@ -59,12 +59,13 @@ class ContentController extends APIController implements ControllerProviderInter
          */
         $ctr = $app['controllers_factory'];
 
-        $ctr->get("", [$this, "getContentList"]);
-        $ctr->get("/search", [$this, "searchContent"]);
-        $ctr->get("/{slug}/{relatedContenttype}", [$this, 'singleContent'])
+        $ctr->get("/{contenttype}", [$this, "getContentList"])->bind('jsonapi.listContent');
+        $ctr->get("/{contenttype}/search", [$this, "searchContent"])->bind('jsonapi.searchContent');
+
+        $ctr->get("/{contenttype}/{slug}/{relatedContenttype}", [$this, 'singleContent'])
             ->value('relatedContenttype', null)
             ->assert('slug', '[a-zA-Z0-9_\-]+')
-            ->bind('jsonapi');
+            ->bind('jsonapi.singleContent');
 
         return $ctr;
     }

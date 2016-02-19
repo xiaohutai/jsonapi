@@ -57,10 +57,10 @@ class Extension extends \Bolt\BaseExtension
 
         $this->app->register(new APIProvider($this->config));
 
-        $this->app->mount($this->app['jsonapi.config']->getBase()."/menu",
+        $this->app->mount($this->app['jsonapi.config']->getBase(),
             new MenuController($this->app['jsonapi.config'], $this->app['jsonapi.apihelper'], $this->app));
 
-       $this->app->mount($this->app['jsonapi.config']->getBase()."/{contenttype}",
+       $this->app->mount($this->app['jsonapi.config']->getBase(),
            new ContentController($this->app['jsonapi.config'], $this->app['jsonapi.apihelper'], $this->app));
     }
 
