@@ -58,12 +58,18 @@ class ContentController extends APIController implements ControllerProviderInter
          */
         $ctr = $app['controllers_factory'];
 
-        $ctr->get("", [$this, "getContent"]);
+        $ctr->get("", [$this, "getContentList"]);
+        $ctr->get("/search", [$this, "searchContent"]);
 
         return $ctr;
     }
 
-    public function getContent($contenttype, Request $request)
+    /**
+     * @param $contenttype
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getContentList($contenttype, Request $request)
     {
 
         $this->config->setCurrentRequest($request);
@@ -187,5 +193,105 @@ class ContentController extends APIController implements ControllerProviderInter
 
         return new JsonResponse($response);
     }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function searchContent(Request $request, $contenttype)
+    {
+        $this->config->setCurrentRequest($request);
+        $this->APIHelper->fixBoltStorageRequest();
+
+        $options = [];
+        $options['paging'] = true;
+        $pager = [];
+
+        if ($limit = $request->get($this->config->getPaginationSizeKey())) {
+            $limit = intval($limit);
+            if ($limit >= 1) {
+                $options['limit'] = $limit;
+            }
+        }
+
+        if ($page = $request->get($this->config->getPaginationNumberKey())) {
+            $page = intval($page);
+        }
+        if (!$page) {
+            $page = 1;
+        }
+
+        // If no $contenttype is set, search all 'searchable' contenttypes.
+        $baselink = "$contenttype/search";
+        if ($contenttype === null) {
+            $allcontenttypes = array_keys($this->config->getContentTypes());
+            // This also fetches unallowed ones:
+            // $allcontenttypes = array_keys($this->app['config']->get('contenttypes'));
+            $allcontenttypes = implode(',', $allcontenttypes);
+            $contenttype = "($allcontenttypes)";
+            $baselink = 'search';
+        }
+
+        if ($q = $request->get('q')) {
+            $options['filter'] = $q;
+        } else {
+            return new JsonResponse([
+                'detail' => "No query parameter q specified."
+            ]);
+        }
+
+        // This 'page' part somehow messses with the getContent query. The
+        // fetched results get sliced one time too much when using pagination.
+        // So we unset it here, and then use array_slice.
+        $all = $request->query->all();
+        unset($all['page']);
+        $request->query->replace($all);
+
+        $items = $this->app['storage']->getContent($contenttype.'/search', [ 'filter' => $q ], $pager, [ 'returnsingle' => false ]);
+
+        if (!is_array($items)) {
+            return new JsonResponse([
+                'detail' => "Configuration error: [$contenttype] is configured as a JSON end-point, but doesn't exist as a contenttype."
+            ]);
+        }
+
+        if (empty($items)) {
+            return new JsonResponse([
+                'detail' => "No search results found for query [$q]"
+            ]);
+        }
+
+        $total = count($items);
+        $totalpages = $limit > 0 ? intval(ceil($total / $limit )) : 1;
+
+        if ($limit && $page) {
+            $items = array_slice($items, $limit * ($page - 1), $limit);
+        }
+
+        // Reset it again...
+        $all = $request->query->all();
+        if ($page != $totalpages) {
+            $all['page'] = $page;
+        }
+        $request->query->replace($all);
+
+        foreach ($items as $key => $item) {
+            $ct = $item->contenttype['slug'];
+            // optimize this part...
+            $ctAllFields = $this->APIHelper->getAllFieldNames($ct);
+            $ctFields = $this->APIHelper->getFields($ct, $ctAllFields, 'list-fields');
+            $items[$key] = $this->APIHelper->cleanItem($item, $ctFields);
+        }
+
+        return new JsonResponse([
+            'links' => $this->APIHelper->makeLinks($baselink, $page, $totalpages, $limit),
+            'meta' => [
+                "count" => count($items),
+                "total" => $total
+            ],
+            'data' => $items,
+        ]);
+    }
+
 
 }

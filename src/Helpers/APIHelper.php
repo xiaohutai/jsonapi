@@ -2,10 +2,13 @@
 namespace JSONAPI\Helpers;
 
 use Bolt\Helpers\Arr;
-use JSONAPI\APIInstance;
 use JSONAPI\Config\Config;
 use Silex\Application;
 
+/**
+ * Class APIHelper
+ * @package JSONAPI\Helpers
+ */
 class APIHelper
 {
 

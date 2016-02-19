@@ -34,6 +34,11 @@ class Config
     private $paginationNumberKey;
 
     /**
+     * @var
+     */
+    private $paginationSizeKey;
+
+    /**
      * @var Request
      */
     private $currentRequest;
@@ -49,6 +54,7 @@ class Config
         $this->setContentTypes($config['contenttypes']);
         $this->setReplacements($config['replacements']);
         $this->setPaginationNumberKey("page");
+        $this->setPaginationSizeKey("limit");
     }
 
     /**
@@ -145,5 +151,21 @@ class Config
     public function setPaginationNumberKey($paginationNumberKey)
     {
         $this->paginationNumberKey = $paginationNumberKey;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getPaginationSizeKey()
+    {
+        return $this->paginationSizeKey;
+    }
+
+    /**
+     * @param mixed $paginationSizeKey
+     */
+    public function setPaginationSizeKey($paginationSizeKey)
+    {
+        $this->paginationSizeKey = $paginationSizeKey;
     }
 }
