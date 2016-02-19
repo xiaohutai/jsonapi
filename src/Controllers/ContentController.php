@@ -60,6 +60,10 @@ class ContentController extends APIController implements ControllerProviderInter
 
         $ctr->get("", [$this, "getContentList"]);
         $ctr->get("/search", [$this, "searchContent"]);
+        $ctr->get("/{slug}/{relatedContenttype}", [$this, 'singleContent'])
+            ->value('relatedContenttype', null)
+            ->assert('slug', '[a-zA-Z0-9_\-]+')
+            ->bind('jsonapi');
 
         return $ctr;
     }
@@ -293,5 +297,105 @@ class ContentController extends APIController implements ControllerProviderInter
         ]);
     }
 
+
+    public function singleContent(Request $request, $contenttype, $slug, $relatedContenttype)
+    {
+        $this->config->setCurrentRequest($request);
+
+        if (!array_key_exists($contenttype, $this->config->getContentTypes())) {
+            return new JsonResponse([
+                'detail' => "Contenttype with name [$contenttype] not found."
+            ]);
+        }
+
+        $item = $this->app['storage']->getContent("$contenttype/$slug");
+        if (!$item) {
+            return new JsonResponse([
+                'detail' => "No [$contenttype] found with id/slug: [$slug]."
+            ]);
+        }
+
+        if ($relatedContenttype !== null)
+        {
+
+            // If a $relatedContenttype is set, fetch the related items.
+
+            $items = $item->related($relatedContenttype);
+            if (!$items) {
+                return new JsonResponse([
+                    'detail' => "No related items of type [$relatedContenttype] found for [$contenttype] with id/slug: [$slug]."
+                ]);
+            }
+
+            $allFields = $this->APIHelper->getAllFieldNames($relatedContenttype);
+            $fields = $this->APIHelper->getFields($relatedContenttype, $allFields, 'list-fields');
+
+            $items = array_values($items);
+            foreach($items as $key => $item) {
+                $items[$key] = $this->APIHelper->cleanItem($item, $fields);
+            }
+
+            $response = new JsonResponse([
+                'links' => [
+                    'self' => $this->config->getBasePath()."/$contenttype/$slug/$relatedContenttype" . $this->APIHelper->makeQueryParameters()
+                ],
+                'meta' => [
+                    "count" => count($items),
+                    "total" => count($items)
+                ],
+                'data' => $items
+            ]);
+
+        } else {
+
+            $allFields = $this->APIHelper->getAllFieldNames($contenttype);
+            $fields = $this->APIHelper->getFields($contenttype, $allFields, 'item-fields');
+            $values = $this->APIHelper->cleanItem($item, $fields);
+            $prev = $item->previous();
+            $next = $item->next();
+
+            $defaultQuerystring = $this->APIHelper->makeQueryParameters();
+            $links = [
+                'self' => $values['links']['self'] . $defaultQuerystring
+            ];
+
+            // optional: This adds additional relationships links in the root
+            //           variable 'links'.
+            $related = $this->APIHelper->makeRelatedLinks($item);
+            foreach ($related as $ct => $link) {
+                $links[$ct] = $link;
+            }
+
+            try {
+                $included = $this->APIHelper->fetchIncludedContent($contenttype, [ $item ]);
+            } catch(\Exception $e) {
+                return new JsonResponse([
+                    'detail' => $e->getMessage()
+                ]);
+            }
+
+            if ($prev)  {
+                $links['prev'] = sprintf('%s/%s/%d%s', $this->config->getBasePath(),
+                    $contenttype, $prev->values['id'], $defaultQuerystring);
+            }
+            if ($next) {
+                $links['next'] = sprintf('%s/%s/%d%s', $this->config->getBasePath(),
+                    $contenttype, $next->values['id'], $defaultQuerystring);
+            }
+
+            $response = [
+                'links' => $links,
+                'data' => $values,
+            ];
+
+            if (!empty($included)) {
+                $response['included'] = $included;
+            }
+
+            $response = new JsonResponse($response);
+        }
+
+        return $response;
+    }
 
 }
