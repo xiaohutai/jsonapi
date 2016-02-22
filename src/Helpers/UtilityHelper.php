@@ -1,5 +1,5 @@
 <?php
-namespace JSONAPI\Helpers;
+namespace Bolt\Extension\Bolt\JsonApi\Helpers;
 use Silex\Application;
 
 

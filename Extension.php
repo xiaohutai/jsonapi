@@ -5,19 +5,15 @@
  * @author Tobias Dammers <tobias@twokings.nl>
  * @author Bob den Otter <bob@twokings.nl>
  * @author Xiao-Hu Tai <xiao@twokings.nl>
+ * @author Dennis Snijder <Dennissnijder97@gmail.com>
  */
 
-namespace JSONAPI;
+namespace Bolt\Extension\Bolt\JsonApi;
 
-use \Bolt\Helpers\Arr;
-use Bolt\Helpers\Menu;
-use JSONAPI\Controllers\ContentController;
-use JSONAPI\Controllers\MenuController;
-use JSONAPI\Helpers\APIHelper;
-use JSONAPI\Helpers\ConfigHelper;
-use JSONAPI\Provider\APIProvider;
+use Bolt\Extension\Bolt\JsonApi\Controllers\ContentController;
+use Bolt\Extension\Bolt\JsonApi\Controllers\MenuController;
+use Bolt\Extension\Bolt\JsonApi\Provider\APIProvider;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 
 /**
  * This extension tries to return JSON responses according to the specifications

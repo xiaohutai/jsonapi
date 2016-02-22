@@ -1,10 +1,10 @@
 <?php
 
-namespace JSONAPI\Provider;
+namespace Bolt\Extension\Bolt\JsonApi\Provider;
 
-use JSONAPI\Config\Config;
-use JSONAPI\Helpers\APIHelper;
-use JSONAPI\Helpers\UtilityHelper;
+use Bolt\Extension\Bolt\JsonApi\Config\Config;
+use Bolt\Extension\Bolt\JsonApi\Helpers\APIHelper;
+use Bolt\Extension\Bolt\JsonApi\Helpers\UtilityHelper;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 

@@ -1,8 +1,8 @@
 <?php
-namespace JSONAPI\Helpers;
+namespace Bolt\Extension\Bolt\JsonApi\Helpers;
 
 use Bolt\Helpers\Arr;
-use JSONAPI\Config\Config;
+use Bolt\Extension\Bolt\JsonApi\Config\Config;
 use Silex\Application;
 
 /**
@@ -440,7 +440,7 @@ class APIHelper
     public function makeLinks($contenttype, $currentPage, $totalPages, $pageSize)
     {
         $basePath = $this->config->getBasePath();
-        $basePathContenttype = $basePath . '/' . $contenttype;
+        $basePathContentType = $basePath . '/' . $contenttype;
         $prevPage = max($currentPage - 1, 1);
         $nextPage = min($currentPage + 1, $totalPages);
         $firstPage = 1;
@@ -451,24 +451,24 @@ class APIHelper
         $defaultQuerystring = $this->makeQueryParameters();
 
         $params = $pagination ? $this->makeQueryParameters([$this->config->getPaginationNumberKey() => $currentPage]) : $defaultQuerystring;
-        $links["self"] = $basePathContenttype.$params;
+        $links["self"] = $basePathContentType.$params;
 
         // The following links only exists if a query was made using pagination.
         if ($currentPage != $firstPage) {
             $params = $this->makeQueryParameters([$this->config->getPaginationNumberKey() => $firstPage]);
-            $links["first"] = $basePathContenttype.$params;
+            $links["first"] = $basePathContentType.$params;
         }
         if ($currentPage != $totalPages) {
             $params = $this->makeQueryParameters([$this->config->getPaginationNumberKey() => $totalPages]);
-            $links["last"] = $basePathContenttype.$params;
+            $links["last"] = $basePathContentType.$params;
         }
         if ($currentPage != $prevPage) {
             $params = $this->makeQueryParameters([$this->config->getPaginationNumberKey() => $prevPage]);
-            $links["prev"] = $basePathContenttype.$params;
+            $links["prev"] = $basePathContentType.$params;
         }
         if ($currentPage != $nextPage) {
             $params = $this->makeQueryParameters([$this->config->getPaginationNumberKey() => $nextPage]);
-            $links["next"] = $basePathContenttype.$params;
+            $links["next"] = $basePathContentType.$params;
         }
 
         return $links;

@@ -1,5 +1,5 @@
 <?php
-namespace JSONAPI\Config;
+namespace Bolt\Extension\Bolt\JsonApi\Config;
 
 
 use Bolt\Application;

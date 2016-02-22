@@ -1,7 +1,6 @@
 <?php
-namespace JSONAPI\Controllers;
+namespace Bolt\Extension\Bolt\JsonApi\Controllers;
 
-use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class APIController

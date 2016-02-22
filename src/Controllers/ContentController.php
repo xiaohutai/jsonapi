@@ -1,9 +1,9 @@
 <?php
-namespace JSONAPI\Controllers;
+namespace Bolt\Extension\Bolt\JsonApi\Controllers;
 
 use Bolt\Content;
-use JSONAPI\Config\Config;
-use JSONAPI\Helpers\APIHelper;
+use Bolt\Extension\Bolt\JsonApi\Config\Config;
+use Bolt\Extension\Bolt\JsonApi\Helpers\APIHelper;
 use Silex\Application;
 use Silex\ControllerCollection;
 use Silex\ControllerProviderInterface;
