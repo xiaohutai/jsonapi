@@ -10,6 +10,10 @@ use Silex\ControllerProviderInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
+/**
+ * Class MenuController
+ * @package JSONAPI\Controllers
+ */
 class MenuController extends APIController implements ControllerProviderInterface
 {
     /**
@@ -54,7 +58,7 @@ class MenuController extends APIController implements ControllerProviderInterfac
          */
         $ctr = $app['controllers_factory'];
 
-            $app->get($this->config->getBase()."/menu", [$this, "listMenus"])->bind('jsonapi.menu');
+        $app->get($this->config->getBase()."/menu", [$this, "listMenus"])->bind('jsonapi.menu');
 
         return $ctr;
     }

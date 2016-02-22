@@ -1,7 +1,7 @@
 <?php
 namespace JSONAPI\Helpers;
+use Silex\Application;
 
-use Symfony\Component\Console\Application;
 
 /**
  * Class UtilityHelper
@@ -28,7 +28,7 @@ class UtilityHelper
      * @param $date
      * @return string
      */
-    private function dateISO($date)
+    public function dateISO($date)
     {
         $dateObject = \DateTime::createFromFormat('Y-m-d H:i:s', $date);
         return($dateObject->format('c'));
@@ -38,7 +38,7 @@ class UtilityHelper
      * @param string $filename
      * @return string
      */
-    private function makeAbsolutePathToImage($filename = '')
+    public function makeAbsolutePathToImage($filename = '')
     {
         return sprintf('%s%s%s',
             $this->app['paths']['canonical'],
@@ -51,7 +51,7 @@ class UtilityHelper
      * @param string $filename
      * @return string
      */
-    private function makeAbsolutePathToThumbnail($filename = '')
+    public function makeAbsolutePathToThumbnail($filename = '')
     {
         return sprintf('%s/thumbs/%sx%s/%s',
             $this->app['paths']['canonical'],

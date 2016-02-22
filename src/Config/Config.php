@@ -43,6 +43,16 @@ class Config
      */
     private $currentRequest;
 
+    /**
+     * @var string
+     */
+    private $thumbnail;
+
+    /**
+     * @var string
+     */
+    private $dateIso;
+
 
     public function __construct($config, Application $app)
     {
@@ -53,8 +63,10 @@ class Config
         $this->setBasePath($app['paths']['canonical'] . $this->base);
         $this->setContentTypes($config['contenttypes']);
         $this->setReplacements($config['replacements']);
-        $this->setPaginationNumberKey("page");
-        $this->setPaginationSizeKey("limit");
+        $this->setPaginationNumberKey('page');
+        $this->setPaginationSizeKey('limit');
+        $this->setThumbnail($config['thumbnail']);
+        $this->setDateIso($config['date-iso-8601']);
     }
 
     /**
@@ -167,5 +179,37 @@ class Config
     public function setPaginationSizeKey($paginationSizeKey)
     {
         $this->paginationSizeKey = $paginationSizeKey;
+    }
+
+    /**
+     * @return string
+     */
+    public function getThumbnail()
+    {
+        return $this->thumbnail;
+    }
+
+    /**
+     * @param string $thumbnail
+     */
+    public function setThumbnail($thumbnail)
+    {
+        $this->thumbnail = $thumbnail;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDateIso()
+    {
+        return $this->dateIso;
+    }
+
+    /**
+     * @param string $dateIso
+     */
+    public function setDateIso($dateIso)
+    {
+        $this->dateIso = $dateIso;
     }
 }

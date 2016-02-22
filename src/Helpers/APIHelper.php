@@ -23,13 +23,21 @@ class APIHelper
     private $config;
 
     /**
+     * @var UtilityHelper
+     */
+    private $utilityHelper;
+
+    /**
      * APIHelper constructor.
      * @param Application $app
+     * @param Config $config
+     * @param UtilityHelper $utilityHelper
      */
-    public function __construct(Application $app)
+    public function __construct(Application $app, Config $config, UtilityHelper $utilityHelper)
     {
         $this->app = $app;
-        $this->config = $app['jsonapi.config'];
+        $this->config = $config;
+        $this->utilityHelper = $utilityHelper;
     }
 
     /**
@@ -311,8 +319,8 @@ class APIHelper
                 $attributes['taxonomy'][$field] = $item->taxonomy[$field];
             }
 
-            if (in_array($field, ['datepublish', 'datecreated', 'datechanged', 'datedepublish']) && $this->config['date-iso-8601']) {
-                $attributes[$field] = $this->dateISO($attributes[$field]);
+            if (in_array($field, ['datepublish', 'datecreated', 'datechanged', 'datedepublish']) && $this->config->getDateIso()) {
+                $attributes[$field] = $this->utilityHelper->dateISO($attributes[$field]);
             }
 
         }
@@ -323,18 +331,18 @@ class APIHelper
 
             if ($field['type'] == 'imagelist' && !empty($attributes[$key])) {
                 foreach ($attributes[$key] as &$image) {
-                    $image['url'] = $this->makeAbsolutePathToImage($image['filename']);
+                    $image['url'] = $this->utilityHelper->makeAbsolutePathToImage($image['filename']);
 
-                    if (is_array(APIInstance::$config['thumbnail'])) {
-                        $image['thumbnail'] = $this->makeAbsolutePathToThumbnail($image['filename']);
+                    if (is_array($this->config->getThumbnail())) {
+                        $image['thumbnail'] = $this->utilityHelper->makeAbsolutePathToThumbnail($image['filename']);
                     }
                 }
             }
 
             if (($field['type'] == 'image' || $field['type'] == 'file') && isset($attributes[$key]) && isset($attributes[$key]['file'])) {
-                $attributes[$key]['url'] = $this->makeAbsolutePathToImage($attributes[$key]['file']);
+                $attributes[$key]['url'] = $this->utilityHelper->makeAbsolutePathToImage($attributes[$key]['file']);
             }
-            if ($field['type'] == 'image' && !empty($attributes[$key]) && is_array($this->config['thumbnail'])) {
+            if ($field['type'] == 'image' && !empty($attributes[$key]) && is_array($this->config->getThumbnail())) {
 
                 // Take 'old-school' image field into account, that are plain strings.
                 if (!is_array($attributes[$key])) {
@@ -343,11 +351,11 @@ class APIHelper
                     );
                 }
 
-                $attributes[$key]['thumbnail'] = $this->makeAbsolutePathToThumbnail($attributes[$key]['file']);
+                $attributes[$key]['thumbnail'] = $this->utilityHelper->makeAbsolutePathToThumbnail($attributes[$key]['file']);
             }
 
-            if (in_array($field['type'], array('date', 'datetime')) && $this->config['date-iso-8601'] && !empty($attributes[$key])) {
-                $attributes[$key] = $this->dateISO($attributes[$key]);
+            if (in_array($field['type'], array('date', 'datetime')) && $this->config->getDateIso() && !empty($attributes[$key])) {
+                $attributes[$key] = $this->utilityHelper->dateISO($attributes[$key]);
             }
 
         }

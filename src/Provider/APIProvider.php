@@ -4,6 +4,7 @@ namespace JSONAPI\Provider;
 
 use JSONAPI\Config\Config;
 use JSONAPI\Helpers\APIHelper;
+use JSONAPI\Helpers\UtilityHelper;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 
@@ -42,9 +43,15 @@ class APIProvider implements ServiceProviderInterface
             }
         );
 
+        $app['jsonapi.utilityhelper'] = $app->share(
+            function ($app) {
+                return new UtilityHelper($app);
+            }
+        );
+
         $app['jsonapi.apihelper'] = $app->share(
             function ($app) {
-                return new APIHelper($app);
+                return new APIHelper($app, $app['jsonapi.config'], $app['jsonapi.utilityhelper']);
             }
         );
 
