@@ -3,6 +3,7 @@
 namespace Bolt\Extension\Bolt\JsonApi\Response;
 
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Class ApiNotFoundResponse
@@ -17,6 +18,7 @@ class ApiNotFoundResponse extends ApiErrorResponse
      */
     public function __construct(array $data, Config $config)
     {
-        parent::__construct('404', 'Not Found', $data, $config);
+        parent::__construct(Response::HTTP_NOT_FOUND,
+            Response::$statusTexts[Response::HTTP_NOT_FOUND], $data, $config);
     }
 }

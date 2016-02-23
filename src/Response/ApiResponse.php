@@ -24,7 +24,7 @@ class ApiResponse extends Response
     public function __construct(array $data, Config $config)
     {
         $this->config = $config;
-        parent::__construct($data, 200, []);
+        parent::__construct($data, Response::HTTP_OK, []);
         $this->setHeadersFromConfig();
     }
 
@@ -70,10 +70,10 @@ class ApiResponse extends Response
     private function setStatusCodeFromData(array $data)
     {
         if (isset($data['errors'])) {
-            $status = isset($data['errors']['status']) ? $data['errors']['status'] : 400;
+            $status = isset($data['errors']['status']) ? $data['errors']['status'] : Response::HTTP_BAD_REQUEST;
             $this->setStatusCode($status);
         } else {
-            $this->setStatusCode(201);
+            $this->setStatusCode(Response::HTTP_OK);
         }
     }
 

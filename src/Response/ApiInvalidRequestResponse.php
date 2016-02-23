@@ -3,6 +3,7 @@
 namespace Bolt\Extension\Bolt\JsonApi\Response;
 
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Class ApiInvalidRequestResponse
@@ -17,6 +18,7 @@ class ApiInvalidRequestResponse extends ApiErrorResponse
      */
     public function __construct(array $data, Config $config)
     {
-        parent::__construct('400', 'Invalid Request', $data, $config);
+        parent::__construct(Response::HTTP_BAD_REQUEST,
+            Response::$statusTexts[Response::HTTP_BAD_REQUEST], $data, $config);
     }
 }
