@@ -106,33 +106,33 @@ class APIHelper
     /**
      * Globally fetch all related content.
      *
-     * @param string $contenttype The name of the contenttype.
+     * @param string $contentType The name of the contenttype.
      * @param \Bolt\Content[] $items
      * @return \Bolt\Content[]
      */
-    public function fetchIncludedContent($contenttype, $items)
+    public function fetchIncludedContent($contentType, $items)
     {
         $include = $this->getContenttypesToInclude();
         $related = [];
-        $tofetch = [];
+        $toFetch = [];
 
         // Collect all ids per contenttype and then fetch em.
         foreach($include as $ct) {
             // Check if the include exists in the contenttypes definition.
-            $exists = $this->app['config']->get("contenttypes/$contenttype/relations/$ct", false);
+            $exists = $this->app['config']->get("contenttypes/$contentType/relations/$ct", false);
             if ($exists !== false) {
-                $tofetch[$ct] = [];
+                $toFetch[$ct] = [];
 
                 foreach ($items as $item) {
                     if ($item->relation && isset($item->relation[$ct])) {
-                        $tofetch[$ct] = array_merge($tofetch[$ct], $item->relation[$ct]);
+                        $toFetch[$ct] = array_merge($toFetch[$ct], $item->relation[$ct]);
                     }
                 }
             }
         }
 
         // ... and fetch!
-        foreach ($tofetch as $ct => $ids) {
+        foreach ($toFetch as $ct => $ids) {
             $ids = implode(' || ', $ids);
             $pager = [];
             $items = $this->app['storage']->getContent($ct, [ 'paging' => false ], $pager, [ 'id' => $ids ]);
@@ -164,14 +164,13 @@ class APIHelper
     {
         $include = [];
 
-        if ($requestedContenttypes = $this->config->getCurrentRequest()->get('include')) {
-            // These are the related contenttypes to include.
-            $requestedContenttypes = explode(',', $requestedContenttypes);
-            foreach($requestedContenttypes as $ct) {
+        if ($requestedContentTypes = $this->config->getCurrentRequest()->get('include')) {
+            $requestedContentTypes = explode(',', $requestedContentTypes);
+            foreach($requestedContentTypes as $ct) {
                 if (isset($this->config->getContentTypes()[$ct])) {
                     $include[] = $ct;
                 } else {
-                    throw new \Exception("Contenttype with name [$ct] requested in include not found.");
+                    throw new \Exception("Content type with name [$ct] requested in include not found.");
                 }
             }
         }
@@ -183,15 +182,15 @@ class APIHelper
     /**
      * Returns all field names for the given contenttype.
      *
-     * @param string $contenttype The name of the contenttype.
+     * @param string $contentType The name of the contenttype.
      * @return string[] An array with all field definitions for the given
      *                  contenttype. This includes the base columns as well.
      */
-    public function getAllFieldNames($contenttype)
+    public function getAllFieldNames($contentType)
     {
         $baseFields = \Bolt\Content::getBaseColumns();
-        $definedFields = $this->app['config']->get("contenttypes/$contenttype/fields", []);
-        $taxonomyFields = $this->getAllTaxonomies($contenttype);
+        $definedFields = $this->app['config']->get("contenttypes/$contentType/fields", []);
+        $taxonomyFields = $this->getAllTaxonomies($contentType);
 
         // Fields could be empty, although it's a rare case.
         if (!empty($definedFields)) {
@@ -204,15 +203,15 @@ class APIHelper
     }
 
     /**
-     * Returns all taxonomy names for the given contenttype.
+     * Returns all taxonomy names for the given content type.
      *
-     * @param string $contenttype The name of the contenttype.
+     * @param string $contentType The name of the content type.
      * @return string[] An array with all taxonomy names for the given
      *                  contenttype.
      */
-    public function getAllTaxonomies($contenttype)
+    public function getAllTaxonomies($contentType)
     {
-        $taxonomyFields = $this->app['config']->get("contenttypes/$contenttype/taxonomy", []);
+        $taxonomyFields = $this->app['config']->get("contenttypes/$contentType/taxonomy", []);
         return $taxonomyFields;
     }
 
@@ -280,7 +279,7 @@ class APIHelper
      */
     public function cleanItem($item, $fields = [])
     {
-        $contenttype = $item->contenttype['slug'];
+        $contentType = $item->contenttype['slug'];
 
         if (empty($fields)) {
             $fields = array_keys($item->contenttype['fields']);
@@ -298,7 +297,7 @@ class APIHelper
         $id = $item->values['id'];
         $values = [
             'id' => $id,
-            'type' => $contenttype,
+            'type' => $contentType,
         ];
         $attributes = [];
         $fields = array_unique($fields);
@@ -383,7 +382,7 @@ class APIHelper
         }
 
         $values['links'] = [
-            'self' => sprintf('%s/%s/%s', $this->config->getBasePath(), $contenttype, $id),
+            'self' => sprintf('%s/%s/%s', $this->config->getBasePath(), $contentType, $id),
         ];
 
         // todo: Handle taxonomies
@@ -417,7 +416,7 @@ class APIHelper
                 $relationships[$ct] = [
                     'links' => [
                         // 'self' -- this is irrelevant for now
-                        'related' => $this->config->getBasePath()."/$contenttype/$id/$ct"
+                        'related' => $this->config->getBasePath()."/$contentType/$id/$ct"
                     ],
                     'data' => $data
                 ];
@@ -431,27 +430,26 @@ class APIHelper
     /**
      * Returns the values for the "links" object in a listing response.
      *
-     * @param string $contenttype The name of the contenttype.
+     * @param string $contentType The name of the contenttype.
      * @param int $currentPage The current page number.
      * @param int $totalPages The total number of pages.
      * @param int $pageSize The number of items per page.
      * @return mixed[] An array with URLs for the current page and related
      *                 pagination pages.
      */
-    public function makeLinks($contenttype, $currentPage, $totalPages, $pageSize)
+    public function makeLinks($contentType, $currentPage, $totalPages, $pageSize)
     {
         $basePath = $this->config->getBasePath();
-        $basePathContentType = $basePath . '/' . $contenttype;
+        $basePathContentType = $basePath . '/' . $contentType;
         $prevPage = max($currentPage - 1, 1);
         $nextPage = min($currentPage + 1, $totalPages);
         $firstPage = 1;
         $pagination = $firstPage != $totalPages;
 
         $links = [];
-        $querystring = '';
-        $defaultQuerystring = $this->makeQueryParameters();
+        $defaultQueryString = $this->makeQueryParameters();
 
-        $params = $pagination ? $this->makeQueryParameters([$this->config->getPaginationNumberKey() => $currentPage]) : $defaultQuerystring;
+        $params = $pagination ? $this->makeQueryParameters([$this->config->getPaginationNumberKey() => $currentPage]) : $defaultQueryString;
         $links["self"] = $basePathContentType.$params;
 
         // The following links only exists if a query was made using pagination.
@@ -484,13 +482,13 @@ class APIHelper
     public function makeRelatedLinks($item)
     {
         $related = [];
-        $contenttype = $item->contenttype['slug'];
+        $contentType = $item->contenttype['slug'];
         $id = $item->values['id'];
 
         if ($item->relation) {
             foreach ($item->relation as $ct => $ids) {
                 $related[$ct] = [
-                    'href' => $this->config->getBasePath()."/$contenttype/$id/$ct",
+                    'href' => $this->config->getBasePath()."/$contentType/$id/$ct",
                     'meta' => [
                         'count' => count($ids)
                     ]
@@ -528,11 +526,11 @@ class APIHelper
 
         if ($buildQuery) {
             // No need to urlencode these, afaik.
-            $querystring =  urldecode(http_build_query($queryParameters));
-            if (!empty($querystring)) {
-                $querystring = '?' . $querystring;
+            $queryString =  urldecode(http_build_query($queryParameters));
+            if (!empty($queryString)) {
+                $queryString = '?' . $queryString;
             }
-            return $querystring;
+            return $queryString;
         }
         return $queryParameters;
     }

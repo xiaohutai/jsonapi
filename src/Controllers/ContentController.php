@@ -58,7 +58,7 @@ class ContentController implements ControllerProviderInterface
         $ctr->get("/{contentType}/search", [$this, "searchContent"])
             ->bind('jsonapi.searchContent');
 
-        $ctr->get("/{contenttype}/{slug}/{relatedContentType}", [$this, 'singleContent'])
+        $ctr->get("/{contentType}/{slug}/{relatedContentType}", [$this, 'singleContent'])
             ->value('relatedContentType', null)
             ->assert('slug', '[a-zA-Z0-9_\-]+')
             ->bind('jsonapi.singleContent');
@@ -359,9 +359,9 @@ class ContentController implements ControllerProviderInterface
             $prev = $item->previous();
             $next = $item->next();
 
-            $defaultQuerystring = $this->APIHelper->makeQueryParameters();
+            $defaultQueryString = $this->APIHelper->makeQueryParameters();
             $links = [
-                'self' => $values['links']['self'] . $defaultQuerystring
+                'self' => $values['links']['self'] . $defaultQueryString
             ];
 
             // optional: This adds additional relationships links in the root
@@ -381,11 +381,11 @@ class ContentController implements ControllerProviderInterface
 
             if ($prev) {
                 $links['prev'] = sprintf('%s/%s/%d%s', $this->config->getBasePath(),
-                    $contentType, $prev->values['id'], $defaultQuerystring);
+                    $contentType, $prev->values['id'], $defaultQueryString);
             }
             if ($next) {
                 $links['next'] = sprintf('%s/%s/%d%s', $this->config->getBasePath(),
-                    $contentType, $next->values['id'], $defaultQuerystring);
+                    $contentType, $next->values['id'], $defaultQueryString);
             }
 
             $response = [
