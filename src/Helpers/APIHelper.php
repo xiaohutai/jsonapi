@@ -219,7 +219,7 @@ class APIHelper
     /**
      * Returns an array with the field names to be shown in the JSON response.
      *
-     * @param string $contenttype The name of the contenttype.
+     * @param string $contentType The name of the contenttype.
      * @param array $allFields An array with all existing fields of the given
      *                         contenttype. This functions as an allowed fields
      *                         list if there is none defined.
@@ -229,20 +229,21 @@ class APIHelper
      * @return string[] An array with field names to be shown. It is possible that
      *                  this function returns an empty array.
      */
-    public function getFields($contenttype, $allFields = [], $defaultFieldsKey = 'list-fields')
+    public function getFields($contentType, $allFields = [], $defaultFieldsKey = 'list-fields')
     {
         $fields = [];
+        $contentTypes = $this->config->getContentTypes();
 
-        if (isset($this->config->getContentTypes()[$contenttype]['allowed-fields'])) {
-            $allowedFields = $this->config->getContentTypes()[$contenttype]['allowed-fields'];
+        if (isset($contentTypes[$contentType]['allowed-fields'])) {
+            $allowedFields = $contentTypes[$contentType]['allowed-fields'];
         } else {
             $allowedFields = $allFields;
         }
 
         // Check if there are any fields requested.
         if ($requestFields = $this->config->getCurrentRequest()->get('fields')) {
-            if (isset($requestFields[$contenttype])) {
-                $values = explode(',', $requestFields[$contenttype]);
+            if (isset($requestFields[$contentType])) {
+                $values = explode(',', $requestFields[$contentType]);
                 foreach ($values as $v) {
                     if (in_array($v, $allowedFields)) {
                         $fields[] = $v;
@@ -253,8 +254,8 @@ class APIHelper
 
         // Default on the default/fallback fields defined in the config.
         if (empty($fields)) {
-            if (isset($this->config->getContentTypes()[$contenttype][$defaultFieldsKey])) {
-                $fields = $this->config->getContentTypes()[$contenttype][$defaultFieldsKey];
+            if (isset($this->config->getContentTypes()[$contentType][$defaultFieldsKey])) {
+                $fields = $this->config->getContentTypes()[$contentType][$defaultFieldsKey];
                 // todo: do we need to filter these through 'allowed-fields'?
             }
         }

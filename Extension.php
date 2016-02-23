@@ -24,18 +24,6 @@ class Extension extends \Bolt\BaseExtension
 {
 
     /**
-     * @var Request
-     */
-    public static $request;
-
-
-    public static $base = '/json';
-    public static $basePath;
-
-    public static $paginationNumberKey = 'page'; // todo: page[number]
-    public static $paginationSizeKey = 'limit';  // todo: page[size]
-
-    /**
      * Returns the name of this extension.
      *
      * @return string The name of this extension.
@@ -54,10 +42,10 @@ class Extension extends \Bolt\BaseExtension
         $this->app->register(new APIProvider($this->config));
 
         $this->app->mount($this->app['jsonapi.config']->getBase(),
-            new MenuController($this->app['jsonapi.config'], $this->app['jsonapi.apihelper'], $this->app));
+            new MenuController($this->app['jsonapi.config'], $this->app['jsonapi.apihelper']));
 
        $this->app->mount($this->app['jsonapi.config']->getBase(),
-           new ContentController($this->app['jsonapi.config'], $this->app['jsonapi.apihelper'], $this->app));
+           new ContentController($this->app['jsonapi.config'], $this->app['jsonapi.apihelper']));
     }
 
 

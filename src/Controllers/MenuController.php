@@ -14,13 +14,8 @@ use Symfony\Component\HttpFoundation\Request;
  * Class MenuController
  * @package JSONAPI\Controllers
  */
-class MenuController extends APIController implements ControllerProviderInterface
+class MenuController implements ControllerProviderInterface
 {
-    /**
-     * @var Application
-     */
-    private $app;
-
     /**
      * @var Config
      */
@@ -35,11 +30,9 @@ class MenuController extends APIController implements ControllerProviderInterfac
      * MenuController constructor.
      * @param Config $config
      * @param APIHelper $APIHelper
-     * @param Application $app
      */
-    public function __construct(Config $config, APIHelper $APIHelper, Application $app)
+    public function __construct(Config $config, APIHelper $APIHelper)
     {
-        $this->app = $app;
         $this->config = $config;
         $this->APIHelper = $APIHelper;
     }
@@ -65,9 +58,10 @@ class MenuController extends APIController implements ControllerProviderInterfac
 
     /**
      * @param Request $request
+     * @param Application $app
      * @return JsonResponse
      */
-    public function listMenus(Request $request)
+    public function listMenus(Request $request, Application $app)
     {
         $this->config->setCurrentRequest($request);
 
@@ -76,7 +70,7 @@ class MenuController extends APIController implements ControllerProviderInterfac
             $name = "/$q";
         }
 
-        $menu = $this->app['config']->get('menu'.$name, false);
+        $menu = $app['config']->get('menu'.$name, false);
         if ($menu) {
             return new JsonResponse([
                 'data' => $menu

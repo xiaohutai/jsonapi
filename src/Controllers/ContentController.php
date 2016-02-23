@@ -14,14 +14,8 @@ use Symfony\Component\HttpFoundation\Request;
  * Class ContentController
  * @package JSONAPI\Controllers
  */
-class ContentController extends APIController implements ControllerProviderInterface
+class ContentController implements ControllerProviderInterface
 {
-
-    /**
-     * @var Application
-     */
-    private $app;
-
     /**
      * @var Config
      */
@@ -31,16 +25,13 @@ class ContentController extends APIController implements ControllerProviderInter
      */
     private $APIHelper;
 
-
     /**
      * ContentController constructor.
      * @param Config $config
      * @param APIHelper $APIHelper
-     * @param Application $app
      */
-    public function __construct(Config $config, APIHelper $APIHelper, Application $app)
+    public function __construct(Config $config, APIHelper $APIHelper)
     {
-        $this->app = $app;
         $this->config = $config;
         $this->APIHelper = $APIHelper;
     }
@@ -59,11 +50,11 @@ class ContentController extends APIController implements ControllerProviderInter
          */
         $ctr = $app['controllers_factory'];
 
-        $ctr->get("/{contenttype}", [$this, "getContentList"])->bind('jsonapi.listContent');
-        $ctr->get("/{contenttype}/search", [$this, "searchContent"])->bind('jsonapi.searchContent');
+        $ctr->get("/{contentType}", [$this, "getContentList"])->bind('jsonapi.listContent');
+        $ctr->get("/{contentType}/search", [$this, "searchContent"])->bind('jsonapi.searchContent');
 
-        $ctr->get("/{contenttype}/{slug}/{relatedContenttype}", [$this, 'singleContent'])
-            ->value('relatedContenttype', null)
+        $ctr->get("/{contenttype}/{slug}/{relatedContentType}", [$this, 'singleContent'])
+            ->value('relatedContentType', null)
             ->assert('slug', '[a-zA-Z0-9_\-]+')
             ->bind('jsonapi.singleContent');
 
@@ -71,19 +62,19 @@ class ContentController extends APIController implements ControllerProviderInter
     }
 
     /**
-     * @param $contenttype
      * @param Request $request
+     * @param Application $app
+     * @param $contentType
      * @return JsonResponse
      */
-    public function getContentList($contenttype, Request $request)
+    public function getContentList(Request $request, Application $app, $contentType)
     {
-
         $this->config->setCurrentRequest($request);
         $this->APIHelper->fixBoltStorageRequest();
 
-        if (!array_key_exists($contenttype, $this->config->getContentTypes())) {
+        if (!array_key_exists($contentType, $this->config->getContentTypes())) {
             return new JsonResponse([
-                'detail' => "Contenttype with name [$contenttype] not found."
+                'detail' => "Contenttype with name [$contentType] not found."
             ]);
         }
 
@@ -110,12 +101,12 @@ class ContentController extends APIController implements ControllerProviderInter
         $pager = [];
         $where = [];
 
-        $allFields = $this->APIHelper->getAllFieldNames($contenttype);
-        $fields = $this->APIHelper->getFields($contenttype, $allFields, 'list-fields');
+        $allFields = $this->APIHelper->getAllFieldNames($contentType);
+        $fields = $this->APIHelper->getFields($contentType, $allFields, 'list-fields');
 
         // Use the `where-clause` defined in the contenttype config.
-        if (isset($this->config->getContentTypes()[$contenttype]['where-clause'])) {
-            $where = $this->config->getContentTypes()['contenttypes'][$contenttype]['where-clause'];
+        if (isset($this->config->getContentTypes()[$contentType]['where-clause'])) {
+            $where = $this->config->getContentTypes()['contenttypes'][$contentType]['where-clause'];
         }
 
         // Handle $filter[], this modifies the $where[] clause.
@@ -123,7 +114,7 @@ class ContentController extends APIController implements ControllerProviderInter
             foreach ($filters as $key => $value) {
                 if (!in_array($key, $allFields)) {
                     return new JsonResponse([
-                        'detail' => "Parameter [$key] does not exist for contenttype with name [$contenttype]."
+                        'detail' => "Parameter [$key] does not exist for contenttype with name [$contentType]."
                     ]);
                 }
                 // A bit crude for now.
@@ -136,7 +127,7 @@ class ContentController extends APIController implements ControllerProviderInter
             foreach ($contains as $key => $value) {
                 if (!in_array($key, $allFields)) {
                     return new JsonResponse([
-                        'detail' => "Parameter [$key] does not exist for contenttype with name [$contenttype]."
+                        'detail' => "Parameter [$key] does not exist for contenttype with name [$contentType]."
                     ]);
                 }
 
@@ -153,7 +144,7 @@ class ContentController extends APIController implements ControllerProviderInter
         // If `returnsingle` is not set to false, then a single result will not
         // result in an array.
         $where['returnsingle'] = false;
-        $items = $this->app['storage']->getContent($contenttype, $options, $pager, $where);
+        $items = $app['storage']->getContent($contentType, $options, $pager, $where);
 
         // If we don't have any items, this can mean one of two things: either
         // the contenttype does not exist (in which case we'll get a non-array
@@ -161,7 +152,7 @@ class ContentController extends APIController implements ControllerProviderInter
 
         if (!is_array($items)) {
             return new JsonResponse([
-                'detail' => "Configuration error: [$contenttype] is configured as a JSON end-point, but doesn't exist as a contenttype."
+                'detail' => "Configuration error: [$contentType] is configured as a JSON end-point, but doesn't exist as a contenttype."
             ]);
         }
 
@@ -173,7 +164,7 @@ class ContentController extends APIController implements ControllerProviderInter
 
         // Handle "include" and fetch related relationships in current query.
         try {
-            $included = $this->APIHelper->fetchIncludedContent($contenttype, $items);
+            $included = $this->APIHelper->fetchIncludedContent($contentType, $items);
         } catch (\Exception $e) {
             return new JsonResponse([
                 'detail' => $e->getMessage()
@@ -185,7 +176,7 @@ class ContentController extends APIController implements ControllerProviderInter
         }
 
         $response = [
-            'links' => $this->APIHelper->makeLinks($contenttype, $pager['current'], intval($pager['totalpages']), $limit),
+            'links' => $this->APIHelper->makeLinks($contentType, $pager['current'], intval($pager['totalpages']), $limit),
             'meta' => [
                 "count" => count($items),
                 "total" => intval($pager['count'])
@@ -202,9 +193,11 @@ class ContentController extends APIController implements ControllerProviderInter
 
     /**
      * @param Request $request
+     * @param Application $app
+     * @param $contentType
      * @return JsonResponse
      */
-    public function searchContent(Request $request, $contenttype)
+    public function searchContent(Request $request, Application $app, $contentType)
     {
         $this->config->setCurrentRequest($request);
         $this->APIHelper->fixBoltStorageRequest();
@@ -228,13 +221,13 @@ class ContentController extends APIController implements ControllerProviderInter
         }
 
         // If no $contenttype is set, search all 'searchable' contenttypes.
-        $baselink = "$contenttype/search";
-        if ($contenttype === null) {
+        $baselink = "$contentType/search";
+        if ($contentType === null) {
             $allcontenttypes = array_keys($this->config->getContentTypes());
             // This also fetches unallowed ones:
             // $allcontenttypes = array_keys($this->app['config']->get('contenttypes'));
             $allcontenttypes = implode(',', $allcontenttypes);
-            $contenttype = "($allcontenttypes)";
+            $contentType = "($allcontenttypes)";
             $baselink = 'search';
         }
 
@@ -253,11 +246,11 @@ class ContentController extends APIController implements ControllerProviderInter
         unset($all['page']);
         $request->query->replace($all);
 
-        $items = $this->app['storage']->getContent($contenttype . '/search', ['filter' => $q], $pager, ['returnsingle' => false]);
+        $items = $app['storage']->getContent($contentType . '/search', ['filter' => $q], $pager, ['returnsingle' => false]);
 
         if (!is_array($items)) {
             return new JsonResponse([
-                'detail' => "Configuration error: [$contenttype] is configured as a JSON end-point, but doesn't exist as a contenttype."
+                'detail' => "Configuration error: [$contentType] is configured as a JSON end-point, but doesn't exist as a contenttype."
             ]);
         }
 
@@ -300,34 +293,42 @@ class ContentController extends APIController implements ControllerProviderInter
     }
 
 
-    public function singleContent(Request $request, $contenttype, $slug, $relatedContenttype)
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @param $contentType
+     * @param $slug
+     * @param $relatedContentType
+     * @return array|JsonResponse
+     */
+    public function singleContent(Request $request, Application $app, $contentType, $slug, $relatedContentType)
     {
         $this->config->setCurrentRequest($request);
 
-        if (!array_key_exists($contenttype, $this->config->getContentTypes())) {
+        if (!array_key_exists($contentType, $this->config->getContentTypes())) {
             return new JsonResponse([
-                'detail' => "Contenttype with name [$contenttype] not found."
+                'detail' => "Contenttype with name [$contentType] not found."
             ]);
         }
 
         /** @var Content $item */
-        $item = $this->app['storage']->getContent("$contenttype/$slug");
+        $item = $app['storage']->getContent("$contentType/$slug");
         if (!$item) {
             return new JsonResponse([
-                'detail' => "No [$contenttype] found with id/slug: [$slug]."
+                'detail' => "No [$contentType] found with id/slug: [$slug]."
             ]);
         }
 
-        if ($relatedContenttype !== null) {
-            $items = $item->related($relatedContenttype);
+        if ($relatedContentType !== null) {
+            $items = $item->related($relatedContentType);
             if (!$items) {
                 return new JsonResponse([
-                    'detail' => "No related items of type [$relatedContenttype] found for [$contenttype] with id/slug: [$slug]."
+                    'detail' => "No related items of type [$relatedContentType] found for [$contentType] with id/slug: [$slug]."
                 ]);
             }
 
-            $allFields = $this->APIHelper->getAllFieldNames($relatedContenttype);
-            $fields = $this->APIHelper->getFields($relatedContenttype, $allFields, 'list-fields');
+            $allFields = $this->APIHelper->getAllFieldNames($relatedContentType);
+            $fields = $this->APIHelper->getFields($relatedContentType, $allFields, 'list-fields');
 
             $items = array_values($items);
             foreach ($items as $key => $item) {
@@ -336,7 +337,7 @@ class ContentController extends APIController implements ControllerProviderInter
 
             $response = new JsonResponse([
                 'links' => [
-                    'self' => $this->config->getBasePath() . "/$contenttype/$slug/$relatedContenttype" . $this->APIHelper->makeQueryParameters()
+                    'self' => $this->config->getBasePath() . "/$contentType/$slug/$relatedContentType" . $this->APIHelper->makeQueryParameters()
                 ],
                 'meta' => [
                     "count" => count($items),
@@ -347,8 +348,8 @@ class ContentController extends APIController implements ControllerProviderInter
 
         } else {
 
-            $allFields = $this->APIHelper->getAllFieldNames($contenttype);
-            $fields = $this->APIHelper->getFields($contenttype, $allFields, 'item-fields');
+            $allFields = $this->APIHelper->getAllFieldNames($contentType);
+            $fields = $this->APIHelper->getFields($contentType, $allFields, 'item-fields');
             $values = $this->APIHelper->cleanItem($item, $fields);
             $prev = $item->previous();
             $next = $item->next();
@@ -366,7 +367,7 @@ class ContentController extends APIController implements ControllerProviderInter
             }
 
             try {
-                $included = $this->APIHelper->fetchIncludedContent($contenttype, [$item]);
+                $included = $this->APIHelper->fetchIncludedContent($contentType, [$item]);
             } catch (\Exception $e) {
                 return new JsonResponse([
                     'detail' => $e->getMessage()
@@ -375,11 +376,11 @@ class ContentController extends APIController implements ControllerProviderInter
 
             if ($prev) {
                 $links['prev'] = sprintf('%s/%s/%d%s', $this->config->getBasePath(),
-                    $contenttype, $prev->values['id'], $defaultQuerystring);
+                    $contentType, $prev->values['id'], $defaultQuerystring);
             }
             if ($next) {
                 $links['next'] = sprintf('%s/%s/%d%s', $this->config->getBasePath(),
-                    $contenttype, $next->values['id'], $defaultQuerystring);
+                    $contentType, $next->values['id'], $defaultQuerystring);
             }
 
             $response = [
