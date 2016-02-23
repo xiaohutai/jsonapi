@@ -53,6 +53,15 @@ class Config
      */
     private $dateIso;
 
+    /**
+     * @var array
+     */
+    private $headers;
+
+    /**
+     * @var array
+     */
+    private $jsonOptions;
 
     public function __construct($config, Application $app)
     {
@@ -67,6 +76,8 @@ class Config
         $this->setPaginationSizeKey('limit');
         $this->setThumbnail($config['thumbnail']);
         $this->setDateIso($config['date-iso-8601']);
+        $this->setHeaders($config['headers']);
+        $this->setJsonOptions($config['jsonoptions']);
     }
 
     /**
@@ -211,5 +222,37 @@ class Config
     public function setDateIso($dateIso)
     {
         $this->dateIso = $dateIso;
+    }
+
+    /**
+     * @return array
+     */
+    public function getHeaders()
+    {
+        return $this->headers;
+    }
+
+    /**
+     * @param array $headers
+     */
+    public function setHeaders($headers)
+    {
+        $this->headers = $headers;
+    }
+
+    /**
+     * @return array
+     */
+    public function getJsonOptions()
+    {
+        return $this->jsonOptions;
+    }
+
+    /**
+     * @param array $jsonOptions
+     */
+    public function setJsonOptions($jsonOptions)
+    {
+        $this->jsonOptions = $jsonOptions;
     }
 }

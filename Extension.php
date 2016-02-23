@@ -13,7 +13,6 @@ namespace Bolt\Extension\Bolt\JsonApi;
 use Bolt\Extension\Bolt\JsonApi\Controllers\ContentController;
 use Bolt\Extension\Bolt\JsonApi\Controllers\MenuController;
 use Bolt\Extension\Bolt\JsonApi\Provider\APIProvider;
-use Symfony\Component\HttpFoundation\Request;
 
 /**
  * This extension tries to return JSON responses according to the specifications
@@ -38,13 +37,15 @@ class Extension extends \Bolt\BaseExtension
      */
     public function initialize()
     {
-
         $this->app->register(new APIProvider($this->config));
 
+
+
+        /* Mount the controllers! */
         $this->app->mount($this->app['jsonapi.config']->getBase(),
             new MenuController($this->app['jsonapi.config'], $this->app['jsonapi.apihelper']));
 
-       $this->app->mount($this->app['jsonapi.config']->getBase(),
+        $this->app->mount($this->app['jsonapi.config']->getBase(),
            new ContentController($this->app['jsonapi.config'], $this->app['jsonapi.apihelper']));
     }
 

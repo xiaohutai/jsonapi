@@ -4,6 +4,7 @@ namespace Bolt\Extension\Bolt\JsonApi\Controllers;
 use Bolt\Content;
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
 use Bolt\Extension\Bolt\JsonApi\Helpers\APIHelper;
+use Bolt\Extension\Bolt\JsonApi\Response\ApiResponse;
 use Silex\Application;
 use Silex\ControllerCollection;
 use Silex\ControllerProviderInterface;
@@ -50,8 +51,11 @@ class ContentController implements ControllerProviderInterface
          */
         $ctr = $app['controllers_factory'];
 
-        $ctr->get("/{contentType}", [$this, "getContentList"])->bind('jsonapi.listContent');
-        $ctr->get("/{contentType}/search", [$this, "searchContent"])->bind('jsonapi.searchContent');
+        $ctr->get("/{contentType}", [$this, "getContentList"])
+            ->bind('jsonapi.listContent');
+
+        $ctr->get("/{contentType}/search", [$this, "searchContent"])
+            ->bind('jsonapi.searchContent');
 
         $ctr->get("/{contenttype}/{slug}/{relatedContentType}", [$this, 'singleContent'])
             ->value('relatedContentType', null)
@@ -188,7 +192,7 @@ class ContentController implements ControllerProviderInterface
             $response['included'] = $included;
         }
 
-        return new JsonResponse($response);
+        return new ApiResponse($response, $this->config);
     }
 
     /**
@@ -282,14 +286,14 @@ class ContentController implements ControllerProviderInterface
             $items[$key] = $this->APIHelper->cleanItem($item, $ctFields);
         }
 
-        return new JsonResponse([
+        return new ApiResponse([
             'links' => $this->APIHelper->makeLinks($baselink, $page, $totalpages, $limit),
             'meta' => [
                 "count" => count($items),
                 "total" => $total
             ],
             'data' => $items,
-        ]);
+        ], $this->config);
     }
 
 
@@ -392,7 +396,7 @@ class ContentController implements ControllerProviderInterface
                 $response['included'] = $included;
             }
 
-            $response = new JsonResponse($response);
+            $response = new ApiResponse($response, $this->config);
         }
 
         return $response;

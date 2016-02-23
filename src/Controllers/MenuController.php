@@ -4,6 +4,7 @@ namespace Bolt\Extension\Bolt\JsonApi\Controllers;
 
 use Bolt\Extension\Bolt\JsonApi\Helpers\APIHelper;
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
+use Bolt\Extension\Bolt\JsonApi\Response\ApiResponse;
 use Silex\Application;
 use Silex\ControllerCollection;
 use Silex\ControllerProviderInterface;
@@ -76,9 +77,9 @@ class MenuController implements ControllerProviderInterface
                 'data' => $menu
             ]);
         }
-        return new JsonResponse([
+        return new ApiResponse([
             'detail' => "Menu with name [$q] not found."
-        ]);
+        ], $this->config);
     }
 
 }
