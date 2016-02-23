@@ -15,6 +15,7 @@ class ApiErrorResponse extends ApiResponse
      * @var string
      */
     private $status;
+
     /**
      * @var string
      */

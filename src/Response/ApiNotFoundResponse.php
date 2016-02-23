@@ -17,6 +17,6 @@ class ApiNotFoundResponse extends ApiErrorResponse
      */
     public function __construct(array $data, Config $config)
     {
-        parent::__construct('400', 'Invalid Request', $data, $config);
+        parent::__construct('404', 'Not Found', $data, $config);
     }
 }
