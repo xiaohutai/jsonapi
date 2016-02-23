@@ -29,15 +29,20 @@ class ApiErrorResponse extends ApiResponse
      */
     public function __construct($status, $title, array $data, Config $config)
     {
-        parent::__construct($data, $config);
         $this->status = $status;
         $this->title = $title;
+
+        parent::__construct($data, $config);
     }
 
+    /**
+     * @param array $content
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
     public function setContent(array $content)
     {
-        $data['status'] = $this->status;
-        $data['title'] = $this->title;
+        $content['status'] = $this->status;
+        $content['title'] = $this->title;
 
         return parent::setContent([
             'errors' => $content
