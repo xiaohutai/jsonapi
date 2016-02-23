@@ -10,7 +10,6 @@ use Bolt\Extension\Bolt\JsonApi\Response\ApiResponse;
 use Silex\Application;
 use Silex\ControllerCollection;
 use Silex\ControllerProviderInterface;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -71,7 +70,7 @@ class ContentController implements ControllerProviderInterface
      * @param Request $request
      * @param Application $app
      * @param $contentType
-     * @return JsonResponse
+     * @return ApiResponse
      */
     public function getContentList(Request $request, Application $app, $contentType)
     {
@@ -201,7 +200,7 @@ class ContentController implements ControllerProviderInterface
      * @param Request $request
      * @param Application $app
      * @param $contentType
-     * @return JsonResponse
+     * @return ApiResponse
      */
     public function searchContent(Request $request, Application $app, $contentType)
     {
@@ -305,7 +304,7 @@ class ContentController implements ControllerProviderInterface
      * @param $contentType
      * @param $slug
      * @param $relatedContentType
-     * @return array|JsonResponse
+     * @return ApiResponse
      */
     public function singleContent(Request $request, Application $app, $contentType, $slug, $relatedContentType)
     {
@@ -341,7 +340,7 @@ class ContentController implements ControllerProviderInterface
                 $items[$key] = $this->APIHelper->cleanItem($item, $fields);
             }
 
-            $response = new JsonResponse([
+            $response = new ApiResponse([
                 'links' => [
                     'self' => $this->config->getBasePath() . "/$contentType/$slug/$relatedContentType" . $this->APIHelper->makeQueryParameters()
                 ],
@@ -350,7 +349,7 @@ class ContentController implements ControllerProviderInterface
                     "total" => count($items)
                 ],
                 'data' => $items
-            ]);
+            ], $this->config);
 
         } else {
 
