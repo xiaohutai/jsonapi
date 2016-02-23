@@ -4,6 +4,8 @@ namespace Bolt\Extension\Bolt\JsonApi\Controllers;
 use Bolt\Content;
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
 use Bolt\Extension\Bolt\JsonApi\Helpers\APIHelper;
+use Bolt\Extension\Bolt\JsonApi\Response\ApiInvalidRequestResponse;
+use Bolt\Extension\Bolt\JsonApi\Response\ApiNotFoundResponse;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiResponse;
 use Silex\Application;
 use Silex\ControllerCollection;
@@ -77,9 +79,9 @@ class ContentController implements ControllerProviderInterface
         $this->APIHelper->fixBoltStorageRequest();
 
         if (!array_key_exists($contentType, $this->config->getContentTypes())) {
-            return new JsonResponse([
+            return new ApiNotFoundResponse([
                 'detail' => "Contenttype with name [$contentType] not found."
-            ]);
+            ], $this->config);
         }
 
         $options = [];
@@ -117,9 +119,9 @@ class ContentController implements ControllerProviderInterface
         if ($filters = $request->get('filter')) {
             foreach ($filters as $key => $value) {
                 if (!in_array($key, $allFields)) {
-                    return new JsonResponse([
+                    return new ApiInvalidRequestResponse([
                         'detail' => "Parameter [$key] does not exist for contenttype with name [$contentType]."
-                    ]);
+                    ], $this->config);
                 }
                 // A bit crude for now.
                 $where[$key] = str_replace(',', ' || ', $value);
@@ -130,9 +132,9 @@ class ContentController implements ControllerProviderInterface
         if ($contains = $request->get('contains')) {
             foreach ($contains as $key => $value) {
                 if (!in_array($key, $allFields)) {
-                    return new JsonResponse([
+                    return new ApiInvalidRequestResponse([
                         'detail' => "Parameter [$key] does not exist for contenttype with name [$contentType]."
-                    ]);
+                    ], $this->config);
                 }
 
                 $values = explode(",", $value);
@@ -155,9 +157,9 @@ class ContentController implements ControllerProviderInterface
         // response), or it exists, but no content has been added yet.
 
         if (!is_array($items)) {
-            return new JsonResponse([
+            return new ApiInvalidRequestResponse([
                 'detail' => "Configuration error: [$contentType] is configured as a JSON end-point, but doesn't exist as a contenttype."
-            ]);
+            ], $this->config);
         }
 
         if (empty($items)) {
@@ -170,9 +172,9 @@ class ContentController implements ControllerProviderInterface
         try {
             $included = $this->APIHelper->fetchIncludedContent($contentType, $items);
         } catch (\Exception $e) {
-            return new JsonResponse([
+            return new ApiInvalidRequestResponse([
                 'detail' => $e->getMessage()
-            ]);
+            ], $this->config);
         }
 
         foreach ($items as $key => $item) {
@@ -238,9 +240,9 @@ class ContentController implements ControllerProviderInterface
         if ($q = $request->get('q')) {
             $options['filter'] = $q;
         } else {
-            return new JsonResponse([
+            return new ApiInvalidRequestResponse([
                 'detail' => "No query parameter q specified."
-            ]);
+            ], $this->config);
         }
 
         // This 'page' part somehow messses with the getContent query. The
@@ -253,15 +255,15 @@ class ContentController implements ControllerProviderInterface
         $items = $app['storage']->getContent($contentType . '/search', ['filter' => $q], $pager, ['returnsingle' => false]);
 
         if (!is_array($items)) {
-            return new JsonResponse([
+            return new ApiInvalidRequestResponse([
                 'detail' => "Configuration error: [$contentType] is configured as a JSON end-point, but doesn't exist as a contenttype."
-            ]);
+            ], $this->config);
         }
 
         if (empty($items)) {
-            return new JsonResponse([
+            return new ApiNotFoundResponse([
                 'detail' => "No search results found for query [$q]"
-            ]);
+            ], $this->config);
         }
 
         $total = count($items);
@@ -310,25 +312,25 @@ class ContentController implements ControllerProviderInterface
         $this->config->setCurrentRequest($request);
 
         if (!array_key_exists($contentType, $this->config->getContentTypes())) {
-            return new JsonResponse([
+            return new ApiNotFoundResponse([
                 'detail' => "Contenttype with name [$contentType] not found."
-            ]);
+            ], $this->config);
         }
 
         /** @var Content $item */
         $item = $app['storage']->getContent("$contentType/$slug");
         if (!$item) {
-            return new JsonResponse([
+            return new ApiNotFoundResponse([
                 'detail' => "No [$contentType] found with id/slug: [$slug]."
-            ]);
+            ], $this->config);
         }
 
         if ($relatedContentType !== null) {
             $items = $item->related($relatedContentType);
             if (!$items) {
-                return new JsonResponse([
+                return new ApiNotFoundResponse([
                     'detail' => "No related items of type [$relatedContentType] found for [$contentType] with id/slug: [$slug]."
-                ]);
+                ], $this->config);
             }
 
             $allFields = $this->APIHelper->getAllFieldNames($relatedContentType);
@@ -373,9 +375,9 @@ class ContentController implements ControllerProviderInterface
             try {
                 $included = $this->APIHelper->fetchIncludedContent($contentType, [$item]);
             } catch (\Exception $e) {
-                return new JsonResponse([
+                return new ApiInvalidRequestResponse([
                     'detail' => $e->getMessage()
-                ]);
+                ], $this->config);
             }
 
             if ($prev) {

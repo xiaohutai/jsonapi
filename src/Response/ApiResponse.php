@@ -26,8 +26,6 @@ class ApiResponse extends Response
         $this->config = $config;
         parent::__construct($data, 200, []);
         $this->setHeadersFromConfig();
-        $this->setStatusCodeFromData($data);
-
     }
 
     /**
@@ -45,6 +43,7 @@ class ApiResponse extends Response
             $json_encodeOptions = JSON_PRETTY_PRINT;
         }
 
+        $this->setStatusCodeFromData($content);
         $json = json_encode($content, $json_encodeOptions);
 
         return parent::setContent($json);
