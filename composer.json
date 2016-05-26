@@ -2,9 +2,15 @@
     "name": "bolt/jsonapi",
     "description": "Provides simple JSON access to Bolt's internal data structures.",
     "type": "bolt-extension",
-    "keywords": ["json"],
+    "keywords": [
+        "json",
+        "api",
+        "jsonapi"
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true,
     "require": {
-        "bolt/bolt": ">=2.2.0,<3.0.0"
+        "bolt/bolt": "^3.0"
     },
     "license": "MIT",
     "authors": [
@@ -26,14 +32,14 @@
         }
     ],
     "autoload": {
-        "files": [
-            "init.php"
-        ],
         "psr-4": {
             "Bolt\\Extension\\Bolt\\JsonApi\\": [
                 "",
                 "src"
             ]
         }
+    },
+    "extra": {
+        "bolt-class": "Bolt\\Extension\\Bolt\\JsonApi\\Extension"
     }
 }
