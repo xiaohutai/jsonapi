@@ -26,7 +26,7 @@ class Extension extends SimpleExtension
     {
         $parentProviders = parent::getServiceProviders();
         $localProviders = [
-            new APIProvider($this->config),
+            new APIProvider($this->getConfig()),
         ];
 
         return $parentProviders + $localProviders;
