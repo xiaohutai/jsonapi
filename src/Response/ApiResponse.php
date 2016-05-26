@@ -34,7 +34,7 @@ class ApiResponse extends Response
      * @param array $content
      * @return Response
      */
-    public function setContent(array $content)
+    public function setContent($content)
     {
 
         if ($this->config->getJsonOptions()) {

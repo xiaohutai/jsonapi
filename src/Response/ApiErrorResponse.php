@@ -40,7 +40,7 @@ class ApiErrorResponse extends ApiResponse
      * @param array $content
      * @return \Symfony\Component\HttpFoundation\Response
      */
-    public function setContent(array $content)
+    public function setContent($content)
     {
         $content['status'] = $this->status;
         $content['title'] = $this->title;
