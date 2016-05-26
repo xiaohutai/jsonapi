@@ -24,12 +24,10 @@ class Extension extends SimpleExtension
 {
     public function getServiceProviders()
     {
-        $parentProviders = parent::getServiceProviders();
-        $localProviders = [
-            new APIProvider($this->getConfig()),
+        return [
+            $this,
+            new APIProvider($this->getConfig())
         ];
-
-        return $parentProviders + $localProviders;
     }
 
     protected function registerFrontendControllers()
@@ -37,8 +35,6 @@ class Extension extends SimpleExtension
         $container = $this->getContainer();
 
         return [
-            '/' . $container['jsonapi.config']->getBase() =>
-                new MenuController($container['jsonapi.config'], $container['jsonapi.apihelper']),
             '/' . $container['jsonapi.config']->getBase() =>
                 new ContentController($container['jsonapi.config'], $container['jsonapi.apihelper']),
         ];
