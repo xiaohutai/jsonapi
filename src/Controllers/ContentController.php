@@ -10,6 +10,7 @@ use Bolt\Extension\Bolt\JsonApi\Response\ApiResponse;
 use Silex\Application;
 use Silex\ControllerCollection;
 use Silex\ControllerProviderInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -51,6 +52,8 @@ class ContentController implements ControllerProviderInterface
          * @var $ctr \Silex\ControllerCollection
          */
         $ctr = $app['controllers_factory'];
+
+        $ctr->get("/menu", [$this, "listMenus"])->bind('jsonapi.menu');
 
         $ctr->get("/{contentType}", [$this, "getContentList"])
             ->bind('jsonapi.listContent');
@@ -401,6 +404,31 @@ class ContentController implements ControllerProviderInterface
         }
 
         return $response;
+    }
+
+    /**
+     * @param Request $request
+     * @param Application $app
+     * @return JsonResponse
+     */
+    public function listMenus(Request $request, Application $app)
+    {
+        $this->config->setCurrentRequest($request);
+
+        $name = '';
+        if ($q = $request->get('q')) {
+            $name = "/$q";
+        }
+
+        $menu = $app['config']->get('menu'.$name, false);
+        if ($menu) {
+            return new ApiResponse([
+                'data' => $menu
+            ], $this->config);
+        }
+        return new ApiNotFoundResponse([
+            'detail' => "Menu with name [$q] not found."
+        ], $this->config);
     }
 
 }
