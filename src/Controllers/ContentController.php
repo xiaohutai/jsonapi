@@ -84,14 +84,14 @@ class ContentController implements ControllerProviderInterface
         }
 
         $options = [];
-        if ($limit = $request->get('page')) {
+        if ($limit = $request->get('limit')) {
             $limit = intval($limit);
             if ($limit >= 1) {
                 $options['limit'] = $limit;
             }
         }
 
-        if ($page = $request->get('limit')) {
+        if ($page = $request->get('page')) {
             $page = intval($page);
             if ($page >= 1) {
                 $options['page'] = $page;
