@@ -45,7 +45,7 @@ class APIProvider implements ServiceProviderInterface
 
         $app['jsonapi.utilityhelper'] = $app->share(
             function ($app) {
-                return new UtilityHelper($app);
+                return new UtilityHelper($app, $app['jsonapi.config']);
             }
         );
 
