@@ -4,6 +4,7 @@ namespace Bolt\Extension\Bolt\JsonApi\Helpers;
 use Bolt\Content;
 use Bolt\Helpers\Arr;
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
+use Bolt\Storage\Collection\Taxonomy;
 use Silex\Application;
 
 /**
@@ -274,7 +275,7 @@ class APIHelper
      * defined in `contenttypes.yml` are used instead. This means that base
      * columns (set by Bolt), such as `datepublished`, are not shown.
      *
-     * @param \Bolt\Content $item The item to be projected.
+     * @param \Bolt\Storage\Entity\Content $item The item to be projected.
      * @param string[] $fields A list of fieldnames to be shown in the eventual
      *                         response. This may be empty, but will always
      *                         default on defined fields in `contenttypes.yml`.
@@ -285,13 +286,14 @@ class APIHelper
      */
     public function cleanItem($item, $fields = [])
     {
-        $contentType = $item->contenttype['slug'];
+        $contentType = $item->getSlug();
+        //$contentType = $item->contenttype['slug'];
 
         if (empty($fields)) {
-            $fields = array_keys($item->contenttype['fields']);
-            if (!empty($item->taxonomy)) {
-                $fields = array_merge($fields, array_keys($item->taxonomy));
-            }
+            $fields = array_keys($item->_fields);
+            /*if (!empty($item->getTaxonomy())) {
+                $fields = array_merge($fields, array_keys($item->getTaxonomy()));
+            }*/
         }
 
         // Both 'id' and 'type' are always required. So remove them from $fields.
@@ -300,21 +302,36 @@ class APIHelper
             unset($fields[$key]);
         }
 
-        $id = $item->values['id'];
+        $id = $item->getId();
         $values = [
-            'id' => $id,
-            'type' => $contentType,
+            'id' => strval($id),
+            'type' => (string) $item->getContenttype(),
         ];
         $attributes = [];
         $fields = array_unique($fields);
 
         foreach ($fields as $key => $field) {
 
-            if (isset($item->values[$field])) {
-                $attributes[$field] = $item->values[$field];
+            if ($item->get($field)) {
+                $attributes[$field] = $item->get($field);
             }
 
-            if (isset($item->taxonomy[$field])) {
+            if ($item->get($field) instanceof Taxonomy) {
+                unset($attributes[$field]);
+                if (! isset($attributes['taxonomy'])) {
+                    $attributes['taxonomy'] = [];
+                }
+
+                foreach ($item->get($field) as $field) {
+                    $type = $field->getTaxonomytype();
+                    $slug = $field->getSlug();
+                    $route = '/' . $type . '/' . $slug;
+                    $attributes['taxonomy'][$type][$route] = $field->getName();
+                }
+            }
+
+            /*if ($item->getTaxonomy()->get($field)) {
+                $test = $item->getTaxonomy($field);
                 if (!isset($attributes['taxonomy'])) {
                     $attributes['taxonomy'] = [];
                 }
@@ -323,7 +340,7 @@ class APIHelper
                 // $multiple = $this->app['config']->get("taxonomy/$field/multiple");
                 // $behavesLike = $this->app['config']->get("taxonomy/$field/behaves_like");
                 $attributes['taxonomy'][$field] = $item->taxonomy[$field];
-            }
+            }*/
 
             if (in_array($field, ['datepublish', 'datecreated', 'datechanged', 'datedepublish']) && $this->config->getDateIso()) {
                 $attributes[$field] = $this->utilityHelper->dateISO($attributes[$field]);
@@ -395,8 +412,8 @@ class APIHelper
         //       1. tags
         //       2. categories
         //       3. groupings
-        if ($item->taxonomy) {
-            foreach($item->taxonomy as $key => $value) {
+        if ($item->getTaxonomy()) {
+            foreach($item->getTaxonomy() as $key => $value) {
                 // $values['attributes']['taxonomy'] = [];
             }
         }
@@ -408,21 +425,30 @@ class APIHelper
         //
         // todo: Depending on multiple, empty relationships need a null or [],
         //       if they don't exist.
-        if ($item->relation) {
+        if (count($item->getRelation()) > 0) {
             $relationships = [];
-            foreach ($item->relation as $ct => $ids) {
+            foreach ($item->getRelation() as $relatedType) {
                 $data = [];
-                foreach($ids as $i) {
+                $id = $relatedType->getId();
+                $fromType = $relatedType->getFromContenttype();
+                $toType = $relatedType->getToContenttype();
+
+                $data[] = [
+                    'type' => $toType,
+                    'id' => $id
+                ];
+
+                /*foreach($ids as $i) {
                     $data[] = [
                         'type' => $ct,
                         'id' => $i
                     ];
-                }
+                }*/
 
-                $relationships[$ct] = [
+                $relationships[$fromType] = [
                     'links' => [
                         // 'self' -- this is irrelevant for now
-                        'related' => $this->config->getBasePath()."/$contentType/$id/$ct"
+                        'related' => $this->config->getBasePath()."/$fromType/$id/$toType"
                     ],
                     'data' => $data
                 ];
@@ -517,7 +543,7 @@ class APIHelper
      *
      * @see \Bolt\Helpers\Arr::mergeRecursiveDistinct()
      */
-    public function makeQueryParameters($overrides = [], $buildQuery = true)
+    public function     makeQueryParameters($overrides = [], $buildQuery = true)
     {
         $queryParameters = $this->config->getCurrentRequest()->query->all();
 
@@ -528,7 +554,7 @@ class APIHelper
         // Using Bolt's Helper Arr class for merging and overriding values.
         $queryParameters = Arr::mergeRecursiveDistinct($queryParameters, $overrides);
 
-        $queryParameters = $this->unfixBoltStorageRequest($queryParameters);
+        //$queryParameters = $this->unfixBoltStorageRequest($queryParameters);
 
         if ($buildQuery) {
             // No need to urlencode these, afaik.

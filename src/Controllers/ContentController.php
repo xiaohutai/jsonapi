@@ -7,6 +7,7 @@ use Bolt\Extension\Bolt\JsonApi\Helpers\APIHelper;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiInvalidRequestResponse;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiNotFoundResponse;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiResponse;
+use Doctrine\Common\Collections\Criteria;
 use Silex\Application;
 use Silex\ControllerCollection;
 use Silex\ControllerProviderInterface;
@@ -78,7 +79,7 @@ class ContentController implements ControllerProviderInterface
     public function getContentList(Request $request, Application $app, $contentType)
     {
         $this->config->setCurrentRequest($request);
-        $this->APIHelper->fixBoltStorageRequest();
+        //$this->APIHelper->fixBoltStorageRequest();
 
         if (!array_key_exists($contentType, $this->config->getContentTypes())) {
             return new ApiNotFoundResponse([
@@ -86,26 +87,30 @@ class ContentController implements ControllerProviderInterface
             ], $this->config);
         }
 
-        $options = [];
-        if ($limit = $request->get('limit')) {
-            $limit = intval($limit);
-            if ($limit >= 1) {
-                $options['limit'] = $limit;
-            }
-        }
+        $repository = $app['storage']->getRepository($contentType);
+        $query = $repository->createQueryBuilder('contentType');
+        $query2 = $repository->createQueryBuilder('contentType');
+        $query2->select('COUNT(*) AS total');
 
-        if ($page = $request->get('page')) {
-            $page = intval($page);
-            if ($page >= 1) {
-                $options['page'] = $page;
+        $limit = intval($request->query->get('page[size]', 10, true));
+        $limit = $limit >= 1 ? $limit : 10;
+        $query->setMaxResults($limit);
+
+        $page = intval($request->query->get('page[number]', 1, true));
+        $page = $page >= 1 ? $page : 1;
+        $query->setFirstResult($limit * ($page - 1));
+
+        $orders = explode(',', $request->get('sort', 'id'));
+        if ($orders) {
+            foreach ($orders as $order) {
+                $order = ltrim($order);
+                $sort = ltrim($order, '-');
+                $query->addOrderBy('contentType.' . $sort, ('-' === $order[0] ? 'DESC' : 'ASC'));
             }
-        }
-        if ($order = $request->get('sort')) {
-            $options['order'] = $order;
         }
 
         // Enable pagination
-        $options['paging'] = true;
+        //$options['paging'] = true;
         $pager = [];
         $where = [];
 
@@ -113,7 +118,9 @@ class ContentController implements ControllerProviderInterface
         $fields = $this->APIHelper->getFields($contentType, $allFields, 'list-fields');
 
         // Use the `where-clause` defined in the contenttype config.
+        // @todo get default where parameters
         if (isset($this->config->getContentTypes()[$contentType]['where-clause'])) {
+            //$query->andWhere('contentType.' . $key . ' LIKE :' . $parameterName . '');
             $where = $this->config->getContentTypes()['contenttypes'][$contentType]['where-clause'];
         }
 
@@ -125,8 +132,16 @@ class ContentController implements ControllerProviderInterface
                         'detail' => "Parameter [$key] does not exist for contenttype with name [$contentType]."
                     ], $this->config);
                 }
+
+                $value = explode(',', $value);
+                $newValues = '\'' . implode('\',\'', $value) . '\'';
+                $query->orWhere('contentType.' . $key . ' IN(:' . $key . ')');
+                $query2->orWhere('contentType.' . $key . ' IN(:' . $key . ')');
+                $query->setParameter($key, $newValues);
+                $query2->setParameter($key, $newValues);
+
                 // A bit crude for now.
-                $where[$key] = str_replace(',', ' || ', $value);
+                //$where[$key] = str_replace(',', ' || ', $value);
             }
         }
 
@@ -139,20 +154,94 @@ class ContentController implements ControllerProviderInterface
                     ], $this->config);
                 }
 
-                $values = explode(",", $value);
+                $values = explode(',', $value);
 
-                foreach ($values as $i => $item) {
+                foreach ($values as $value) {
+                    $parameterName = '';
+
+                    //Random Parameter Name Generator LOL!!!!
+                    for ($i = 0; $i < 6; $i++) {
+                        $parameterName .= chr(rand(ord('a'), ord('z')));
+                    }
+
+                    $query->orWhere('contentType.' . $key . ' LIKE :' . $parameterName . '');
+                    $query2->orWhere('contentType.' . $key . ' LIKE :' . $parameterName . '');
+                    $query->setParameter($parameterName, $value);
+                    $query2->setParameter($parameterName, $value);
+                }
+
+                //$values = explode(",", $value);
+
+                /*foreach ($values as $i => $item) {
                     $values[$i] = '%' . $item . '%';
                 }
 
-                $where[$key] = implode(' || ', $values);
+                $where[$key] = implode(' || ', $values);*/
             }
+        }
+
+        $totalItems = 0;
+
+        $totalItemsQuery = $query2->execute()->fetch();
+        if (isset($totalItemsQuery['total'])) {
+            $totalItems = intval($totalItemsQuery['total']);
+        }
+
+        $items = $repository->findWith($query);
+
+        // Handle "include" and fetch related relationships in current query.
+        try {
+            $include = $this->APIHelper->getContenttypesToInclude();
+
+            foreach($include as $ct) {
+                // Check if the include exists in the contenttypes definition.
+                $exists = $app['config']->get("contenttypes/$contentType/relations/$ct", false);
+                if ($exists !== false) {
+                    $toFetch[$ct] = [];
+
+                    foreach ($items as $item) {
+                        if (count($item->getRelation()->getField($ct)) >= 1) {
+                            /*$test = $item->getRelation()->getField($ct);
+                            $criteria = Criteria::create();
+                            $criteria->where(Criteria::expr()->eq('to_contenttype', $ct));
+                            $matched = $item->getRelation()->matching($criteria);*/
+
+                            foreach ($item->getRelation()->getField($ct) as $related) {
+                                $test = $related->getField('pages');
+                                $toFetch[$ct][] = $related->getId();
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (isset($toFetch)) {
+                $includedRepository = $app['storage']->getRepository($ct);
+                $related = $includedRepository->findBy(['id' => $toFetch[$ct]]);
+                foreach(array_values($related) as $key => $item) {
+                    // todo: optimize dynamically!
+                    $ct = $item->getSlug();
+                    $ctAllFields = $this->APIHelper->getAllFieldNames($ct);
+                    $ctFields = $this->APIHelper->getFields($ct, $ctAllFields, 'list-fields');
+                    $included[$key] = $this->APIHelper->cleanItem($item, $ctFields);
+                }
+            }
+
+
+            //$included = $this->APIHelper->fetchIncludedContent($contentType, $items);
+        } catch (\Exception $e) {
+            return new ApiInvalidRequestResponse([
+                'detail' => $e->getMessage()
+            ], $this->config);
         }
 
         // If `returnsingle` is not set to false, then a single result will not
         // result in an array.
-        $where['returnsingle'] = false;
-        $items = $app['storage']->getContent($contentType, $options, $pager, $where);
+        //$where['returnsingle'] = false;
+
+        //$items = $app['storage']->getContent($contentType, $options, $pager, $where);
+
+        //$items = $repository->findWith($query);
 
         // If we don't have any items, this can mean one of two things: either
         // the contenttype does not exist (in which case we'll get a non-array
@@ -160,7 +249,8 @@ class ContentController implements ControllerProviderInterface
 
         if (!is_array($items)) {
             return new ApiInvalidRequestResponse([
-                'detail' => "Configuration error: [$contentType] is configured as a JSON end-point, but doesn't exist as a contenttype."
+                'detail' => "Bad request: There were no results based upon your criteria!"
+                //'detail' => "Configuration error: [$contentType] is configured as a JSON end-point, but doesn't exist as a contenttype."
             ], $this->config);
         }
 
@@ -170,24 +260,17 @@ class ContentController implements ControllerProviderInterface
 
         $items = array_values($items);
 
-        // Handle "include" and fetch related relationships in current query.
-        try {
-            $included = $this->APIHelper->fetchIncludedContent($contentType, $items);
-        } catch (\Exception $e) {
-            return new ApiInvalidRequestResponse([
-                'detail' => $e->getMessage()
-            ], $this->config);
-        }
-
         foreach ($items as $key => $item) {
             $items[$key] = $this->APIHelper->cleanItem($item, $fields);
         }
 
+        $totalPages = ($totalItems/$limit) > 1 ? ($totalItems/$limit) : 1;
+
         $response = [
-            'links' => $this->APIHelper->makeLinks($contentType, $pager['current'], intval($pager['totalpages']), $limit),
+            'links' => $this->APIHelper->makeLinks($contentType, $page, $totalPages, $limit),
             'meta' => [
                 "count" => count($items),
-                "total" => intval($pager['count'])
+                "total" => $totalItems
             ],
             'data' => $items,
         ];
@@ -214,19 +297,17 @@ class ContentController implements ControllerProviderInterface
         $options['paging'] = true;
         $pager = [];
 
-        if ($limit = $request->get($this->config->getPaginationSizeKey())) {
-            $limit = intval($limit);
-            if ($limit >= 1) {
-                $options['limit'] = $limit;
-            }
-        }
+        $repository = $app['storage']->getRepository($contentType);
+        $search = $app['query.search'];
+        $query = $repository->createQueryBuilder('contentType');
 
-        if ($page = $request->get($this->config->getPaginationNumberKey())) {
-            $page = intval($page);
-        }
-        if (!$page) {
-            $page = 1;
-        }
+        $limit = intval($request->query->get('page[size]', 10, true));
+        $limit = $limit >= 1 ? $limit : 10;
+        //$query->setMaxResults($limit);
+
+        $page = intval($request->query->get('page[number]', 1, true));
+        $page = $page >= 1 ? $page : 1;
+        //$query->setFirstResult($limit * ($page - 1));
 
         // If no $contenttype is set, search all 'searchable' contenttypes.
         $baselink = "$contentType/search";
@@ -246,6 +327,16 @@ class ContentController implements ControllerProviderInterface
                 'detail' => "No query parameter q specified."
             ], $this->config);
         }
+
+        $search->setContentType($contentType);
+        $search->setSearch($q);
+
+        //$test = $app['query.search']->
+
+        //$items = $app['storage']->searchContent('Lorem');
+
+        //$items = $app['storage']->getRepository($contentType)->findWith($search);
+
 
         // This 'page' part somehow messses with the getContent query. The
         // fetched results get sliced one time too much when using pagination.
