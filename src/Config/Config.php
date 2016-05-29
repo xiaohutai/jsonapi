@@ -72,7 +72,7 @@ class Config
         $this->setBasePath($app['paths']['canonical'] . $this->base);
         $this->setContentTypes($config['contenttypes']);
         $this->setReplacements($config['replacements']);
-        $this->setPaginationNumberKey('page');
+        $this->setPaginationNumberKey('page[number]');
         $this->setPaginationSizeKey('limit');
         $this->setThumbnail($config['thumbnail']);
         $this->setDateIso($config['date-iso-8601']);
