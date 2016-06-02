@@ -3,6 +3,7 @@
 namespace Bolt\Extension\Bolt\JsonApi\Provider;
 
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
+use Bolt\Extension\Bolt\JsonApi\Converter\JSONAPIConverter;
 use Bolt\Extension\Bolt\JsonApi\Helpers\APIHelper;
 use Bolt\Extension\Bolt\JsonApi\Helpers\UtilityHelper;
 use Silex\Application;
@@ -52,6 +53,12 @@ class APIProvider implements ServiceProviderInterface
         $app['jsonapi.apihelper'] = $app->share(
             function ($app) {
                 return new APIHelper($app, $app['jsonapi.config'], $app['jsonapi.utilityhelper']);
+            }
+        );
+
+        $app['jsonapi.converter'] = $app->share(
+            function ($app) {
+                return new JSONAPIConverter($app['jsonapi.apihelper'], $app['jsonapi.config']);
             }
         );
 

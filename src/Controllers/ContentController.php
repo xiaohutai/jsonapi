@@ -3,10 +3,12 @@ namespace Bolt\Extension\Bolt\JsonApi\Controllers;
 
 use Bolt\Content;
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
+use Bolt\Extension\Bolt\JsonApi\Converter\JSONAPIConverter;
 use Bolt\Extension\Bolt\JsonApi\Helpers\APIHelper;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiInvalidRequestResponse;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiNotFoundResponse;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiResponse;
+use Bolt\Storage\Query\QueryResultset;
 use Doctrine\Common\Collections\Criteria;
 use Silex\Application;
 use Silex\ControllerCollection;
@@ -56,9 +58,6 @@ class ContentController implements ControllerProviderInterface
 
         $ctr->get("/menu", [$this, "listMenus"])->bind('jsonapi.menu');
 
-        $ctr->get("/{contentType}", [$this, "getContentList"])
-            ->bind('jsonapi.listContent');
-
         $ctr->get("/{contentType}/search", [$this, "searchContent"])
             ->bind('jsonapi.searchContent');
 
@@ -66,6 +65,10 @@ class ContentController implements ControllerProviderInterface
             ->value('relatedContentType', null)
             ->assert('slug', '[a-zA-Z0-9_\-]+')
             ->bind('jsonapi.singleContent');
+
+        $ctr->get("/{contentType}", [$this, "getContentList"])
+            ->bind('jsonapi.listContent')
+            ->convert('parameters', 'jsonapi.converter:convert');
 
         return $ctr;
     }
@@ -76,18 +79,18 @@ class ContentController implements ControllerProviderInterface
      * @param $contentType
      * @return ApiResponse
      */
-    public function getContentList(Request $request, Application $app, $contentType)
+    public function getContentList(Request $request, Application $app, $contentType, JSONAPIConverter $parameters)
     {
         $this->config->setCurrentRequest($request);
         //$this->APIHelper->fixBoltStorageRequest();
 
-        if (!array_key_exists($contentType, $this->config->getContentTypes())) {
+        /*if (!array_key_exists($contentType, $this->config->getContentTypes())) {
             return new ApiNotFoundResponse([
                 'detail' => "Contenttype with name [$contentType] not found."
             ], $this->config);
-        }
+        }*/
 
-        $repository = $app['storage']->getRepository($contentType);
+        /*$repository = $app['storage']->getRepository($contentType);
         $query = $repository->createQueryBuilder('contentType');
         $query2 = $repository->createQueryBuilder('contentType');
         $query2->select('COUNT(*) AS total');
@@ -112,20 +115,20 @@ class ContentController implements ControllerProviderInterface
         // Enable pagination
         //$options['paging'] = true;
         $pager = [];
-        $where = [];
-
-        $allFields = $this->APIHelper->getAllFieldNames($contentType);
-        $fields = $this->APIHelper->getFields($contentType, $allFields, 'list-fields');
+        $where = [];*/
 
         // Use the `where-clause` defined in the contenttype config.
-        // @todo get default where parameters
         if (isset($this->config->getContentTypes()[$contentType]['where-clause'])) {
             //$query->andWhere('contentType.' . $key . ' LIKE :' . $parameterName . '');
-            $where = $this->config->getContentTypes()['contenttypes'][$contentType]['where-clause'];
+            $where = $this->config->getContentTypes()[$contentType]['where-clause'];
+            foreach ($where as $column => $value) {
+                $filters = array_merge($parameters->getFilters(), [(string)$column => $value]);
+                $parameters->setFilters($filters);
+            }
         }
 
         // Handle $filter[], this modifies the $where[] clause.
-        if ($filters = $request->get('filter')) {
+        /*if ($filters = $request->get('filter')) {
             foreach ($filters as $key => $value) {
                 if (!in_array($key, $allFields)) {
                     return new ApiInvalidRequestResponse([
@@ -135,10 +138,10 @@ class ContentController implements ControllerProviderInterface
 
                 $value = explode(',', $value);
                 $newValues = '\'' . implode('\',\'', $value) . '\'';
-                $query->orWhere('contentType.' . $key . ' IN(:' . $key . ')');
-                $query2->orWhere('contentType.' . $key . ' IN(:' . $key . ')');
-                $query->setParameter($key, $newValues);
-                $query2->setParameter($key, $newValues);
+                //$query->orWhere('contentType.' . $key . ' IN(:' . $key . ')');
+                //$query2->orWhere('contentType.' . $key . ' IN(:' . $key . ')');
+                //$query->setParameter($key, $newValues);
+                //$query2->setParameter($key, $newValues);
 
                 // A bit crude for now.
                 //$where[$key] = str_replace(',', ' || ', $value);
@@ -172,28 +175,52 @@ class ContentController implements ControllerProviderInterface
 
                 //$values = explode(",", $value);
 
-                /*foreach ($values as $i => $item) {
-                    $values[$i] = '%' . $item . '%';
-                }
+                //foreach ($values as $i => $item) {
+                    //$values[$i] = '%' . $item . '%';
+                //}
 
-                $where[$key] = implode(' || ', $values);*/
+                //$where[$key] = implode(' || ', $values);
             }
-        }
+        }*/
 
-        $totalItems = 0;
+        $where = array_merge($parameters->getFilters(), $parameters->getContains());
+
+        $queryParameters = array_merge($where, ['order' => $parameters->getOrder()]);
+
+        /** @var QueryResultset $results */
+        $results = $app['query']->getContent($contentType, $queryParameters)->get('entries');
+
+        //->get($contentType);
+
+        $totalItems = count($results);
+
+        /*$totalItems = 0;
 
         $totalItemsQuery = $query2->execute()->fetch();
         if (isset($totalItemsQuery['total'])) {
             $totalItems = intval($totalItemsQuery['total']);
         }
 
-        $items = $repository->findWith($query);
+        $items = $repository->findWith($query);*/
 
         // Handle "include" and fetch related relationships in current query.
         try {
-            $include = $this->APIHelper->getContenttypesToInclude();
+            //$include = $this->APIHelper->getContenttypesToInclude();
 
-            foreach($include as $ct) {
+            foreach ($parameters->getIncludes() as $ct) {
+                // Check if the include exists in the contenttypes definition.
+                $exists = $app['config']->get("contenttypes/$contentType/relations/$ct", false);
+                if ($exists !== false) {
+                    foreach ($results as $key => $item) {
+                        $ct = $item->getSlug();
+                        $ctAllFields = $this->APIHelper->getAllFieldNames($ct);
+                        $ctFields = $this->APIHelper->getFields($ct, $ctAllFields, 'list-fields');
+                        $included[$key] = $this->APIHelper->cleanItem($item, $ctFields);
+                    }
+                }
+            }
+
+            /*foreach($include as $ct) {
                 // Check if the include exists in the contenttypes definition.
                 $exists = $app['config']->get("contenttypes/$contentType/relations/$ct", false);
                 if ($exists !== false) {
@@ -201,10 +228,10 @@ class ContentController implements ControllerProviderInterface
 
                     foreach ($items as $item) {
                         if (count($item->getRelation()->getField($ct)) >= 1) {
-                            /*$test = $item->getRelation()->getField($ct);
-                            $criteria = Criteria::create();
-                            $criteria->where(Criteria::expr()->eq('to_contenttype', $ct));
-                            $matched = $item->getRelation()->matching($criteria);*/
+                            //$test = $item->getRelation()->getField($ct);
+                            //$criteria = Criteria::create();
+                            //$criteria->where(Criteria::expr()->eq('to_contenttype', $ct));
+                            //$matched = $item->getRelation()->matching($criteria);
 
                             foreach ($item->getRelation()->getField($ct) as $related) {
                                 $test = $related->getField('pages');
@@ -225,7 +252,7 @@ class ContentController implements ControllerProviderInterface
                     $ctFields = $this->APIHelper->getFields($ct, $ctAllFields, 'list-fields');
                     $included[$key] = $this->APIHelper->cleanItem($item, $ctFields);
                 }
-            }
+            }*/
 
 
             //$included = $this->APIHelper->fetchIncludedContent($contentType, $items);
@@ -247,27 +274,34 @@ class ContentController implements ControllerProviderInterface
         // the contenttype does not exist (in which case we'll get a non-array
         // response), or it exists, but no content has been added yet.
 
-        if (!is_array($items)) {
+        $offset = ($parameters->getPage()-1)*$parameters->getLimit();
+
+        $results = array_splice($results, $offset, $parameters->getLimit());
+
+        if (! $results || count($results) === 0) {
             return new ApiInvalidRequestResponse([
                 'detail' => "Bad request: There were no results based upon your criteria!"
                 //'detail' => "Configuration error: [$contentType] is configured as a JSON end-point, but doesn't exist as a contenttype."
             ], $this->config);
         }
 
-        if (empty($items)) {
-            $items = [];
+        if (empty($results)) {
+            $results = [];
         }
 
-        $items = array_values($items);
+        //$items = array_values($results);
 
-        foreach ($items as $key => $item) {
+        foreach ($results as $key => $item) {
+            $allFields = $this->APIHelper->getAllFieldNames($contentType);
+            $fields = $this->APIHelper->getFields($contentType, $allFields, 'list-fields');
             $items[$key] = $this->APIHelper->cleanItem($item, $fields);
         }
 
-        $totalPages = ($totalItems/$limit) > 1 ? ($totalItems/$limit) : 1;
+        $totalPages = ceil(($totalItems/$parameters->getLimit()) > 1 ? ($totalItems/$parameters->getLimit()) : 1);
+        //$totalPages = ($totalItems/$limit) > 1 ? ($totalItems/$limit) : 1;
 
         $response = [
-            'links' => $this->APIHelper->makeLinks($contentType, $page, $totalPages, $limit),
+            'links' => $this->APIHelper->makeLinks($contentType, $parameters->getPage(), $totalPages, $parameters->getLimit()),
             'meta' => [
                 "count" => count($items),
                 "total" => $totalItems
@@ -298,7 +332,7 @@ class ContentController implements ControllerProviderInterface
         $pager = [];
 
         $repository = $app['storage']->getRepository($contentType);
-        $search = $app['query.search'];
+        $search = $app['query'];
         $query = $repository->createQueryBuilder('contentType');
 
         $limit = intval($request->query->get('page[size]', 10, true));
@@ -328,8 +362,23 @@ class ContentController implements ControllerProviderInterface
             ], $this->config);
         }
 
-        $search->setContentType($contentType);
-        $search->setSearch($q);
+        $results = $search->getContent($baselink, ['filter' => $q]);
+
+        $totalItems = $results->count();
+
+        $totalPages = ($totalItems/$limit) > 1 ? ($totalItems/$limit) : 1;
+
+        $offset = $limit * ($page - 1);
+
+        if ($totalItems > 0) {
+            /** @var \Bolt\Storage\Entity\Content[] $items */
+            $items = $results->get('results');
+            $items = array_splice($items, $offset, $limit);
+        } else {
+            return new ApiNotFoundResponse([
+                'detail' => "No search results found for query [$q]"
+            ], $this->config);
+        }
 
         //$test = $app['query.search']->
 
@@ -341,13 +390,13 @@ class ContentController implements ControllerProviderInterface
         // This 'page' part somehow messses with the getContent query. The
         // fetched results get sliced one time too much when using pagination.
         // So we unset it here, and then use array_slice.
-        $all = $request->query->all();
-        unset($all['page']);
-        $request->query->replace($all);
+        //$all = $request->query->all();
+        //unset($all['page']);
+        //$request->query->replace($all);
 
-        $items = $app['storage']->getContent($contentType . '/search', ['filter' => $q], $pager, ['returnsingle' => false]);
+        //$items = $app['storage']->getContent($contentType . '/search', ['filter' => $q], $pager, ['returnsingle' => false]);
 
-        if (!is_array($items)) {
+        /*if (!is_array($items)) {
             return new ApiInvalidRequestResponse([
                 'detail' => "Configuration error: [$contentType] is configured as a JSON end-point, but doesn't exist as a contenttype."
             ], $this->config);
@@ -371,10 +420,10 @@ class ContentController implements ControllerProviderInterface
         if ($page != $totalpages) {
             $all['page'] = $page;
         }
-        $request->query->replace($all);
+        $request->query->replace($all);*/
 
         foreach ($items as $key => $item) {
-            $ct = $item->contenttype['slug'];
+            $ct = $item->getSlug();
             // optimize this part...
             $ctAllFields = $this->APIHelper->getAllFieldNames($ct);
             $ctFields = $this->APIHelper->getFields($ct, $ctAllFields, 'list-fields');
@@ -382,10 +431,10 @@ class ContentController implements ControllerProviderInterface
         }
 
         return new ApiResponse([
-            'links' => $this->APIHelper->makeLinks($baselink, $page, $totalpages, $limit),
+            'links' => $this->APIHelper->makeLinks($baselink, $page, $totalPages, $limit),
             'meta' => [
                 "count" => count($items),
-                "total" => $total
+                "total" => $totalItems
             ],
             'data' => $items,
         ], $this->config);
@@ -410,17 +459,17 @@ class ContentController implements ControllerProviderInterface
             ], $this->config);
         }
 
-        /** @var Content $item */
-        $item = $app['storage']->getContent("$contentType/$slug");
-        if (!$item) {
+        /** @var \Bolt\Storage\Entity\Content $item */
+        $item = $app['query']->getContent("$contentType/$slug", ['returnsingle' => true, 'id' => $slug]);
+        if (! $item) {
             return new ApiNotFoundResponse([
                 'detail' => "No [$contentType] found with id/slug: [$slug]."
             ], $this->config);
         }
 
         if ($relatedContentType !== null) {
-            $items = $item->related($relatedContentType);
-            if (!$items) {
+            $relatedItemsTotal = $item->getRelation()->getField($relatedContentType)->count();
+            if ($relatedItemsTotal <= 0) {
                 return new ApiNotFoundResponse([
                     'detail' => "No related items of type [$relatedContentType] found for [$contentType] with id/slug: [$slug]."
                 ], $this->config);
@@ -429,9 +478,8 @@ class ContentController implements ControllerProviderInterface
             $allFields = $this->APIHelper->getAllFieldNames($relatedContentType);
             $fields = $this->APIHelper->getFields($relatedContentType, $allFields, 'list-fields');
 
-            $items = array_values($items);
-            foreach ($items as $key => $item) {
-                $items[$key] = $this->APIHelper->cleanItem($item, $fields);
+            foreach ($item->relation[$relatedContentType] as $item) {
+                $items[] = $this->APIHelper->cleanItem($item, $fields);
             }
 
             $response = new ApiResponse([
@@ -446,7 +494,6 @@ class ContentController implements ControllerProviderInterface
             ], $this->config);
 
         } else {
-
             $allFields = $this->APIHelper->getAllFieldNames($contentType);
             $fields = $this->APIHelper->getFields($contentType, $allFields, 'item-fields');
             $values = $this->APIHelper->cleanItem($item, $fields);

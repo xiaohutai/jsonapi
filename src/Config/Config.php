@@ -68,8 +68,8 @@ class Config
         if(isset($config['base'])) {
             $this->base = $config['base'];
         }
-
-        $this->setBasePath($app['paths']['canonical'] . $this->base);
+        
+        $this->setBasePath($app['paths']['hosturl'] . $this->base);
         $this->setContentTypes($config['contenttypes']);
         $this->setReplacements($config['replacements']);
         $this->setPaginationNumberKey('page[number]');
