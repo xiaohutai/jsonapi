@@ -53,10 +53,11 @@ class UtilityHelper
      */
     public function makeAbsolutePathToThumbnail($filename = '')
     {
+        $config = $this->app['extensions']->getEnabled()['JSON API']->getConfig();
         return sprintf('%s/thumbs/%sx%s/%s',
             $this->app['paths']['canonical'],
-            $this->app['config']['thumbnail']['width'],
-            $this->app['config']['thumbnail']['height'],
+            $config['thumbnail']['width'],
+            $config['thumbnail']['height'],
             $filename
         );
     }
