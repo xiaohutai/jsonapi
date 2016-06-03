@@ -19,6 +19,10 @@
         {
             "name": "Xiao-Hu Tai",
             "email": "xiao@twokings.nl"
+        },
+        {
+            "name": "Dennis Snijder",
+            "email": "Dennissnijder97@gmail.com"
         }
     ],
     "autoload": {
@@ -26,7 +30,7 @@
             "init.php"
         ],
         "psr-4": {
-            "JSONAPI\\": ""
+            "Bolt\\Extension\\Bolt\\JsonApi\\": ""
         }
     }
 }
