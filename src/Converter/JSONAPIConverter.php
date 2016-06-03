@@ -4,10 +4,14 @@
 namespace Bolt\Extension\Bolt\JsonApi\Converter;
 
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
+use Bolt\Extension\Bolt\JsonApi\Exception\ApiException;
+use Bolt\Extension\Bolt\JsonApi\Exception\ApiInvalidRequestException;
+use Bolt\Extension\Bolt\JsonApi\Exception\ApiNotFoundException;
 use Bolt\Extension\Bolt\JsonApi\Helpers\APIHelper;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiInvalidRequestResponse;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiNotFoundResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class JSONAPIConverter
 {
@@ -55,9 +59,7 @@ class JSONAPIConverter
         $contentType = $request->attributes->get('contentType');
 
         if (! $this->isValidContentType($contentType)) {
-            return new ApiNotFoundResponse([
-                'detail' => "Contenttype with name [$contentType] not found."
-            ], $this->config);
+            throw new ApiNotFoundException("Contenttype with name [$contentType] not found.");
         }
 
         $limit = intval($request->query->get('page[size]', self::DEFAULT_PAGE_SIZE, true));
@@ -72,9 +74,9 @@ class JSONAPIConverter
         if ($filters = $request->get('filter')) {
             foreach ($filters as $key => $value) {
                 if (! $this->isValidField($key, $contentType)) {
-                    return new ApiInvalidRequestResponse([
-                        'detail' => "Parameter [$key] does not exist for contenttype with name [$contentType]."
-                    ], $this->config);
+                    throw new ApiInvalidRequestException(
+                        "Parameter [$key] does not exist for contenttype with name [$contentType]."
+                    );
                 }
                 $this->filters[$key] = str_replace(',', ' || ', $value);
             }
@@ -84,9 +86,9 @@ class JSONAPIConverter
         if ($contains = $request->get('contains')) {
             foreach ($contains as $key => $value) {
                 if (! $this->isValidField($key, $contentType)) {
-                    return new ApiInvalidRequestResponse([
-                        'detail' => "Parameter [$key] does not exist for contenttype with name [$contentType]."
-                    ], $this->config);
+                    throw new ApiInvalidRequestException(
+                        "Parameter [$key] does not exist for contenttype with name [$contentType]."
+                    );
                 }
 
                 $values = explode(',', $value);
@@ -105,7 +107,9 @@ class JSONAPIConverter
             $includes = explode(',', $includes);
             foreach ($includes as $ct) {
                 if (! $this->isValidContentType($ct)) {
-                    throw new \Exception("Content type with name [$ct] requested in include not found.");
+                    throw new ApiInvalidRequestException(
+                        "Content type with name [$ct] requested in include not found."
+                    );
                 }
                 $this->includes[] = $ct;
             }

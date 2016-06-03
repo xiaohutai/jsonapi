@@ -4,17 +4,22 @@ namespace Bolt\Extension\Bolt\JsonApi\Controllers;
 use Bolt\Content;
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
 use Bolt\Extension\Bolt\JsonApi\Converter\JSONAPIConverter;
+use Bolt\Extension\Bolt\JsonApi\Exception\ApiException;
+use Bolt\Extension\Bolt\JsonApi\Exception\ApiInvalidRequestException;
+use Bolt\Extension\Bolt\JsonApi\Exception\ApiNotFoundException;
 use Bolt\Extension\Bolt\JsonApi\Helpers\APIHelper;
+use Bolt\Extension\Bolt\JsonApi\Response\ApiErrorResponse;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiInvalidRequestResponse;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiNotFoundResponse;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiResponse;
 use Bolt\Storage\Query\QueryResultset;
-use Doctrine\Common\Collections\Criteria;
 use Silex\Application;
 use Silex\ControllerCollection;
 use Silex\ControllerProviderInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Exception;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Class ContentController
@@ -124,9 +129,9 @@ class ContentController implements ControllerProviderInterface
         $results = array_splice($results, $offset, $parameters->getLimit());
 
         if (! $results || count($results) === 0) {
-            return new ApiInvalidRequestResponse([
-                'detail' => "Bad request: There were no results based upon your criteria!"
-            ], $this->config);
+            throw new ApiInvalidRequestException(
+                "Bad request: There were no results based upon your criteria!"
+            );
         }
 
         if (empty($results)) {
@@ -196,9 +201,9 @@ class ContentController implements ControllerProviderInterface
         }
 
         if (! $q = $request->get('q')) {
-            return new ApiInvalidRequestResponse([
-                'detail' => "No query parameter q specified."
-            ], $this->config);
+            throw new ApiInvalidRequestException(
+                "No query parameter q specified."
+            );
         }
 
         $where = array_merge($parameters->getFilters(), $parameters->getContains());
@@ -217,9 +222,9 @@ class ContentController implements ControllerProviderInterface
         $results = array_splice($results, $offset, $parameters->getLimit());
 
         if (! $results || count($results) === 0) {
-            return new ApiInvalidRequestResponse([
-                'detail' => "No search results found for query [$q]"
-            ], $this->config);
+            throw new ApiNotFoundException(
+                "No search results found for query [$q]"
+            );
         }
 
         foreach ($results as $key => $item) {
@@ -276,17 +281,17 @@ class ContentController implements ControllerProviderInterface
         $results = $app['query']->getContent($contentType, $queryParameters);
 
         if (! $results || count($results) === 0) {
-            return new ApiNotFoundResponse([
-                'detail' => "No [$contentType] found with id/slug: [$slug]."
-            ], $this->config);
+            throw new ApiNotFoundException(
+                "No [$contentType] found with id/slug: [$slug]."
+            );
         }
 
         if ($relatedContentType !== null) {
             $relatedItemsTotal = $results->getRelation()->getField($relatedContentType)->count();
             if ($relatedItemsTotal <= 0) {
-                return new ApiNotFoundResponse([
-                    'detail' => "No related items of type [$relatedContentType] found for [$contentType] with id/slug: [$slug]."
-                ], $this->config);
+                throw new ApiNotFoundException(
+                    "No related items of type [$relatedContentType] found for [$contentType] with id/slug: [$slug]."
+                );
             }
 
             $allFields = $this->APIHelper->getAllFieldNames($relatedContentType);
@@ -386,9 +391,11 @@ class ContentController implements ControllerProviderInterface
                 'data' => $menu
             ], $this->config);
         }
-        return new ApiNotFoundResponse([
-            'detail' => "Menu with name [$q] not found."
-        ], $this->config);
+
+        throw new ApiNotFoundException(
+            "Menu with name [$q] not found."
+        );
+
     }
 
 }
