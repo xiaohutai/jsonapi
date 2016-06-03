@@ -30,7 +30,10 @@
             "init.php"
         ],
         "psr-4": {
-            "Bolt\\Extension\\Bolt\\JsonApi\\": ""
+            "Bolt\\Extension\\Bolt\\JsonApi\\": [
+                "",
+                "src"
+            ]
         }
     }
 }
