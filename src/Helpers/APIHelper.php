@@ -4,6 +4,7 @@ namespace Bolt\Extension\Bolt\JsonApi\Helpers;
 use Bolt\Content;
 use Bolt\Helpers\Arr;
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
+use Bolt\Storage\Collection\Relations;
 use Bolt\Storage\Collection\Taxonomy;
 use Silex\Application;
 
@@ -286,7 +287,7 @@ class APIHelper
      */
     public function cleanItem($item, $fields = [])
     {
-        $contentType = $item->getSlug();
+        $contentType = (string) $item->getContenttype();
         //$contentType = $item->contenttype['slug'];
 
         if (empty($fields)) {
@@ -298,22 +299,24 @@ class APIHelper
 
         // Both 'id' and 'type' are always required. So remove them from $fields.
         // The remaining $fields go into 'attributes'.
-        if(($key = array_search('id', $fields)) !== false) {
+        if (($key = array_search('id', $fields)) !== false) {
             unset($fields[$key]);
         }
 
         $id = $item->getId();
         $values = [
             'id' => strval($id),
-            'type' => (string) $item->getContenttype(),
+            'type' => $contentType,
         ];
         $attributes = [];
         $fields = array_unique($fields);
 
         foreach ($fields as $key => $field) {
-
             if ($item->get($field)) {
-                $attributes[$field] = $item->get($field);
+                //Exclude relationships
+                if (!$item->get($field) instanceof Relations) {
+                    $attributes[$field] = $item->get($field);
+                }
             }
 
             if ($item->get($field) instanceof Taxonomy) {
@@ -350,8 +353,7 @@ class APIHelper
 
         // Check if we have image or file fields present. If so, see if we need
         // to use the full URL's for these.
-        foreach($item->contenttype['fields'] as $key => $field) {
-
+        foreach ($item->contenttype['fields'] as $key => $field) {
             if ($field['type'] == 'imagelist' && !empty($attributes[$key])) {
                 foreach ($attributes[$key] as &$image) {
                     $image['url'] = $this->utilityHelper->makeAbsolutePathToImage($image['filename']);
@@ -384,9 +386,8 @@ class APIHelper
         }
 
         if (!empty($attributes)) {
-
             // Recursively walk the array..
-            array_walk_recursive($attributes, function(&$item) {
+            array_walk_recursive ($attributes, function(&$item) {
                 // Make sure that any \Twig_Markup objects are cast to plain strings.
                 if ($item instanceof \Twig_Markup) {
                     $item = $item->__toString();
@@ -413,7 +414,7 @@ class APIHelper
         //       2. categories
         //       3. groupings
         if ($item->getTaxonomy()) {
-            foreach($item->getTaxonomy() as $key => $value) {
+            foreach ($item->getTaxonomy() as $key => $value) {
                 // $values['attributes']['taxonomy'] = [];
             }
         }
@@ -429,7 +430,7 @@ class APIHelper
             $relationships = [];
             foreach ($item->getRelation() as $relatedType) {
                 $data = [];
-                $id = $relatedType->getId();
+                $id = $relatedType->getFromId();
                 $fromType = $relatedType->getFromContenttype();
                 $toType = $relatedType->getToContenttype();
 
@@ -445,7 +446,7 @@ class APIHelper
                     ];
                 }*/
 
-                $relationships[$fromType] = [
+                $relationships[$toType] = [
                     'links' => [
                         // 'self' -- this is irrelevant for now
                         'related' => $this->config->getBasePath()."/$fromType/$id/$toType"
@@ -508,21 +509,25 @@ class APIHelper
     /**
      * Make related links for a singular item.
      *
-     * @param \Bolt\Content $item
+     * @param \Bolt\Storage\Entity\Content $item
      * @return mixed[] An array with URLs for the relationships.
      */
     public function makeRelatedLinks($item)
     {
         $related = [];
-        $contentType = $item->contenttype['slug'];
-        $id = $item->values['id'];
+        $contentType = (string)$item->getContenttype();
+        $id = $item->getId();
 
-        if ($item->relation) {
-            foreach ($item->relation as $ct => $ids) {
-                $related[$ct] = [
-                    'href' => $this->config->getBasePath()."/$contentType/$id/$ct",
+        if (count($item->getRelation()) > 0) {
+            foreach ($item->getRelation() as $relatedType) {
+                $id = $relatedType->getId();
+                $fromType = $relatedType->getFromContenttype();
+                $toType = $relatedType->getToContenttype();
+
+                $related[$fromType] = [
+                    'href' => $this->config->getBasePath()."/$contentType/$id/$fromType",
                     'meta' => [
-                        'count' => count($ids)
+                        'count' => 1
                     ]
                 ];
             }

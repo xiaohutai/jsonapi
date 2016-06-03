@@ -76,9 +76,6 @@ class JSONAPIConverter
                         'detail' => "Parameter [$key] does not exist for contenttype with name [$contentType]."
                     ], $this->config);
                 }
-                $value = explode(',', $value);
-                //$newValues = '\'' . implode('\',\'', $value) . '\'';
-                //$this->filters[$key] = $newValues;
                 $this->filters[$key] = str_replace(',', ' || ', $value);
             }
         }
@@ -96,14 +93,6 @@ class JSONAPIConverter
                 $newValues = [];
 
                 foreach ($values as $index => $value) {
-                    //$parameterName = '';
-
-                    //Random Parameter Name Generator LOL!!!!
-                    //for ($i = 0; $i < 6; $i++) {
-                        //$parameterName .= chr(rand(ord('a'), ord('z')));
-                    //}
-
-                    //$this->$contains[$key][$parameterName] = $value;
                     $newValues[$index] = '%' . $value . '%';
                 }
 
