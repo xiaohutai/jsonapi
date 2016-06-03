@@ -4,11 +4,9 @@ namespace Bolt\Extension\Bolt\JsonApi\Controllers;
 use Bolt\Content;
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
 use Bolt\Extension\Bolt\JsonApi\Converter\JSONAPIConverter;
-use Bolt\Extension\Bolt\JsonApi\Exception\ApiException;
 use Bolt\Extension\Bolt\JsonApi\Exception\ApiInvalidRequestException;
 use Bolt\Extension\Bolt\JsonApi\Exception\ApiNotFoundException;
 use Bolt\Extension\Bolt\JsonApi\Helpers\APIHelper;
-use Bolt\Extension\Bolt\JsonApi\Response\ApiErrorResponse;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiInvalidRequestResponse;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiNotFoundResponse;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiResponse;
@@ -18,8 +16,6 @@ use Silex\ControllerCollection;
 use Silex\ControllerProviderInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Exception;
-use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Class ContentController

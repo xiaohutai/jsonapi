@@ -40,6 +40,6 @@
         }
     },
     "extra": {
-        "bolt-class": "Bolt\\Extension\\Bolt\\JsonApi\\Extension"
+        "bolt-class": "Bolt\\Extension\\Bolt\\JsonApi\\JSONAPIExtension"
     }
 }
