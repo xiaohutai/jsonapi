@@ -4,6 +4,8 @@ namespace Bolt\Extension\Bolt\JsonApi\Controllers;
 use Bolt\Content;
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
 use Bolt\Extension\Bolt\JsonApi\Converter\JSONAPIConverter;
+use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\ParameterCollection;
+use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\ParameterInterface;
 use Bolt\Extension\Bolt\JsonApi\Exception\ApiInvalidRequestException;
 use Bolt\Extension\Bolt\JsonApi\Exception\ApiNotFoundException;
 use Bolt\Extension\Bolt\JsonApi\Helpers\APIHelper;
@@ -11,6 +13,7 @@ use Bolt\Extension\Bolt\JsonApi\Response\ApiInvalidRequestResponse;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiNotFoundResponse;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiResponse;
 use Bolt\Storage\Query\QueryResultset;
+use Doctrine\Common\Collections\Collection;
 use Silex\Application;
 use Silex\ControllerCollection;
 use Silex\ControllerProviderInterface;
@@ -61,17 +64,17 @@ class ContentController implements ControllerProviderInterface
 
         $ctr->get("/{contentType}/search", [$this, "searchContent"])
             ->bind('jsonapi.searchContent')
-            ->convert('parameters', 'jsonapi.converter:convert');
+            ->convert('parameters', 'jsonapi.converter:grabParameters');
 
         $ctr->get("/{contentType}/{slug}/{relatedContentType}", [$this, 'singleContent'])
             ->value('relatedContentType', null)
             ->assert('slug', '[a-zA-Z0-9_\-]+')
             ->bind('jsonapi.singleContent')
-            ->convert('parameters', 'jsonapi.converter:convert');
+            ->convert('parameters', 'jsonapi.converter:grabParameters');
 
         $ctr->get("/{contentType}", [$this, "getContentList"])
             ->bind('jsonapi.listContent')
-            ->convert('parameters', 'jsonapi.converter:convert');
+            ->convert('parameters', 'jsonapi.converter:grabParameters');
 
         return $ctr;
     }
@@ -80,49 +83,39 @@ class ContentController implements ControllerProviderInterface
      * @param Request $request
      * @param Application $app
      * @param $contentType
+     * @param Collection|ParameterInterface[] $parameters
      * @return ApiResponse
      */
-    public function getContentList(Request $request, Application $app, $contentType, JSONAPIConverter $parameters)
+    public function getContentList(Request $request, Application $app, $contentType, ParameterCollection $parameters)
     {
         $this->config->setCurrentRequest($request);
 
-        // Use the `where-clause` defined in the contenttype config.
-        if (isset($this->config->getContentTypes()[$contentType]['where-clause'])) {
-            //$query->andWhere('contentType.' . $key . ' LIKE :' . $parameterName . '');
-            $where = $this->config->getContentTypes()[$contentType]['where-clause'];
-            foreach ($where as $column => $value) {
-                $filters = array_merge($parameters->getFilters(), [$column => $value]);
-                $parameters->setFilters($filters);
-            }
-        }
-
-        $where = array_merge($parameters->getFilters(), $parameters->getContains());
-
-        $queryParameters = array_merge($where, ['order' => $parameters->getOrder()]);
-
         /** @var QueryResultset $results */
-        $results = $app['query']->getContent($contentType, $queryParameters)->get($contentType);
+        $results = $app['query']
+            ->getContent($contentType, $parameters->getQueryParameters())
+            ->get($contentType);
 
         $totalItems = count($results);
 
-        foreach ($parameters->getIncludes() as $ct) {
-            // Check if the include exists in the contenttypes definition.
-            $exists = $app['config']->get("contenttypes/$contentType/relations/$ct", false);
-            if ($exists !== false) {
-                foreach ($results as $key => $item) {
-                    //$ct = $item->getSlug();
-                    $ctAllFields = $this->APIHelper->getAllFieldNames($ct);
-                    $ctFields = $this->APIHelper->getFields($ct, $ctAllFields, 'list-fields');
-                    foreach ($item->relation[$ct] as $related) {
-                        $included[$key] = $this->APIHelper->cleanItem($related, $ctFields);
-                    }
+        $includes = $parameters->getParametersByType('includes');
+
+        foreach ($includes as $include) {
+            //Loop through all results
+            foreach ($results as $key => $item) {
+                $ctAllFields = $this->APIHelper->getAllFieldNames($include);
+                $ctFields = $this->APIHelper->getFields($include, $ctAllFields, 'list-fields');
+                //Loop through all relationships
+                foreach ($item->relation[$include] as $related) {
+                    $included[$key] = $this->APIHelper->cleanItem($related, $ctFields);
                 }
             }
         }
 
-        $offset = ($parameters->getPage()-1)*$parameters->getLimit();
+        $page = $parameters->getParametersByType('page');
 
-        $results = array_splice($results, $offset, $parameters->getLimit());
+        $offset = ($page['number']-1)*$page['limit'];
+
+        $results = array_splice($results, $offset, $page['limit']);
 
         if (! $results || count($results) === 0) {
             throw new ApiInvalidRequestException(
@@ -142,14 +135,14 @@ class ContentController implements ControllerProviderInterface
             $items[$key] = $this->APIHelper->cleanItem($item, $fields);
         }
 
-        $totalPages = ceil(($totalItems/$parameters->getLimit()) > 1 ? ($totalItems/$parameters->getLimit()) : 1);
+        $totalPages = ceil(($totalItems/$page['limit']) > 1 ? ($totalItems/$page['limit']) : 1);
 
         $response = [
             'links' => $this->APIHelper->makeLinks(
                 $contentType,
-                $parameters->getPage(),
+                $page['number'],
                 $totalPages,
-                $parameters->getLimit()
+                $page['limit']
             ),
             'meta' => [
                 "count" => count($items),
@@ -169,21 +162,12 @@ class ContentController implements ControllerProviderInterface
      * @param Request $request
      * @param Application $app
      * @param $contentType
+     * @param Collection|ParameterInterface[] $parameters
      * @return ApiResponse
      */
-    public function searchContent(Request $request, Application $app, $contentType, JSONAPIConverter $parameters)
+    public function searchContent(Request $request, Application $app, $contentType, ParameterCollection $parameters)
     {
         $this->config->setCurrentRequest($request);
-
-        // Use the `where-clause` defined in the contenttype config.
-        if (isset($this->config->getContentTypes()[$contentType]['where-clause'])) {
-            //$query->andWhere('contentType.' . $key . ' LIKE :' . $parameterName . '');
-            $where = $this->config->getContentTypes()[$contentType]['where-clause'];
-            foreach ($where as $column => $value) {
-                $filters = array_merge($parameters->getFilters(), [$column => $value]);
-                $parameters->setFilters($filters);
-            }
-        }
 
         // If no $contenttype is set, search all 'searchable' contenttypes.
         $baselink = "$contentType/search";
@@ -202,20 +186,22 @@ class ContentController implements ControllerProviderInterface
             );
         }
 
-        $where = array_merge($parameters->getFilters(), $parameters->getContains());
-
-        $queryParameters = array_merge($where, ['order' => $parameters->getOrder(), 'filter' => $q]);
+        $queryParameters = array_merge($parameters->getQueryParameters(), ['filter' => $q]);
 
         /** @var QueryResultset $results */
-        $results = $app['query']->getContent($baselink, $queryParameters)->get($contentType);
+        $results = $app['query']
+            ->getContent($baselink, $queryParameters)
+            ->get($contentType);
+
+        $page = $parameters->getParametersByType('page');
 
         $totalItems = count($results);
 
-        $totalPages = ceil(($totalItems/$parameters->getLimit()) > 1 ? ($totalItems/$parameters->getLimit()) : 1);
+        $totalPages = ceil(($totalItems/$page['limit']) > 1 ? ($totalItems/$page['limit']) : 1);
 
-        $offset = ($parameters->getPage()-1)*$parameters->getLimit();
+        $offset = ($page['number']-1)*$page['limit'];
 
-        $results = array_splice($results, $offset, $parameters->getLimit());
+        $results = array_splice($results, $offset, $page['limit']);
 
         if (! $results || count($results) === 0) {
             throw new ApiNotFoundException(
@@ -234,9 +220,9 @@ class ContentController implements ControllerProviderInterface
         return new ApiResponse([
             'links' => $this->APIHelper->makeLinks(
                 $baselink,
-                $parameters->getPage(),
+                $page['number'],
                 $totalPages,
-                $parameters->getLimit()
+                $page['limit']
             ),
             'meta' => [
                 "count" => count($items),
@@ -253,25 +239,14 @@ class ContentController implements ControllerProviderInterface
      * @param $contentType
      * @param $slug
      * @param $relatedContentType
+     * @param Collection|ParameterInterface[] $parameters
      * @return ApiResponse
      */
-    public function singleContent(Request $request, Application $app, $contentType, $slug, $relatedContentType, JSONAPIConverter $parameters)
+    public function singleContent(Request $request, Application $app, $contentType, $slug, $relatedContentType, ParameterCollection $parameters)
     {
         $this->config->setCurrentRequest($request);
 
-        // Use the `where-clause` defined in the contenttype config.
-        if (isset($this->config->getContentTypes()[$contentType]['where-clause'])) {
-            //$query->andWhere('contentType.' . $key . ' LIKE :' . $parameterName . '');
-            $where = $this->config->getContentTypes()[$contentType]['where-clause'];
-            foreach ($where as $column => $value) {
-                $filters = array_merge($parameters->getFilters(), [$column => $value]);
-                $parameters->setFilters($filters);
-            }
-        }
-
-        $where = array_merge($parameters->getFilters(), $parameters->getContains());
-
-        $queryParameters = array_merge($where, ['order' => $parameters->getOrder(), 'returnsingle' => true, 'id' => $slug]);
+        $queryParameters = array_merge($parameters->getQueryParameters(), ['returnsingle' => true, 'id' => $slug]);
 
         /** @var QueryResultset $results */
         $results = $app['query']->getContent($contentType, $queryParameters);
@@ -328,17 +303,16 @@ class ContentController implements ControllerProviderInterface
                 $links[$ct] = $link;
             }
 
-            foreach ($parameters->getIncludes() as $ct) {
-                // Check if the include exists in the contenttypes definition.
-                $exists = $app['config']->get("contenttypes/$contentType/relations/$ct", false);
-                if ($exists !== false) {
-                    foreach ($results as $key => $item) {
-                        //$ct = $item->getSlug();
-                        $ctAllFields = $this->APIHelper->getAllFieldNames($ct);
-                        $ctFields = $this->APIHelper->getFields($ct, $ctAllFields, 'list-fields');
-                        foreach ($item->relation[$ct] as $related) {
-                            $included[$key] = $this->APIHelper->cleanItem($related, $ctFields);
-                        }
+            $includes = $parameters->getParametersByType('includes');
+
+            foreach ($includes as $include) {
+                //Loop through all results
+                foreach ($results as $key => $item) {
+                    $ctAllFields = $this->APIHelper->getAllFieldNames($include);
+                    $ctFields = $this->APIHelper->getFields($include, $ctAllFields, 'list-fields');
+                    //Loop through all relationships
+                    foreach ($item->relation[$include] as $related) {
+                        $included[$key] = $this->APIHelper->cleanItem($related, $ctFields);
                     }
                 }
             }
