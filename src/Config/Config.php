@@ -255,4 +255,40 @@ class Config
     {
         $this->jsonOptions = $jsonOptions;
     }
+    
+    public function getWhereClauses($contentType)
+    {
+        if (isset($this->contentTypes[$contentType]['where-clause'])) {
+            return $this->contentTypes[$contentType]['where-clause'];
+        }
+
+        return [];
+    }
+    
+    public function getListFields($contentType)
+    {
+        if (isset($this->contentTypes[$contentType]['list-fields'])) {
+            return $this->contentTypes[$contentType]['list-fields'];
+        }
+
+        return [];
+    }
+    
+    public function getItemFields($contentType)
+    {
+        if (isset($this->contentTypes[$contentType]['item-fields'])) {
+            return $this->contentTypes[$contentType]['item-fields'];
+        }
+
+        return [];
+    }
+    
+    public function getAllowedFields($contentType)
+    {
+        if (isset($this->contentTypes[$contentType]['allowed-fields'])) {
+            return $this->contentTypes[$contentType]['allowed-fields'];
+        }
+
+        return [];
+    }
 }
