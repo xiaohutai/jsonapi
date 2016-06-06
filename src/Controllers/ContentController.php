@@ -102,11 +102,10 @@ class ContentController implements ControllerProviderInterface
         foreach ($includes as $include) {
             //Loop through all results
             foreach ($results as $key => $item) {
-                $ctAllFields = $this->APIHelper->getAllFieldNames($include);
-                $ctFields = $this->APIHelper->getFields($include, $ctAllFields, 'list-fields');
                 //Loop through all relationships
                 foreach ($item->relation[$include] as $related) {
-                    $included[$key] = $this->APIHelper->cleanItem($related, $ctFields);
+                    $fields = $parameters->get('includes')->getFieldsByContentType($include);
+                    $included[$key] = $this->APIHelper->cleanItem($related, $fields);
                 }
             }
         }
@@ -130,8 +129,7 @@ class ContentController implements ControllerProviderInterface
         $items = [];
 
         foreach ($results as $key => $item) {
-            $allFields = $this->APIHelper->getAllFieldNames($contentType);
-            $fields = $this->APIHelper->getFields($contentType, $allFields, 'list-fields');
+            $fields = $parameters->get('fields')->getFields();
             $items[$key] = $this->APIHelper->cleanItem($item, $fields);
         }
 
@@ -212,9 +210,8 @@ class ContentController implements ControllerProviderInterface
         foreach ($results as $key => $item) {
             $ct = $item->getSlug();
             // optimize this part...
-            $ctAllFields = $this->APIHelper->getAllFieldNames($ct);
-            $ctFields = $this->APIHelper->getFields($ct, $ctAllFields, 'list-fields');
-            $items[$key] = $this->APIHelper->cleanItem($item, $ctFields);
+            $fields = $parameters->get('fields')->getFields();
+            $items[$key] = $this->APIHelper->cleanItem($item, $fields);
         }
 
         return new ApiResponse([
@@ -265,8 +262,10 @@ class ContentController implements ControllerProviderInterface
                 );
             }
 
-            $allFields = $this->APIHelper->getAllFieldNames($relatedContentType);
-            $fields = $this->APIHelper->getFields($relatedContentType, $allFields, 'list-fields');
+            //$allFields = $this->APIHelper->getAllFieldNames($relatedContentType);
+            //$fields = $this->APIHelper->getFields($relatedContentType, $allFields, 'list-fields');
+            // @todo item-fields INSTEAD of list-items
+            $fields = $parameters->get('fields')->getFields();
 
             foreach ($results->relation[$relatedContentType] as $item) {
                 $items[] = $this->APIHelper->cleanItem($item, $fields);
@@ -284,8 +283,9 @@ class ContentController implements ControllerProviderInterface
             ], $this->config);
 
         } else {
-            $allFields = $this->APIHelper->getAllFieldNames($contentType);
-            $fields = $this->APIHelper->getFields($contentType, $allFields, 'item-fields');
+            //$allFields = $this->APIHelper->getAllFieldNames($contentType);
+            //$fields = $this->APIHelper->getFields($contentType, $allFields, 'item-fields');
+            $fields = $parameters->get('fields')->getFields();
             $values = $this->APIHelper->cleanItem($results, $fields);
             //@todo get previous and next link
             $prev = $results->previous();
@@ -308,11 +308,10 @@ class ContentController implements ControllerProviderInterface
             foreach ($includes as $include) {
                 //Loop through all results
                 foreach ($results as $key => $item) {
-                    $ctAllFields = $this->APIHelper->getAllFieldNames($include);
-                    $ctFields = $this->APIHelper->getFields($include, $ctAllFields, 'list-fields');
                     //Loop through all relationships
                     foreach ($item->relation[$include] as $related) {
-                        $included[$key] = $this->APIHelper->cleanItem($related, $ctFields);
+                        $fields = $parameters->get('includes')->getFieldsByContentType($include);
+                        $included[$key] = $this->APIHelper->cleanItem($related, $fields);
                     }
                 }
             }
