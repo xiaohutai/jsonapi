@@ -1,6 +1,7 @@
 <?php
 namespace Bolt\Extension\Bolt\JsonApi\Helpers;
 
+use Bolt\Content;
 use Bolt\Helpers\Arr;
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
 use Silex\Application;
@@ -136,7 +137,12 @@ class APIHelper
             $ids = implode(' || ', $ids);
             $pager = [];
             $items = $this->app['storage']->getContent($ct, [ 'paging' => false ], $pager, [ 'id' => $ids ]);
-            $related = array_merge($related, $items);
+            if ($items instanceof Content) {
+                $newItems[] = $items;
+            } else {
+                $newItems = $items;
+            }
+            $related = array_merge($related, $newItems);
         }
 
         // return array_values($related);
@@ -167,7 +173,7 @@ class APIHelper
         if ($requestedContentTypes = $this->config->getCurrentRequest()->get('include')) {
             $requestedContentTypes = explode(',', $requestedContentTypes);
             foreach($requestedContentTypes as $ct) {
-                if (isset($this->config->getContentTypes()[$ct])) {
+                if (array_key_exists($ct, $this->config->getContentTypes())) {
                     $include[] = $ct;
                 } else {
                     throw new \Exception("Content type with name [$ct] requested in include not found.");
