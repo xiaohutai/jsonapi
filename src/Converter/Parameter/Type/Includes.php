@@ -9,6 +9,8 @@ class Includes extends AbstractParameter
     /** @var array $includes */
     protected $includes;
 
+    protected $fields;
+
     public function convertRequest()
     {
         $this->includes = [];
@@ -35,6 +37,18 @@ class Includes extends AbstractParameter
     public function findConfigValues()
     {
         // TODO: Implement findConfigValues() method.
+    }
+
+    public function setFields($contentType, $fields)
+    {
+        $this->fields[$contentType] = $fields;
+
+        return $this;
+    }
+
+    public function getFieldsByContentType($contentType)
+    {
+        return $this->fields[$contentType];
     }
 
     public function getParameter()

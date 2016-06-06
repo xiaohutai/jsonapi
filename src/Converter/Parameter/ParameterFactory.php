@@ -6,6 +6,7 @@ namespace Bolt\Extension\Bolt\JsonApi\Converter\Parameter;
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
 use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type\Contains;
 use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type\ContentType;
+use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type\Fields;
 use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type\Filters;
 use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type\Includes;
 use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type\Order;
@@ -47,6 +48,10 @@ class ParameterFactory
                     $newParameter = new ContentType($contentType, $value, $config, $metadata);
                     $newParameter->convertRequest();
                     break;
+                case 'fields':
+                    $newParameter = new Fields($contentType, $value, $config, $metadata);
+                    $newParameter->convertRequest();
+                    break;
             }
 
             if ($newParameter) {
@@ -55,6 +60,16 @@ class ParameterFactory
         }
 
         $parameterCollection = new ParameterCollection($parameter);
+
+        $includes = $parameterCollection->getParametersByType('includes');
+        
+        foreach ($includes as $include) {
+            //Grab all fields that should be displayed based upon the 
+            //  content type.
+            $newField = new Fields($include, $parameters['fields'], $config, $metadata);
+            $newField->convertRequest();
+            $parameterCollection->get('includes')->setFields($include, $newField);
+        }
 
         return $parameterCollection;
 
