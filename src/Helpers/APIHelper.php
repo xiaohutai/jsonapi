@@ -45,38 +45,10 @@ class APIHelper
 
     /**
      * Returns all field names for the given contenttype.
-     *
-     * @param string $contentType The name of the contenttype.
-     * @return string[] An array with all field definitions for the given
-     *                  contenttype. This includes the base columns as well.
      */
-    public function getAllFieldNames($contentType)
+    protected function getAllFieldNames($contentType)
     {
-        $baseFields = \Bolt\Content::getBaseColumns();
-        $definedFields = $this->app['config']->get("contenttypes/$contentType/fields", []);
-        $taxonomyFields = $this->getAllTaxonomies($contentType);
-
-        // Fields could be empty, although it's a rare case.
-        if (!empty($definedFields)) {
-            $definedFields = array_keys($definedFields);
-        }
-
-        $definedFields = array_merge($definedFields, $taxonomyFields);
-
-        return array_merge($baseFields, $definedFields);
-    }
-
-    /**
-     * Returns all taxonomy names for the given content type.
-     *
-     * @param string $contentType The name of the content type.
-     * @return string[] An array with all taxonomy names for the given
-     *                  contenttype.
-     */
-    public function getAllTaxonomies($contentType)
-    {
-        $taxonomyFields = $this->app['config']->get("contenttypes/$contentType/taxonomy", []);
-        return $taxonomyFields;
+        return $this->metadata->getClassMetadata($contentType)['fields'];
     }
 
     /**
