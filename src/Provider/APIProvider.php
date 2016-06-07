@@ -2,10 +2,13 @@
 
 namespace Bolt\Extension\Bolt\JsonApi\Provider;
 
+use Bolt\Extension\Bolt\JsonApi\Action\ContentListAction;
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
 use Bolt\Extension\Bolt\JsonApi\Converter\JSONAPIConverter;
 use Bolt\Extension\Bolt\JsonApi\Helpers\APIHelper;
+use Bolt\Extension\Bolt\JsonApi\Helpers\DataLinks;
 use Bolt\Extension\Bolt\JsonApi\Helpers\UtilityHelper;
+use Bolt\Extension\Bolt\JsonApi\Parser\Parser;
 use Bolt\Storage\Mapping\MetadataDriver;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
@@ -60,6 +63,29 @@ class APIProvider implements ServiceProviderInterface
         $app['jsonapi.converter'] = $app->share(
             function ($app) {
                 return new JSONAPIConverter($app['jsonapi.apihelper'], $app['jsonapi.config'], $app['storage.metadata']);
+            }
+        );
+
+        $app['jsonapi.parser'] = $app->share(
+            function ($app) {
+                return new Parser($app['jsonapi.config'], $app['jsonapi.utilityhelper']);
+            }
+        );
+
+        $app['jsonapi.datalinks'] = $app->share(
+            function ($app) {
+                return new DataLinks($app['jsonapi.config']);
+            }
+        );
+
+        $app['jsonapi.action.contentlist'] = $app->share(
+            function ($app) {
+                return new ContentListAction(
+                    $app['query'],
+                    $app['jsonapi.parser'],
+                    $app['jsonapi.datalinks'],
+                    $app['jsonapi.config']
+                );
             }
         );
 

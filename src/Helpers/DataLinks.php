@@ -108,15 +108,15 @@ class DataLinks
      */
     public function makeQueryParameters($overrides = [], $buildQuery = true)
     {
-        $queryParameters = $this->config->getCurrentRequest()->query->all();
+        //$queryParameters = $this->config->getCurrentRequest()->query->all();
 
         // todo: (optional) cleanup. There is a default set of fields we can
         //       expect using this Extension and jsonapi. Or we could ignore
         //       them like we already do.
 
         // Using Bolt's Helper Arr class for merging and overriding values.
-        $queryParameters = Arr::mergeRecursiveDistinct($queryParameters, $overrides);
-        
+        //$queryParameters = Arr::mergeRecursiveDistinct($queryParameters, $overrides);
+        $queryParameters = $overrides;
         if ($buildQuery) {
             // No need to urlencode these, afaik.
             $queryString =  urldecode(http_build_query($queryParameters));
