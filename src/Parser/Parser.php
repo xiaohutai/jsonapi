@@ -3,15 +3,22 @@
 
 namespace Bolt\Extension\Bolt\JsonApi\Parser;
 
+use Bolt\Extension\Bolt\JsonApi\Config\Config;
+use Bolt\Extension\Bolt\JsonApi\Helpers\UtilityHelper;
 use Bolt\Storage\Collection\Relations;
 use Bolt\Storage\Collection\Taxonomy;
 
 class Parser
 {
 
-    public function __construct()
-    {
+    protected $config;
 
+    protected $utilityHelper;
+
+    public function __construct(Config $config, UtilityHelper $utilityHelper)
+    {
+        $this->config = $config;
+        $this->utilityHelper = $utilityHelper;
     }
 
     public function parseItem($item, $fields = [])

@@ -14,7 +14,7 @@ use Bolt\Extension\Bolt\JsonApi\Response\ApiResponse;
 use Bolt\Storage\Query\Query;
 use Bolt\Storage\Query\QueryResultset;
 
-class ContentListAction
+class SearchAction
 {
     protected $query;
 
@@ -25,7 +25,7 @@ class ContentListAction
     protected $dataLinks;
 
     protected $config;
-
+    
     public function __construct(
         Query $query,
         Parser $parser,
@@ -40,51 +40,68 @@ class ContentListAction
 
     public function handle($contentType, ParameterCollection $parameters)
     {
-        $this->config->setCurrentRequest($request);
-
         $this->parameters = $parameters;
 
-        /** @var QueryResultset $results */
-        $results = $this->query
-            ->getContent($contentType, $this->parameters->getQueryParameters())
-            ->get($contentType);
-
-        $paginator = new Paginator($results, $this->parameters->get('page'));
-
-        $includes = $this->parameters->getParametersByType('includes');
-
-        $this->fetchIncludes($includes, $results);
-
-        $page = $this->parameters->getParametersByType('page');
-
-        $results = $paginator->getResultsPaginated();
-
-        $items = [];
-
-        foreach ($results as $key => $item) {
-            $fields = $this->parameters->get('fields')->getFields();
-            $items[$key] = $this->parser->parseItem($item, $fields);
+        // If no $contenttype is set, search all 'searchable' contenttypes.
+        $baselink = "$contentType/search";
+        if ($contentType === null) {
+            $allcontenttypes = array_keys($this->config->getContentTypes());
+            // This also fetches unallowed ones:
+            // $allcontenttypes = array_keys($this->app['config']->get('contenttypes'));
+            $allcontenttypes = implode(',', $allcontenttypes);
+            $contentType = "($allcontenttypes)";
+            $baselink = 'search';
         }
 
-        $response = [
-            'links' => $this->dataLinks->makeLinks(
-                $contentType,
+        if (! $q = $request->get('q')) {
+            throw new ApiInvalidRequestException(
+                "No query parameter q specified."
+            );
+        }
+
+        $queryParameters = array_merge($parameters->getQueryParameters(), ['filter' => $q]);
+
+        /** @var QueryResultset $results */
+        $results = $app['query']
+            ->getContent($baselink, $queryParameters)
+            ->get($contentType);
+
+        $page = $parameters->getParametersByType('page');
+
+        $totalItems = count($results);
+
+        $totalPages = ceil(($totalItems/$page['limit']) > 1 ? ($totalItems/$page['limit']) : 1);
+
+        $offset = ($page['number']-1)*$page['limit'];
+
+        $results = array_splice($results, $offset, $page['limit']);
+
+        if (! $results || count($results) === 0) {
+            throw new ApiNotFoundException(
+                "No search results found for query [$q]"
+            );
+        }
+
+        foreach ($results as $key => $item) {
+            $ct = $item->getSlug();
+            // optimize this part...
+            $fields = $parameters->get('fields')->getFields();
+            $items[$key] = $this->APIHelper->cleanItem($item, $fields);
+        }
+
+        return new ApiResponse([
+            'links' => $this->APIHelper->makeLinks(
+                $baselink,
                 $page['number'],
-                $paginator->getTotalPages(),
+                $totalPages,
                 $page['limit']
             ),
             'meta' => [
                 "count" => count($items),
-                "total" => $paginator->getTotalItems()
+                "total" => $totalItems
             ],
             'data' => $items,
-        ];
-
-        if (!empty($included)) {
-            $response['included'] = $included;
-        }
-
-        return new ApiResponse($response, $this->config);
+        ], $this->config);
     }
 
     protected function fetchIncludes($includes, $results)
