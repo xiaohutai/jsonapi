@@ -44,61 +44,6 @@ class APIHelper
     }
 
     /**
-     * Returns all field names for the given contenttype.
-     */
-    protected function getAllFieldNames($contentType)
-    {
-        return $this->metadata->getClassMetadata($contentType)['fields'];
-    }
-
-    /**
-     * Returns an array with the field names to be shown in the JSON response.
-     *
-     * @param string $contentType The name of the contenttype.
-     * @param array $allFields An array with all existing fields of the given
-     *                         contenttype. This functions as an allowed fields
-     *                         list if there is none defined.
-     * @param string $defaultFieldsKey A string that is either 'list-fields' or
-     *                                 'item-fields' that defines the default
-     *                                 fallback fields in the config.
-     * @return string[] An array with field names to be shown. It is possible that
-     *                  this function returns an empty array.
-     */
-    public function getFields($contentType, $allFields = [], $defaultFieldsKey = 'list-fields')
-    {
-        $fields = [];
-        $contentTypes = $this->config->getContentTypes();
-
-        if (isset($contentTypes[$contentType]['allowed-fields'])) {
-            $allowedFields = $contentTypes[$contentType]['allowed-fields'];
-        } else {
-            $allowedFields = $allFields;
-        }
-
-        // Check if there are any fields requested.
-        if ($requestFields = $this->config->getCurrentRequest()->get('fields')) {
-            if (isset($requestFields[$contentType])) {
-                $values = explode(',', $requestFields[$contentType]);
-                foreach ($values as $v) {
-                    if (in_array($v, $allowedFields)) {
-                        $fields[] = $v;
-                    }
-                }
-            }
-        }
-
-        // Default on the default/fallback fields defined in the config.
-        if (empty($fields)) {
-            if (isset($this->config->getContentTypes()[$contentType][$defaultFieldsKey])) {
-                $fields = $this->config->getContentTypes()[$contentType][$defaultFieldsKey];
-                // todo: do we need to filter these through 'allowed-fields'?
-            }
-        }
-
-        return $fields;
-    }
-
-    /**
      * Returns a suitable format for a given $item, where only the given $fields
      * (i.e 'attributes') are shown. If no $fields are defined, all the fields
      * defined in `contenttypes.yml` are used instead. This means that base
