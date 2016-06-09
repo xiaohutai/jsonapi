@@ -52,6 +52,7 @@ class JSONAPIConverter
         $parameters['contains'] = $request->query->get('contains', false);
         $parameters['includes'] = $request->query->get('include', false);
         $parameters['fields'] = $request->query->get('fields', false);
+        $parameters['search'] = $request->query->get('q', false);
 
         $parameterCollection = ParameterFactory::build($parameters, $this->config, $this->metadata);
 
