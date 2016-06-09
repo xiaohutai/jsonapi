@@ -34,7 +34,7 @@ class Page extends AbstractParameter
 
     public function getParameter()
     {
-        return ['limit' => $this->getSize(), 'number' => $this->getNumber()];
+        return ['paginate' => $this];
     }
 
     /**

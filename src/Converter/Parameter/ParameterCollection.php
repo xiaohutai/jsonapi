@@ -20,20 +20,17 @@ class ParameterCollection extends ArrayCollection
 
         //Loop through the parameters and add them to an array
         foreach ($this as $key => $value) {
-            if (in_array($key, ['sort', 'filters', 'contains'])) {
+            if (in_array($key, ['sort', 'filters', 'contains', 'page'])) {
                 $queryParameters = array_merge($value->getParameter(), $queryParameters);
             }
         }
-
-        //Manually add limit to array
-        $queryParameters = array_merge(['limit' => $this->get('page')->getSize()], $queryParameters);
 
         return $queryParameters;
     }
 
     public function getParametersByType($type)
     {
-        if ($parameters = $this->get($type)){
+        if ($parameters = $this->get($type)) {
             return $parameters->getParameter();
         }
 
