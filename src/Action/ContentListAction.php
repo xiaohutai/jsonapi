@@ -3,10 +3,15 @@
 
 namespace Bolt\Extension\Bolt\JsonApi\Action;
 
+use Bolt\Extension\Bolt\JsonApi\Config\Config;
 use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\ParameterCollection;
 use Bolt\Extension\Bolt\JsonApi\Exception\ApiInvalidRequestException;
 use Bolt\Extension\Bolt\JsonApi\Helpers\APIHelper;
+use Bolt\Extension\Bolt\JsonApi\Helpers\DataLinks;
+use Bolt\Extension\Bolt\JsonApi\Helpers\Paginator;
+use Bolt\Extension\Bolt\JsonApi\Parser\Parser;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiResponse;
+use Bolt\Extension\Bolt\JsonApi\Storage\Query\PagingResultSet;
 use Bolt\Storage\Query\Query;
 use Bolt\Storage\Query\QueryResultset;
 
@@ -16,49 +21,65 @@ class ContentListAction
 
     protected $parameters;
 
+    protected $parser;
+
+    protected $dataLinks;
+
+    protected $config;
+
     public function __construct(
         Query $query,
-        ParameterCollection $parameters,
-        APIHelper $APIHelper
+        Parser $parser,
+        DataLinks $dataLinks,
+        Config $config
     ) {
+        $this->query = $query;
+        $this->parser = $parser;
+        $this->dataLinks = $dataLinks;
+        $this->config = $config;
     }
 
-    public function handle()
+    public function handle($contentType, ParameterCollection $parameters)
     {
-        /** @var QueryResultset $results */
-        $results = $this->query
-            ->getContent($contentType, $this->parameters->getQueryParameters())
-            ->get($contentType);
+        $this->parameters = $parameters;
 
-        $totalItems = count($results);
+        $page = $this->parameters->get('page');
+
+        $queryParameters = array_merge($this->parameters->getQueryParameters(), ['paginate' => $page]);
+
+        /** @var PagingResultSet $set */
+        $set = $this->query
+            ->getContent("$contentType/pager", $queryParameters);
+
+        $results = $set->get($contentType);
+
+        if (! $results || count($results) === 0) {
+            throw new ApiInvalidRequestException(
+                "Bad request: There were no results based upon your criteria!"
+            );
+        }
 
         $includes = $this->parameters->getParametersByType('includes');
 
-        $page = $this->parameters->getParametersByType('page');
-
-        $offset = ($page['number']-1)*$page['limit'];
-
-        $results = array_splice($results, $offset, $page['limit']);
-
+        $this->fetchIncludes($includes, $results);
+        
         $items = [];
 
         foreach ($results as $key => $item) {
             $fields = $this->parameters->get('fields')->getFields();
-            $items[$key] = $this->APIHelper->cleanItem($item, $fields);
+            $items[$key] = $this->parser->parseItem($item, $fields);
         }
 
-        $totalPages = ceil(($totalItems/$page['limit']) > 1 ? ($totalItems/$page['limit']) : 1);
-
         $response = [
-            'links' => $this->APIHelper->makeLinks(
+            'links' => $this->dataLinks->makeLinks(
                 $contentType,
                 $page['number'],
-                $totalPages,
+                $set->getTotalPages(),
                 $page['limit']
             ),
             'meta' => [
                 "count" => count($items),
-                "total" => $totalItems
+                "total" => $set->getTotalResults()
             ],
             'data' => $items,
         ];
@@ -70,26 +91,17 @@ class ContentListAction
         return new ApiResponse($response, $this->config);
     }
 
-    protected function fetchIncludes()
+    protected function fetchIncludes($includes, $results)
     {
         foreach ($includes as $include) {
             //Loop through all results
             foreach ($results as $key => $item) {
                 //Loop through all relationships
                 foreach ($item->relation[$include] as $related) {
-                    $fields = $parameters->get('includes')->getFieldsByContentType($include);
-                    $included[$key] = $this->APIHelper->cleanItem($related, $fields);
+                    $fields = $this->parameters->get('includes')->getFieldsByContentType($include);
+                    $included[$key] = $this->parser->parseItem($related, $fields);
                 }
             }
-        }
-    }
-
-    protected function checkResults(QueryResultset $results)
-    {
-        if (! $results || count($results) === 0) {
-            throw new ApiInvalidRequestException(
-                "Bad request: There were no results based upon your criteria!"
-            );
         }
     }
 }
