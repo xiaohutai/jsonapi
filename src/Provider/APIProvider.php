@@ -3,6 +3,7 @@
 namespace Bolt\Extension\Bolt\JsonApi\Provider;
 
 use Bolt\Extension\Bolt\JsonApi\Action\ContentListAction;
+use Bolt\Extension\Bolt\JsonApi\Action\SearchAction;
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
 use Bolt\Extension\Bolt\JsonApi\Converter\JSONAPIConverter;
 use Bolt\Extension\Bolt\JsonApi\Helpers\APIHelper;
@@ -83,6 +84,17 @@ class APIProvider implements ServiceProviderInterface
         $app['jsonapi.action.contentlist'] = $app->share(
             function ($app) {
                 return new ContentListAction(
+                    $app['query'],
+                    $app['jsonapi.parser'],
+                    $app['jsonapi.datalinks'],
+                    $app['jsonapi.config']
+                );
+            }
+        );
+
+        $app['jsonapi.action.search'] = $app->share(
+            function ($app) {
+                return new SearchAction(
                     $app['query'],
                     $app['jsonapi.parser'],
                     $app['jsonapi.datalinks'],

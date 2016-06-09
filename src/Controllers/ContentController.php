@@ -62,7 +62,7 @@ class ContentController implements ControllerProviderInterface
 
         $ctr->get("/menu", [$this, "listMenus"])->bind('jsonapi.menu');
 
-        $ctr->get("/{contentType}/search", [$this, "searchContent"])
+        $ctr->get("/{contentType}/search", [$app['jsonapi.action.search'], "handle"])
             ->bind('jsonapi.searchContent')
             ->convert('parameters', 'jsonapi.converter:grabParameters');
 
@@ -78,80 +78,6 @@ class ContentController implements ControllerProviderInterface
 
         return $ctr;
     }
-
-    /**
-     * @param Request $request
-     * @param Application $app
-     * @param $contentType
-     * @param Collection|ParameterInterface[] $parameters
-     * @return ApiResponse
-     */
-    public function searchContent(Request $request, Application $app, $contentType, ParameterCollection $parameters)
-    {
-        $this->config->setCurrentRequest($request);
-
-        // If no $contenttype is set, search all 'searchable' contenttypes.
-        $baselink = "$contentType/search";
-        if ($contentType === null) {
-            $allcontenttypes = array_keys($this->config->getContentTypes());
-            // This also fetches unallowed ones:
-            // $allcontenttypes = array_keys($this->app['config']->get('contenttypes'));
-            $allcontenttypes = implode(',', $allcontenttypes);
-            $contentType = "($allcontenttypes)";
-            $baselink = 'search';
-        }
-
-        if (! $q = $request->get('q')) {
-            throw new ApiInvalidRequestException(
-                "No query parameter q specified."
-            );
-        }
-
-        $queryParameters = array_merge($parameters->getQueryParameters(), ['filter' => $q]);
-
-        /** @var QueryResultset $results */
-        $results = $app['query']
-            ->getContent($baselink, $queryParameters)
-            ->get($contentType);
-
-        $page = $parameters->getParametersByType('page');
-
-        $totalItems = count($results);
-
-        $totalPages = ceil(($totalItems/$page['limit']) > 1 ? ($totalItems/$page['limit']) : 1);
-
-        $offset = ($page['number']-1)*$page['limit'];
-
-        $results = array_splice($results, $offset, $page['limit']);
-
-        if (! $results || count($results) === 0) {
-            throw new ApiNotFoundException(
-                "No search results found for query [$q]"
-            );
-        }
-
-        foreach ($results as $key => $item) {
-            $ct = $item->getSlug();
-            // optimize this part...
-            $fields = $parameters->get('fields')->getFields();
-            $items[$key] = $this->APIHelper->cleanItem($item, $fields);
-        }
-
-        return new ApiResponse([
-            'links' => $this->APIHelper->makeLinks(
-                $baselink,
-                $page['number'],
-                $totalPages,
-                $page['limit']
-            ),
-            'meta' => [
-                "count" => count($items),
-                "total" => $totalItems
-            ],
-            'data' => $items,
-        ], $this->config);
-    }
-
 
     /**
      * @param Request $request
