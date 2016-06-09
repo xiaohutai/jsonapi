@@ -53,4 +53,3 @@ class ContentType extends AbstractParameter
         return $this;
     }
 }
-

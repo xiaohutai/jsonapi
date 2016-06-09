@@ -30,14 +30,16 @@ class ParameterFactory
             //Check if it exists
             if (class_exists($class)) {
                 //Call static function to initialize instance
-                $parameterInstance = call_user_func_array([$class, 'initialize'], [$contentType, $value, $config, $metadata]);
+                $parameterInstance = call_user_func_array(
+                    [$class, 'initialize'],
+                    [$contentType, $value, $config, $metadata]
+                );
                 if ($parameterInstance instanceof AbstractParameter) {
                     //Run convertRequest to store values in correct variables for getters and setters...
                     $parameterInstance->convertRequest();
                     $parameter[$key] = $parameterInstance;
                 }
             }
-
         }
 
         $parameterCollection = new ParameterCollection($parameter);
@@ -55,6 +57,4 @@ class ParameterFactory
         return $parameterCollection;
 
     }
-
 }
-

@@ -1,8 +1,8 @@
 <?php
 namespace Bolt\Extension\Bolt\JsonApi\Helpers;
+
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
 use Silex\Application;
-
 
 /**
  * Class UtilityHelper
@@ -46,7 +46,8 @@ class UtilityHelper
      */
     public function makeAbsolutePathToImage($filename = '')
     {
-        return sprintf('%s%s%s',
+        return sprintf(
+            '%s%s%s',
             $this->app['paths']['hosturl'],
             $this->app['paths']['files'],
             $filename
@@ -59,7 +60,8 @@ class UtilityHelper
      */
     public function makeAbsolutePathToThumbnail($filename = '')
     {
-        return sprintf('%s/thumbs/%sx%s/%s',
+        return sprintf(
+            '%s/thumbs/%sx%s/%s',
             $this->app['paths']['hosturl'],
             $this->config->getThumbnail()['width'],
             $this->config->getThumbnail()['height'],

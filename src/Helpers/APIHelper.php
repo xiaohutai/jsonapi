@@ -118,7 +118,9 @@ class APIHelper
                 $attributes['taxonomy'][$field] = $item->taxonomy[$field];
             }*/
 
-            if (in_array($field, ['datepublish', 'datecreated', 'datechanged', 'datedepublish']) && $this->config->getDateIso()) {
+            $defaultFields = ['datepublish', 'datecreated', 'datechanged', 'datedepublish'];
+
+            if (in_array($field, $defaultFields) && $this->config->getDateIso()) {
                 $attributes[$field] = $this->utilityHelper->dateISO($attributes[$field]);
             }
 

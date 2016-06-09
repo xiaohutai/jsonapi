@@ -66,4 +66,3 @@ class Fields extends AbstractParameter
         return $this;
     }
 }
-

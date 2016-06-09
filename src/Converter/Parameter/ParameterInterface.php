@@ -12,4 +12,3 @@ interface ParameterInterface
 
     public function getParameter();
 }
-

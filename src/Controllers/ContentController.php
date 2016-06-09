@@ -105,5 +105,4 @@ class ContentController implements ControllerProviderInterface
         );
 
     }
-
 }

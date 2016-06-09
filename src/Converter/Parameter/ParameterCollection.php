@@ -37,4 +37,3 @@ class ParameterCollection extends ArrayCollection
         throw new ApiException('Invalid item fetched!');
     }
 }
-

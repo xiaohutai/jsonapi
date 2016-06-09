@@ -28,7 +28,8 @@ class Page extends AbstractParameter
         return $this;
     }
 
-    public function findConfigValues() {
+    public function findConfigValues()
+    {
 
     }
 
@@ -75,4 +76,3 @@ class Page extends AbstractParameter
         return $this;
     }
 }
-

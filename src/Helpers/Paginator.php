@@ -51,4 +51,3 @@ class Paginator
         return ($this->page->getNumber() - 1) * $this->page->getSize();
     }
 }
-

@@ -56,4 +56,3 @@ class Filters extends AbstractParameter
         return $this;
     }
 }
-

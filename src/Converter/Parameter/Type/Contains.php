@@ -63,4 +63,3 @@ class Contains extends AbstractParameter
         return $this;
     }
 }
-

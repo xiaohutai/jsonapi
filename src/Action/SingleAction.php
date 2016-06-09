@@ -38,7 +38,9 @@ class SingleAction extends FetchAction
 
             $response = new ApiResponse([
                 'links' => [
-                    'self' => $this->config->getBasePath() . "/$contentType/$slug/$relatedContentType" . $this->APIHelper->makeQueryParameters()
+                    'self' => $this->config->getBasePath() .
+                        "/$contentType/$slug/$relatedContentType" .
+                        $this->dataLinks->makeQueryParameters()
                 ],
                 'meta' => [
                     "count" => count($items),
@@ -46,7 +48,6 @@ class SingleAction extends FetchAction
                 ],
                 'data' => $items
             ], $this->config);
-
         } else {
             //$allFields = $this->APIHelper->getAllFieldNames($contentType);
             //$fields = $this->APIHelper->getFields($contentType, $allFields, 'item-fields');

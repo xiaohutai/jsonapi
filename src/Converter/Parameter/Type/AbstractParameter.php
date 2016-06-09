@@ -66,4 +66,3 @@ abstract class AbstractParameter implements ParameterInterface
         return array_key_exists($ct, $this->config->getContentTypes());
     }
 }
-

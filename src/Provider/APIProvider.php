@@ -66,7 +66,11 @@ class APIProvider implements ServiceProviderInterface
 
         $app['jsonapi.converter'] = $app->share(
             function ($app) {
-                return new JSONAPIConverter($app['jsonapi.apihelper'], $app['jsonapi.config'], $app['storage.metadata']);
+                return new JSONAPIConverter(
+                    $app['jsonapi.apihelper'],
+                    $app['jsonapi.config'],
+                    $app['storage.metadata']
+                );
             }
         );
 

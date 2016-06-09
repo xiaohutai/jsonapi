@@ -76,5 +76,4 @@ class ApiResponse extends Response
             $this->setStatusCode(Response::HTTP_OK);
         }
     }
-
 }

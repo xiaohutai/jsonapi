@@ -1,6 +1,6 @@
 <?php
-namespace Bolt\Extension\Bolt\JsonApi\Config;
 
+namespace Bolt\Extension\Bolt\JsonApi\Config;
 
 use Bolt\Application;
 use Symfony\Component\HttpFoundation\Request;
@@ -65,7 +65,7 @@ class Config
 
     public function __construct($config, Application $app)
     {
-        if(isset($config['base'])) {
+        if (isset($config['base'])) {
             $this->base = $config['base'];
         }
         
