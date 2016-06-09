@@ -34,7 +34,7 @@ class FetchAction
         $this->config = $config;
     }
 
-    protected function throwErrorOnNoResults(array $results, $message)
+    protected function throwErrorOnNoResults($results, $message)
     {
         if (! $results || count($results) === 0) {
             throw new ApiInvalidRequestException(
