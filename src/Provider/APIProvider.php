@@ -91,6 +91,15 @@ class APIProvider implements ServiceProviderInterface
             }
         );
 
+        $app['storage.content_repository'] = $app->protect(
+            function ($classMetadata) use ($app) {
+                $repoClass = 'Bolt\Extension\Bolt\JsonApi\Storage\Repository';
+                $repo = new $repoClass($app['storage'], $classMetadata);
+                $repo->setLegacyService($app['storage.legacy_service']);
+                return $repo;
+            }
+        );
+
         $app['query.parser']->addDirectiveHandler('paginate', new PagerHandler());
         $app['query.parser']->addHandler('pager', new PagingHandler());
         $app['query.parser']->addOperation('pager');
