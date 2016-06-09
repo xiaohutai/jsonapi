@@ -29,6 +29,11 @@ abstract class AbstractParameter implements ParameterInterface
         $this->metadata = $metadata;
     }
 
+    public static function initialize($contentType, $values, Config $config, MetadataDriver $metadata)
+    {
+        return new static($contentType, $values, $config, $metadata);
+    }
+
     abstract public function convertRequest();
 
     abstract public function findConfigValues();

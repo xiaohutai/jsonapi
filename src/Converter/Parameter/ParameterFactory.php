@@ -4,59 +4,40 @@
 namespace Bolt\Extension\Bolt\JsonApi\Converter\Parameter;
 
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
-use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type\Contains;
-use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type\ContentType;
+use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type\AbstractParameter;
 use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type\Fields;
-use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type\Filters;
-use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type\Includes;
-use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type\Order;
-use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type\Page;
 use Bolt\Storage\Mapping\MetadataDriver;
 
 class ParameterFactory
 {
 
+    /**
+     * @param $parameters
+     * @param Config $config
+     * @param MetadataDriver $metadata
+     * @return ParameterCollection
+     * Loop through all current parameters from param converter. See if we have a class for it, initialize the class and
+     *  run convertRequest to put variables where they need to be, and add to the array.
+     */
     public static function build($parameters, Config $config, MetadataDriver $metadata)
     {
         $contentType = $parameters['contentType'];
 
         foreach ($parameters as $key => $value) {
-            $newParameter = false;
+            //Get FQDN
+            $class = __NAMESPACE__ . '\\Type\\' . ucfirst($key);
 
-            switch($key) {
-                case 'page':
-                    $newParameter = new Page($contentType, $value, $config, $metadata);
-                    $newParameter->convertRequest();
-                    break;
-                case 'sort':
-                    $newParameter = new Order($contentType, $value, $config, $metadata);
-                    $newParameter->convertRequest();
-                    break;
-                case 'filters':
-                    $newParameter = new Filters($contentType, $value, $config, $metadata);
-                    $newParameter->convertRequest();
-                    break;
-                case 'contains':
-                    $newParameter = new Contains($contentType, $value, $config, $metadata);
-                    $newParameter->convertRequest();
-                    break;
-                case 'includes':
-                    $newParameter = new Includes($contentType, $value, $config, $metadata);
-                    $newParameter->convertRequest();
-                    break;
-                case 'contentType':
-                    $newParameter = new ContentType($contentType, $value, $config, $metadata);
-                    $newParameter->convertRequest();
-                    break;
-                case 'fields':
-                    $newParameter = new Fields($contentType, $value, $config, $metadata);
-                    $newParameter->convertRequest();
-                    break;
+            //Check if it exists
+            if (class_exists($class)) {
+                //Call static function to initialize instance
+                $parameterInstance = call_user_func_array([$class, 'initialize'], [$contentType, $value, $config, $metadata]);
+                if ($parameterInstance instanceof AbstractParameter) {
+                    //Run convertRequest to store values in correct variables for getters and setters...
+                    $parameterInstance->convertRequest();
+                    $parameter[$key] = $parameterInstance;
+                }
             }
 
-            if ($newParameter) {
-                $parameter[$key] = $newParameter;
-            }
         }
 
         $parameterCollection = new ParameterCollection($parameter);
@@ -64,7 +45,7 @@ class ParameterFactory
         $includes = $parameterCollection->getParametersByType('includes');
         
         foreach ($includes as $include) {
-            //Grab all fields that should be displayed based upon the 
+            //Grab all fields that should be displayed based upon the
             //  content type.
             $newField = new Fields($include, $parameters['fields'], $config, $metadata);
             $newField->convertRequest();
