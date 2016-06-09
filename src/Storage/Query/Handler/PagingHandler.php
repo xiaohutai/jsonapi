@@ -6,6 +6,8 @@ namespace Bolt\Extension\Bolt\JsonApi\Storage\Query\Handler;
 use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type\Page;
 use Bolt\Extension\Bolt\JsonApi\Storage\Query\PagingResultSet;
 use Bolt\Storage\Query\ContentQueryParser;
+use Bolt\Storage\Query\SearchQuery;
+use Doctrine\DBAL\Query\QueryBuilder;
 
 class PagingHandler
 {
@@ -15,29 +17,36 @@ class PagingHandler
         $set = new PagingResultSet();
 
         foreach ($contentQuery->getContentTypes() as $contenttype) {
-            $query = $contentQuery->getService('select');
+            if ($searchParam = $contentQuery->getParameter('filter')) {
+                $query = $contentQuery->getService('search');
+            } else {
+                $query = $contentQuery->getService('select');
+            }
+
             $repo = $contentQuery->getEntityManager()->getRepository($contenttype);
             $query->setQueryBuilder($repo->createQueryBuilder($contenttype));
             $query->setContentType($contenttype);
             $query->setParameters($contentQuery->getParameters());
 
+            if ($query instanceof SearchQuery) {
+                $query->setSearch($searchParam);
+            }
+
             $contentQuery->runDirectives($query);
 
+            $query = $repo->getQueryBuilderAfterMappings($query);
+
+            /** @var QueryBuilder $query2 */
             $query2 = clone $query->getQueryBuilder();
             $qb = clone $query->getQueryBuilder();
 
             $query2
-                ->setMaxResults(null)
-                ->setFirstResult(null)
+                ->resetQueryParts(['groupBy', 'maxResults', 'firstResult'])
                 ->select("COUNT(*) as total");
 
-            $query->setQueryBuilder($query2);
+            $totalItems = $repo->findResult($query2);
 
-            $totalItems = $query->build()->execute()->fetch();
-            $totalItems = $totalItems['total'];
-
-            $query->setQueryBuilder($qb);
-            $result = $repo->queryWith($query);
+            $result = $repo->findResults($qb);
             if ($result) {
                 $set->add($result, $contenttype);
                 $set->setTotalResults($totalItems);
