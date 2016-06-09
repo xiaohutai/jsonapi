@@ -48,7 +48,7 @@ class JSONAPIConverter
         $parameters['page']['size'] = $request->query->get('page[size]', false, true);
         $parameters['page']['number'] = $request->query->get('page[number]', false, true);
         $parameters['sort'] = $request->query->get('sort', false);
-        $parameters['filter'] = $request->query->get('filter', false);
+        $parameters['filters'] = $request->query->get('filter', false);
         $parameters['contains'] = $request->query->get('contains', false);
         $parameters['includes'] = $request->query->get('include', false);
         $parameters['fields'] = $request->query->get('fields', false);
