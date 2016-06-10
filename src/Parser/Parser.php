@@ -5,6 +5,7 @@ namespace Bolt\Extension\Bolt\JsonApi\Parser;
 
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
 use Bolt\Extension\Bolt\JsonApi\Helpers\UtilityHelper;
+use Bolt\Extension\Bolt\JsonApi\Parser\Field\FieldFactory;
 use Bolt\Storage\Collection\Relations;
 use Bolt\Storage\Collection\Taxonomy;
 
@@ -44,6 +45,14 @@ class Parser
         $fields = array_unique($fields);
 
         foreach ($fields as $key => $field) {
+            if ($data = $item->get($field)) {
+                //$fieldFactory = FieldFactory::build($type, $data);
+                //Exclude relationships
+                if (!$item->get($field) instanceof Relations) {
+                    $attributes[$field] = $item->get($field);
+                }
+            }
+
             if ($item->get($field)) {
                 //Exclude relationships
                 if (!$item->get($field) instanceof Relations) {
