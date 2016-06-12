@@ -60,7 +60,9 @@ class ContentController implements ControllerProviderInterface
          */
         $ctr = $app['controllers_factory'];
 
-        $ctr->get("/menu", [$this, "listMenus"])->bind('jsonapi.menu');
+        $ctr->get("/menu", [$app['jsonapi.action.menu'], "handle"])
+            ->bind('jsonapi.menu');
+
 
         $ctr->get("/{contentType}/search", [$app['jsonapi.action.search'], "handle"])
             ->bind('jsonapi.searchContent')
