@@ -3,6 +3,7 @@
 namespace Bolt\Extension\Bolt\JsonApi\Provider;
 
 use Bolt\Extension\Bolt\JsonApi\Action\ContentListAction;
+use Bolt\Extension\Bolt\JsonApi\Action\MenuAction;
 use Bolt\Extension\Bolt\JsonApi\Action\SearchAction;
 use Bolt\Extension\Bolt\JsonApi\Action\SingleAction;
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
@@ -114,6 +115,15 @@ class APIProvider implements ServiceProviderInterface
                     $app['query'],
                     $app['jsonapi.parser'],
                     $app['jsonapi.datalinks'],
+                    $app['jsonapi.config']
+                );
+            }
+        );
+
+        $app['jsonapi.action.menu'] = $app->share(
+            function ($app) {
+                return new MenuAction(
+                    $app['config'],
                     $app['jsonapi.config']
                 );
             }
