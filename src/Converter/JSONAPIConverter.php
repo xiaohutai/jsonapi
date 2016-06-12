@@ -42,8 +42,12 @@ class JSONAPIConverter
     {
         $parameters = [];
 
-        //Get content type
-        $parameters['contentType'] = $request->attributes->get('contentType');
+        $parameters['search'] = $request->query->get('q', false);
+
+        if (! $this->isSearch($parameters)) {
+            //Get content type
+            $parameters['contentType'] = $request->attributes->get('contentType');
+        }
 
         $parameters['page']['size'] = $request->query->get('page[size]', false, true);
         $parameters['page']['number'] = $request->query->get('page[number]', false, true);
@@ -52,10 +56,14 @@ class JSONAPIConverter
         $parameters['contains'] = $request->query->get('contains', false);
         $parameters['includes'] = $request->query->get('include', false);
         $parameters['fields'] = $request->query->get('fields', false);
-        $parameters['search'] = $request->query->get('q', false);
 
         $parameterCollection = ParameterFactory::build($parameters, $this->config, $this->metadata);
 
         return $parameterCollection;
+    }
+
+    protected function isSearch($parameters)
+    {
+        return isset($parameters['search']);
     }
 }
