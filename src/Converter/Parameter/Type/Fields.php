@@ -14,7 +14,7 @@ class Fields extends AbstractParameter
         if ($this->config->getAllowedFields($this->contentType)) {
             $allowedFields = $this->config->getAllowedFields($this->contentType);
         } else {
-            $allowedFields = $this->getAllFieldNames();
+            $allowedFields = array_keys($this->getAllFieldNames());
         }
 
         if (isset($this->values[$this->contentType])) {
@@ -28,6 +28,7 @@ class Fields extends AbstractParameter
 
         // Default on the default/fallback fields defined in the config.
         if (empty($this->fields)) {
+            $this->fields = $allowedFields;
             if ($this->config->getListFields($this->contentType)) {
                 $this->fields = $this->config->getListFields(($this->contentType));
                 // todo: do we need to filter these through 'allowed-fields'?

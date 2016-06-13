@@ -26,9 +26,10 @@ class Parser
     {
         $contentType = (string) $item->getContenttype();
 
-        if (empty($fields)) {
-            $fields = array_keys($item->_fields);
-        }
+        /*if (empty($fields)) {
+            $fields = array_keys($item->getContenttype()['fields']);
+            //$fields = array_keys($item->_fields);
+        }*/
 
         // Both 'id' and 'type' are always required. So remove them from $fields.
         // The remaining $fields go into 'attributes'.
@@ -44,9 +45,11 @@ class Parser
         $attributes = [];
         $fields = array_unique($fields);
 
+        //@todo Create individual parsers for different field types
+        //$fieldCollection = FieldFactory::build($item, $fields);
+
         foreach ($fields as $key => $field) {
             if ($data = $item->get($field)) {
-                //$fieldFactory = FieldFactory::build($type, $data);
                 //Exclude relationships
                 if (!$item->get($field) instanceof Relations) {
                     $attributes[$field] = $item->get($field);
@@ -75,7 +78,10 @@ class Parser
             }
             
             if (in_array($field, ['datepublish', 'datecreated', 'datechanged', 'datedepublish']) && $this->config->getDateIso()) {
-                $attributes[$field] = $this->utilityHelper->dateISO($attributes[$field]);
+                //Verify not NULL
+                if ($data) {
+                    $attributes[$field] = $this->utilityHelper->dateISO($attributes[$field]);
+                }
             }
 
         }
