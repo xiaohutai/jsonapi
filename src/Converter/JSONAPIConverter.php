@@ -6,9 +6,6 @@ namespace Bolt\Extension\Bolt\JsonApi\Converter;
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
 use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\ParameterFactory;
 use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\ParameterInterface;
-use Bolt\Extension\Bolt\JsonApi\Exception\ApiInvalidRequestException;
-use Bolt\Extension\Bolt\JsonApi\Exception\ApiNotFoundException;
-use Bolt\Extension\Bolt\JsonApi\Helpers\APIHelper;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiInvalidRequestResponse;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiNotFoundResponse;
 use Bolt\Storage\Mapping\MetadataDriver;
@@ -17,8 +14,6 @@ use Symfony\Component\HttpFoundation\Request;
 
 class JSONAPIConverter
 {
-    /** @var APIHelper $APIHelper */
-    protected $APIHelper;
 
     /** @var Config $config */
     protected $config;
@@ -26,10 +21,9 @@ class JSONAPIConverter
     /** @var MetadataDriver $metadata */
     protected $metadata;
 
-    public function __construct(APIHelper $APIHelper, Config $config, MetadataDriver $metadata)
+    public function __construct(Config $config, MetadataDriver $metadata)
     {
         $this->metadata = $metadata;
-        $this->APIHelper = $APIHelper;
         $this->config = $config;
     }
 
@@ -51,7 +45,7 @@ class JSONAPIConverter
 
         $parameters['page']['size'] = $request->query->get('page[size]', false, true);
         $parameters['page']['number'] = $request->query->get('page[number]', false, true);
-        $parameters['sort'] = $request->query->get('sort', false);
+        $parameters['order'] = $request->query->get('sort', false);
         $parameters['filters'] = $request->query->get('filter', false);
         $parameters['contains'] = $request->query->get('contains', false);
         $parameters['includes'] = $request->query->get('include', false);
@@ -64,6 +58,6 @@ class JSONAPIConverter
 
     protected function isSearch($parameters)
     {
-        return isset($parameters['search']);
+        return $parameters['search'];
     }
 }
