@@ -32,6 +32,8 @@ class PagingHandler
                 $query->setSearch($searchParam);
             }
 
+            $paginate = $contentQuery->getDirective('paginate');
+            $contentQuery->setDirective('limit', $paginate->getSize());
             $contentQuery->runDirectives($query);
 
             $query = $repo->getQueryBuilderAfterMappings($query);
@@ -42,6 +44,8 @@ class PagingHandler
 
             $query2
                 ->resetQueryParts(['groupBy', 'maxResults', 'firstResult'])
+                ->setFirstResult(null)
+                ->setMaxResults(null)
                 ->select("COUNT(*) as total");
 
             $totalItems = $repo->findResult($query2);
