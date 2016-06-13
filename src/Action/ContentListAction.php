@@ -4,16 +4,19 @@
 namespace Bolt\Extension\Bolt\JsonApi\Action;
 
 use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\ParameterCollection;
+use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type\Page;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiResponse;
 use Bolt\Extension\Bolt\JsonApi\Storage\Query\PagingResultSet;
+use Symfony\Component\HttpFoundation\Request;
 
 class ContentListAction extends FetchAction
 {
-    public function handle($contentType, ParameterCollection $parameters)
+    public function handle($contentType, Request $request, ParameterCollection $parameters)
     {
+        /** @var Page $page */
         $page = $parameters->get('page');
 
-        $queryParameters = array_merge($parameters->getQueryParameters(), ['paginate' => $page]);
+        $queryParameters = array_merge($parameters->getQueryParameters(), $page->getParameter());
 
         /** @var PagingResultSet $set */
         $set = $this->query
@@ -29,8 +32,6 @@ class ContentListAction extends FetchAction
             $parameters
         );
 
-        $page = $parameters->getParametersByType('page');
-
         $items = [];
 
         foreach ($results as $key => $item) {
@@ -41,9 +42,10 @@ class ContentListAction extends FetchAction
         $response = [
             'links' => $this->dataLinks->makeLinks(
                 $contentType,
-                $page['number'],
+                $page->getNumber(),
                 $set->getTotalPages(),
-                $page['limit']
+                $page->getSize(),
+                $request
             ),
             'meta' => [
                 "count" => count($items),
