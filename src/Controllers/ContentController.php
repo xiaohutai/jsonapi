@@ -3,17 +3,10 @@ namespace Bolt\Extension\Bolt\JsonApi\Controllers;
 
 use Bolt\Content;
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
-use Bolt\Extension\Bolt\JsonApi\Converter\JSONAPIConverter;
-use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\ParameterCollection;
-use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\ParameterInterface;
-use Bolt\Extension\Bolt\JsonApi\Exception\ApiInvalidRequestException;
 use Bolt\Extension\Bolt\JsonApi\Exception\ApiNotFoundException;
-use Bolt\Extension\Bolt\JsonApi\Helpers\APIHelper;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiInvalidRequestResponse;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiNotFoundResponse;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiResponse;
-use Bolt\Storage\Query\QueryResultset;
-use Doctrine\Common\Collections\Collection;
 use Silex\Application;
 use Silex\ControllerCollection;
 use Silex\ControllerProviderInterface;
@@ -30,20 +23,14 @@ class ContentController implements ControllerProviderInterface
      * @var Config
      */
     private $config;
-    /**
-     * @var APIHelper
-     */
-    private $APIHelper;
 
     /**
      * ContentController constructor.
      * @param Config $config
-     * @param APIHelper $APIHelper
      */
-    public function __construct(Config $config, APIHelper $APIHelper)
+    public function __construct(Config $config)
     {
         $this->config = $config;
-        $this->APIHelper = $APIHelper;
     }
 
     /**

@@ -42,7 +42,7 @@ class JSONAPIExtension extends SimpleExtension
         //You can't mount the same route twice, because it will be overwritten in the array.
         return [
             $container['jsonapi.config']->getBase() =>
-                new ContentController($container['jsonapi.config'], $container['jsonapi.apihelper']),
+                new ContentController($container['jsonapi.config']),
         ];
     }
 

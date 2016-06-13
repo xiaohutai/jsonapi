@@ -8,7 +8,6 @@ use Bolt\Extension\Bolt\JsonApi\Action\SearchAction;
 use Bolt\Extension\Bolt\JsonApi\Action\SingleAction;
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
 use Bolt\Extension\Bolt\JsonApi\Converter\JSONAPIConverter;
-use Bolt\Extension\Bolt\JsonApi\Helpers\APIHelper;
 use Bolt\Extension\Bolt\JsonApi\Helpers\DataLinks;
 use Bolt\Extension\Bolt\JsonApi\Helpers\UtilityHelper;
 use Bolt\Extension\Bolt\JsonApi\Parser\Parser;
@@ -59,16 +58,9 @@ class APIProvider implements ServiceProviderInterface
             }
         );
 
-        $app['jsonapi.apihelper'] = $app->share(
-            function ($app) {
-                return new APIHelper($app, $app['jsonapi.config'], $app['jsonapi.utilityhelper']);
-            }
-        );
-
         $app['jsonapi.converter'] = $app->share(
             function ($app) {
                 return new JSONAPIConverter(
-                    $app['jsonapi.apihelper'],
                     $app['jsonapi.config'],
                     $app['storage.metadata']
                 );
