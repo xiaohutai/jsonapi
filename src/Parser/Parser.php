@@ -26,10 +26,10 @@ class Parser
     {
         $contentType = (string) $item->getContenttype();
 
-        /*if (empty($fields)) {
+        if (empty($fields)) {
             $fields = array_keys($item->getContenttype()['fields']);
             //$fields = array_keys($item->_fields);
-        }*/
+        }
 
         // Both 'id' and 'type' are always required. So remove them from $fields.
         // The remaining $fields go into 'attributes'.

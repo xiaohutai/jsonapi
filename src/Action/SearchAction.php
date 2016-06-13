@@ -7,22 +7,12 @@ use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\ParameterCollection;
 use Bolt\Extension\Bolt\JsonApi\Exception\ApiInvalidRequestException;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiResponse;
 use Bolt\Extension\Bolt\JsonApi\Storage\Query\PagingResultSet;
+use Symfony\Component\HttpFoundation\Request;
 
 class SearchAction extends FetchAction
 {
-    public function handle($contentType = null, ParameterCollection $parameters)
+    public function handle($contentType = null, Request $request, ParameterCollection $parameters)
     {
-        // If no $contenttype is set, search all 'searchable' contenttypes.
-        $baselink = "$contentType/pager";
-        if ($contentType === null) {
-            $allcontenttypes = array_keys($this->config->getContentTypes());
-            // This also fetches unallowed ones:
-            // $allcontenttypes = array_keys($this->app['config']->get('contenttypes'));
-            $allcontenttypes = implode(',', $allcontenttypes);
-            $contentType = "($allcontenttypes)";
-            $baselink = "$contentType/pager";
-        }
-
         $search = $parameters->get('search')->getSearch();
 
         if (! $search) {
@@ -31,7 +21,22 @@ class SearchAction extends FetchAction
             );
         }
 
+        // If no $contenttype is set, search all 'searchable' contenttypes.
+        $baselink = "$contentType/pager";
+        if ($contentType === null) {
+            $allcontenttypes = array_keys($this->config->getContentTypes());
+            // This also fetches unallowed ones:
+            // $allcontenttypes = array_keys($this->app['config']->get('contenttypes'));
+            $allcontenttypes = implode(',', $allcontenttypes);
+            $baselink = "($allcontenttypes)/pager";
+        }
+
         $queryParameters = array_merge($parameters->getQueryParameters(), $parameters->getParametersByType('search'));
+
+        if ($contentType === null) {
+            //Remove search order off of id, since ambigious...
+            unset($queryParameters['order']);
+        }
 
         /** @var PagingResultSet $results */
         $set = $this->query
@@ -54,7 +59,8 @@ class SearchAction extends FetchAction
                 $baselink,
                 $page['number'],
                 $set->getTotalPages(),
-                $page['limit']
+                $page['limit'],
+                $request
             ),
             'meta' => [
                 "count" => count($items),
