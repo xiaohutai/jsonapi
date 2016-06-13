@@ -4,11 +4,12 @@
 namespace Bolt\Extension\Bolt\JsonApi\Helpers;
 
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
+use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type\Page;
 use Bolt\Helpers\Arr;
+use Symfony\Component\HttpFoundation\Request;
 
 class DataLinks
 {
-
     /** @var Config $config */
     protected $config;
 
@@ -27,43 +28,58 @@ class DataLinks
      * @return mixed[] An array with URLs for the current page and related
      *                 pagination pages.
      */
-    public function makeLinks($contentType, $currentPage, $totalPages, $pageSize)
+    public function makeLinks($contentType, $currentPage, $totalPages, $pageSize, Request $request)
     {
         $basePath = $this->config->getBasePath();
         $basePathContentType = $basePath . '/' . $contentType;
-        $prevPage = max($currentPage - 1, 1);
-        $nextPage = min($currentPage + 1, $totalPages);
-        $firstPage = 1;
-        $pagination = $firstPage != $totalPages;
+        $firstPage = Page::DEFAULT_PAGE_NUMBER;
+        $parameters = $this->getQueryParameters($request);
 
         $links = [];
-        $defaultQueryString = $this->makeQueryParameters();
 
-        $params = $pagination
-            ? $this->makeQueryParameters([$this->config->getPaginationNumberKey() => $currentPage])
-            : $defaultQueryString;
+        $links["self"] = $basePathContentType . $this->makeQueryParameters($parameters);
 
-        $links["self"] = $basePathContentType.$params;
+        //If there are more pages defined, then show them...
+        if ($firstPage != $totalPages) {
+            // The following links only exists if a query was made using pagination.
+            if ($currentPage != $firstPage) {
+                $params = $this->makeQueryParameters($parameters, ['page' => ['number' => $firstPage]]);
+                $links["first"] = $basePathContentType.$params;
+            }
+            if ($currentPage != $totalPages) {
+                $params = $this->makeQueryParameters($parameters, ['page' => ['number' => $totalPages]]);
+                $links["last"] = $basePathContentType.$params;
+            }
 
-        // The following links only exists if a query was made using pagination.
-        if ($currentPage != $firstPage) {
-            $params = $this->makeQueryParameters([$this->config->getPaginationNumberKey() => $firstPage]);
-            $links["first"] = $basePathContentType.$params;
-        }
-        if ($currentPage != $totalPages) {
-            $params = $this->makeQueryParameters([$this->config->getPaginationNumberKey() => $totalPages]);
-            $links["last"] = $basePathContentType.$params;
-        }
-        if ($currentPage != $prevPage) {
-            $params = $this->makeQueryParameters([$this->config->getPaginationNumberKey() => $prevPage]);
-            $links["prev"] = $basePathContentType.$params;
-        }
-        if ($currentPage != $nextPage) {
-            $params = $this->makeQueryParameters([$this->config->getPaginationNumberKey() => $nextPage]);
-            $links["next"] = $basePathContentType.$params;
+            $previousPage = $this->getPreviousPage($currentPage);
+            if ($currentPage != $previousPage) {
+                $params = $this->makeQueryParameters($parameters, ['page' => ['number' => $previousPage]]);
+                $links["prev"] = $basePathContentType.$params;
+            }
+
+            $nextPage = $this->getNextPage($currentPage, $totalPages);
+            if ($currentPage != $nextPage) {
+                $params = $this->makeQueryParameters($parameters, ['page' => ['number' => $nextPage]]);
+                $links["next"] = $basePathContentType.$params;
+            }
         }
 
         return $links;
+    }
+
+    protected function getPreviousPage($currentPage)
+    {
+        return max($currentPage - 1, 1);
+    }
+
+    protected function getNextPage($currentPage, $totalPages)
+    {
+        return min($currentPage + 1, $totalPages);
+    }
+
+    protected function getQueryParameters(Request $request)
+    {
+        return $request->query->all();
     }
 
     /**
@@ -106,7 +122,7 @@ class DataLinks
      *
      * @see \Bolt\Helpers\Arr::mergeRecursiveDistinct()
      */
-    public function makeQueryParameters($overrides = [], $buildQuery = true)
+    public function makeQueryParameters($parameters, $overrides = [], $buildQuery = true)
     {
         //$queryParameters = $this->config->getCurrentRequest()->query->all();
 
@@ -115,8 +131,11 @@ class DataLinks
         //       them like we already do.
 
         // Using Bolt's Helper Arr class for merging and overriding values.
-        //$queryParameters = Arr::mergeRecursiveDistinct($queryParameters, $overrides);
-        $queryParameters = $overrides;
+        //$queryParameters = Arr::mergeRecursiveDistinct($parameters, $overrides);
+
+        $queryParameters = array_replace_recursive($parameters, $overrides);
+
+        //$queryParameters = $overrides;
         if ($buildQuery) {
             // No need to urlencode these, afaik.
             $queryString =  urldecode(http_build_query($queryParameters));
