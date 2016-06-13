@@ -70,31 +70,4 @@ class ContentController implements ControllerProviderInterface
 
         return $ctr;
     }
-
-    /**
-     * @param Request $request
-     * @param Application $app
-     * @return JsonResponse
-     */
-    public function listMenus(Request $request, Application $app)
-    {
-        $this->config->setCurrentRequest($request);
-
-        $name = '';
-        if ($q = $request->get('q')) {
-            $name = "/$q";
-        }
-
-        $menu = $app['config']->get('menu'.$name, false);
-        if ($menu) {
-            return new ApiResponse([
-                'data' => $menu
-            ], $this->config);
-        }
-
-        throw new ApiNotFoundException(
-            "Menu with name [$q] not found."
-        );
-
-    }
 }
