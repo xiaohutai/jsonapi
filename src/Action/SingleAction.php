@@ -7,10 +7,11 @@ use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\ParameterCollection;
 use Bolt\Extension\Bolt\JsonApi\Exception\ApiNotFoundException;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiResponse;
 use Bolt\Storage\Query\QueryResultset;
+use Symfony\Component\HttpFoundation\Request;
 
 class SingleAction extends FetchAction
 {
-    public function handle($contentType, $slug, $relatedContentType, ParameterCollection $parameters)
+    public function handle($contentType, $slug, $relatedContentType, Request $request, ParameterCollection $parameters)
     {
         $queryParameters = array_merge($parameters->getQueryParameters(), ['returnsingle' => true, 'id' => $slug]);
 
@@ -40,7 +41,7 @@ class SingleAction extends FetchAction
                 'links' => [
                     'self' => $this->config->getBasePath() .
                         "/$contentType/$slug/$relatedContentType" .
-                        $this->dataLinks->makeQueryParameters()
+                        $this->dataLinks->makeQueryParameters($request->query->all())
                 ],
                 'meta' => [
                     "count" => count($items),
@@ -57,7 +58,7 @@ class SingleAction extends FetchAction
             $prev = $results->previous();
             $next = $results->next();
 
-            $defaultQueryString = $this->dataLinks->makeQueryParameters();
+            $defaultQueryString = $this->dataLinks->makeQueryParameters($request->query->all());
             $links = [
                 'self' => $values['links']['self'] . $defaultQueryString
             ];
