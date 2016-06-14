@@ -12,6 +12,10 @@ use Bolt\Storage\Mapping\MetadataDriver;
 use Doctrine\Common\Collections\Collection;
 use Symfony\Component\HttpFoundation\Request;
 
+/**
+ * Class JSONAPIConverter
+ * @package Bolt\Extension\Bolt\JsonApi\Converter
+ */
 class JSONAPIConverter
 {
 
@@ -21,6 +25,11 @@ class JSONAPIConverter
     /** @var MetadataDriver $metadata */
     protected $metadata;
 
+    /**
+     * JSONAPIConverter constructor.
+     * @param Config $config
+     * @param MetadataDriver $metadata
+     */
     public function __construct(Config $config, MetadataDriver $metadata)
     {
         $this->metadata = $metadata;
@@ -28,6 +37,7 @@ class JSONAPIConverter
     }
 
     /**
+     * Create an array of parameters to be handled by our ParameterFactory class
      * @param $converter
      * @param Request $request
      * @return Collection|ParameterInterface[]
@@ -39,13 +49,13 @@ class JSONAPIConverter
         $parameters['search'] = $request->query->get('q', false);
 
         if (! $this->isSearch($parameters)) {
-            //Get content type
+            //Get content type if it isn't a search...
             $parameters['contentType'] = $request->attributes->get('contentType');
         }
 
         $parameters['page']['size'] = $request->query->get('page[size]', false, true);
         $parameters['page']['number'] = $request->query->get('page[number]', false, true);
-        $parameters['order'] = $request->query->get('sort', false);
+        $parameters['sort'] = $request->query->get('sort', false);
         $parameters['filters'] = $request->query->get('filter', false);
         $parameters['contains'] = $request->query->get('contains', false);
         $parameters['includes'] = $request->query->get('include', false);
@@ -56,6 +66,10 @@ class JSONAPIConverter
         return $parameterCollection;
     }
 
+    /**
+     * @param $parameters
+     * @return mixed
+     */
     protected function isSearch($parameters)
     {
         return $parameters['search'];

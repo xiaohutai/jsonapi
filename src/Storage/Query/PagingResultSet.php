@@ -6,15 +6,22 @@ namespace Bolt\Extension\Bolt\JsonApi\Storage\Query;
 use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type\Page;
 use Bolt\Storage\Query\QueryResultset;
 
+/**
+ * Class PagingResultSet
+ * Extends the QueryResultSet to add new methods to handle pagination
+ * @package Bolt\Extension\Bolt\JsonApi\Storage\Query
+ */
 class PagingResultSet extends QueryResultset
 {
 
+    /** @var int $totalResults */
     protected $totalResults;
 
+    /** @var int $totalPages */
     protected $totalPages;
 
     /**
-     * @return mixed
+     * @return int
      */
     public function getTotalPages()
     {
@@ -41,7 +48,7 @@ class PagingResultSet extends QueryResultset
     }
 
     /**
-     * @return mixed
+     * @return int
      */
     public function getTotalResults()
     {

@@ -2,11 +2,19 @@
 
 namespace Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type;
 
+/**
+ * Class Fields
+ * @package Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type
+ */
 class Fields extends AbstractParameter
 {
     /** @var array $fields */
     protected $fields;
 
+    /**
+     * Parameter example: fields[pages]=title,teaser
+     * @return $this
+     */
     public function convertRequest()
     {
         $this->fields = [];
@@ -43,6 +51,9 @@ class Fields extends AbstractParameter
 
     }
 
+    /**
+     * @return array
+     */
     public function getParameter()
     {
         return $this->getFields();

@@ -2,6 +2,10 @@
 
 namespace Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type;
 
+/**
+ * Class Page
+ * @package Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type
+ */
 class Page extends AbstractParameter
 {
     const DEFAULT_PAGE_SIZE = 10;
@@ -13,6 +17,10 @@ class Page extends AbstractParameter
     /** @var int $number */
     protected $number;
 
+    /**
+     * Parameter example: page[number]=1&page[size]=5
+     * @return $this
+     */
     public function convertRequest()
     {
         //False will return 0, which will be less than 1, so it should default correctly.
@@ -33,6 +41,9 @@ class Page extends AbstractParameter
 
     }
 
+    /**
+     * @return array
+     */
     public function getParameter()
     {
         return ['paginate' => $this];

@@ -67,16 +67,29 @@ class DataLinks
         return $links;
     }
 
+    /**
+     * @param $currentPage
+     * @return mixed
+     */
     protected function getPreviousPage($currentPage)
     {
         return max($currentPage - 1, 1);
     }
 
+    /**
+     * @param $currentPage
+     * @param $totalPages
+     * @return mixed
+     */
     protected function getNextPage($currentPage, $totalPages)
     {
         return min($currentPage + 1, $totalPages);
     }
 
+    /**
+     * @param Request $request
+     * @return array
+     */
     protected function getQueryParameters(Request $request)
     {
         return $request->query->all();

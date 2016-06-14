@@ -9,6 +9,10 @@ use Bolt\Storage\Query\ContentQueryParser;
 use Bolt\Storage\Query\SearchQuery;
 use Doctrine\DBAL\Query\QueryBuilder;
 
+/**
+ * Class PagingHandler
+ * @package Bolt\Extension\Bolt\JsonApi\Storage\Query\Handler
+ */
 class PagingHandler
 {
 
@@ -17,6 +21,7 @@ class PagingHandler
         $set = new PagingResultSet();
 
         foreach ($contentQuery->getContentTypes() as $contenttype) {
+            //Find out if we are searching or just doing a simple query
             if ($searchParam = $contentQuery->getParameter('filter')) {
                 $query = $contentQuery->getService('search');
             } else {
@@ -28,18 +33,28 @@ class PagingHandler
             $query->setContentType($contenttype);
             $query->setParameters($contentQuery->getParameters());
 
+            //Set the search parameter if searching
             if ($query instanceof SearchQuery) {
                 $query->setSearch($searchParam);
             }
 
+            //Get Page from the new directive handler that allows pagination
             $paginate = $contentQuery->getDirective('paginate');
+            
+            //Set the default limitto the pagination size, since it defaults to null
             $contentQuery->setDirective('limit', $paginate->getSize());
+
+            //Run all of the directives to return the query
             $contentQuery->runDirectives($query);
 
+            //Get the full query so we can manipulate the result with our count query.
             $query = $repo->getQueryBuilderAfterMappings($query);
 
+            //Clone our query builder now to manipulate and find the results.
             /** @var QueryBuilder $query2 */
             $query2 = clone $query->getQueryBuilder();
+
+            /** @var QueryBuilder $qb */
             $qb = clone $query->getQueryBuilder();
 
             $query2

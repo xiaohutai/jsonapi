@@ -22,6 +22,13 @@ class FetchAction
     /** @var Config $config */
     protected $config;
 
+    /**
+     * FetchAction constructor.
+     * @param Query $query
+     * @param Parser $parser
+     * @param DataLinks $dataLinks
+     * @param Config $config
+     */
     public function __construct(
         Query $query,
         Parser $parser,
@@ -34,6 +41,10 @@ class FetchAction
         $this->config = $config;
     }
 
+    /**
+     * @param $results
+     * @param $message
+     */
     protected function throwErrorOnNoResults($results, $message)
     {
         if (! $results || count($results) === 0) {
@@ -43,6 +54,11 @@ class FetchAction
         }
     }
 
+    /**
+     * @param $includes
+     * @param $results
+     * @param $parameters
+     */
     protected function fetchIncludes($includes, $results, $parameters)
     {
         foreach ($includes as $include) {

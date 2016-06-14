@@ -6,12 +6,15 @@ namespace Bolt\Extension\Bolt\JsonApi\Converter\Parameter;
 use Bolt\Extension\Bolt\JsonApi\Exception\ApiException;
 use Doctrine\Common\Collections\ArrayCollection;
 
+/**
+ * Class ParameterCollection
+ * @package Bolt\Extension\Bolt\JsonApi\Converter\Parameter
+ */
 class ParameterCollection extends ArrayCollection
 {
 
     /**
-     * Quick function to output all query parameters to an array
-     *
+     * Function to output all query parameters in a readable format for Bolt
      * @return array
      */
     public function getQueryParameters()
@@ -28,6 +31,11 @@ class ParameterCollection extends ArrayCollection
         return $queryParameters;
     }
 
+    /**
+     * Calls the getParameter based upon the type
+     * @param $type
+     * @return mixed
+     */
     public function getParametersByType($type)
     {
         if ($parameters = $this->get($type)) {

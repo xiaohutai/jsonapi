@@ -9,8 +9,18 @@ use Bolt\Extension\Bolt\JsonApi\Response\ApiResponse;
 use Bolt\Extension\Bolt\JsonApi\Storage\Query\PagingResultSet;
 use Symfony\Component\HttpFoundation\Request;
 
+/**
+ * Class ContentListAction
+ * @package Bolt\Extension\Bolt\JsonApi\Action
+ */
 class ContentListAction extends FetchAction
 {
+    /**
+     * @param $contentType
+     * @param Request $request
+     * @param ParameterCollection $parameters
+     * @return ApiResponse
+     */
     public function handle($contentType, Request $request, ParameterCollection $parameters)
     {
         /** @var Page $page */

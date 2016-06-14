@@ -4,13 +4,22 @@ namespace Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type;
 
 use Bolt\Extension\Bolt\JsonApi\Exception\ApiInvalidRequestException;
 
+/**
+ * Class Includes
+ * @package Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type
+ */
 class Includes extends AbstractParameter
 {
     /** @var array $includes */
     protected $includes;
 
+    /** @var array $fields */
     protected $fields;
 
+    /**
+     * Parameter example: includes=pages,entries,...
+     * @return $this
+     */
     public function convertRequest()
     {
         $this->includes = [];
@@ -39,6 +48,11 @@ class Includes extends AbstractParameter
         // TODO: Implement findConfigValues() method.
     }
 
+    /**
+     * @param $contentType
+     * @param $fields
+     * @return $this
+     */
     public function setFields($contentType, $fields)
     {
         $this->fields[$contentType] = $fields;
@@ -46,11 +60,18 @@ class Includes extends AbstractParameter
         return $this;
     }
 
+    /**
+     * @param $contentType
+     * @return mixed
+     */
     public function getFieldsByContentType($contentType)
     {
         return $this->fields[$contentType];
     }
 
+    /**
+     * @return array
+     */
     public function getParameter()
     {
         return $this->getIncludes();

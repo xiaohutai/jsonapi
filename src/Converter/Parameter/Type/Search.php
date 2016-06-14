@@ -2,12 +2,20 @@
 
 namespace Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type;
 
+/**
+ * Class Search
+ * @package Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type
+ */
 class Search extends AbstractParameter
 {
 
     /** @var string $search */
     protected $search;
 
+    /**
+     * Parameter example: q=test
+     * @return $this
+     */
     public function convertRequest()
     {
         $this->search = $this->values;
@@ -20,6 +28,9 @@ class Search extends AbstractParameter
 
     }
 
+    /**
+     * @return array
+     */
     public function getParameter()
     {
         return ['filter' => $this->getSearch()];

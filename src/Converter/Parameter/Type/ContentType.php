@@ -4,12 +4,19 @@ namespace Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type;
 
 use Bolt\Extension\Bolt\JsonApi\Exception\ApiNotFoundException;
 
+/**
+ * Class ContentType
+ * @package Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type
+ */
 class ContentType extends AbstractParameter
 {
 
     /** @var string $contentType */
     protected $contentType;
 
+    /**
+     * @return $this
+     */
     public function convertRequest()
     {
         $contentType = $this->values;
@@ -29,6 +36,9 @@ class ContentType extends AbstractParameter
 
     }
 
+    /**
+     * @return string
+     */
     public function getParameter()
     {
         return $this->getContentType();

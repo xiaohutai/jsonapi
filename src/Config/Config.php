@@ -255,7 +255,11 @@ class Config
     {
         $this->jsonOptions = $jsonOptions;
     }
-    
+
+    /**
+     * @param $contentType
+     * @return array
+     */
     public function getWhereClauses($contentType)
     {
         if (isset($this->contentTypes[$contentType]['where-clause'])) {
@@ -264,7 +268,11 @@ class Config
 
         return [];
     }
-    
+
+    /**
+     * @param $contentType
+     * @return array
+     */
     public function getListFields($contentType)
     {
         if (isset($this->contentTypes[$contentType]['list-fields'])) {
@@ -273,7 +281,11 @@ class Config
 
         return [];
     }
-    
+
+    /**
+     * @param $contentType
+     * @return array
+     */
     public function getItemFields($contentType)
     {
         if (isset($this->contentTypes[$contentType]['item-fields'])) {
@@ -282,7 +294,11 @@ class Config
 
         return [];
     }
-    
+
+    /**
+     * @param $contentType
+     * @return array
+     */
     public function getAllowedFields($contentType)
     {
         if (isset($this->contentTypes[$contentType]['allowed-fields'])) {

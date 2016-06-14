@@ -8,16 +8,20 @@ use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type\AbstractParameter;
 use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type\Fields;
 use Bolt\Storage\Mapping\MetadataDriver;
 
+/**
+ * Class ParameterFactory
+ * @package Bolt\Extension\Bolt\JsonApi\Converter\Parameter
+ */
 class ParameterFactory
 {
 
     /**
+     * Loop through all current parameters from param converter. See if we have a class for it, initialize the class and
+     *  run convertRequest to put variables where they need to be, and add to the array.
      * @param $parameters
      * @param Config $config
      * @param MetadataDriver $metadata
      * @return ParameterCollection
-     * Loop through all current parameters from param converter. See if we have a class for it, initialize the class and
-     *  run convertRequest to put variables where they need to be, and add to the array.
      */
     public static function build($parameters, Config $config, MetadataDriver $metadata)
     {
@@ -45,7 +49,8 @@ class ParameterFactory
         $parameterCollection = new ParameterCollection($parameter);
 
         $includes = $parameterCollection->getParametersByType('includes');
-        
+
+        //Loop through the includes to get fields for each one...
         foreach ($includes as $include) {
             //Grab all fields that should be displayed based upon the
             //  content type.

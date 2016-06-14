@@ -46,18 +46,30 @@ class APIProvider implements ServiceProviderInterface
     public function register(Application $app)
     {
 
+        /**
+         * The main configuration class
+         */
         $app['jsonapi.config'] = $app->share(
             function ($app) {
                 return new Config($this->config, $app);
             }
         );
 
+        /**
+         * A helper when parsing field types
+         * @todo Refactor and remove when parsing individual items
+         */
         $app['jsonapi.utilityhelper'] = $app->share(
             function ($app) {
                 return new UtilityHelper($app, $app['jsonapi.config']);
             }
         );
 
+        /**
+         * Param converter to handle JSONAPI spec.
+         * For example:
+         *  filters, contains, sort, includes, page[number], and page[size]
+         */
         $app['jsonapi.converter'] = $app->share(
             function ($app) {
                 return new JSONAPIConverter(
@@ -67,18 +79,29 @@ class APIProvider implements ServiceProviderInterface
             }
         );
 
+        /**
+         * Class to handle parsing of individual items
+         * @todo Refactor to include individual parsers based upon the field type
+         */
         $app['jsonapi.parser'] = $app->share(
             function ($app) {
                 return new Parser($app['jsonapi.config'], $app['jsonapi.utilityhelper']);
             }
         );
 
+        /**
+         * Simple class to handle linking to related items and the current content type
+         * @todo Refactor...
+         */
         $app['jsonapi.datalinks'] = $app->share(
             function ($app) {
                 return new DataLinks($app['jsonapi.config']);
             }
         );
 
+        /**
+         * Add controller actions to DI container
+         */
         $app['jsonapi.action.contentlist'] = $app->share(
             function ($app) {
                 return new ContentListAction(
@@ -121,6 +144,9 @@ class APIProvider implements ServiceProviderInterface
             }
         );
 
+        /**
+         * Add repository and query parsers to handle pagination to DI
+         */
         $app['storage.content_repository'] = $app->protect(
             function ($classMetadata) use ($app) {
                 $repoClass = 'Bolt\Extension\Bolt\JsonApi\Storage\Repository';

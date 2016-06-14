@@ -27,6 +27,9 @@ use Symfony\Component\HttpKernel\KernelEvents;
  */
 class JSONAPIExtension extends SimpleExtension
 {
+    /**
+     * @return array
+     */
     public function getServiceProviders()
     {
         return [
@@ -35,6 +38,9 @@ class JSONAPIExtension extends SimpleExtension
         ];
     }
 
+    /**
+     * @return array
+     */
     protected function registerFrontendControllers()
     {
         $container = $this->getContainer();
@@ -46,6 +52,9 @@ class JSONAPIExtension extends SimpleExtension
         ];
     }
 
+    /**
+     * @return array
+     */
     public static function getSubscribedEvents()
     {
         $parentEvents = parent::getSubscribedEvents();
@@ -60,6 +69,11 @@ class JSONAPIExtension extends SimpleExtension
         return $parentEvents + $localEvents;
     }
 
+    /**
+     * Listener to handle all exceptions thrown of type ApiException. It converts
+     * the exception into an ApiErrorResponse.
+     * @param GetResponseForExceptionEvent $response
+     */
     public function error(GetResponseForExceptionEvent $response)
     {
         $exception = $response->getException();

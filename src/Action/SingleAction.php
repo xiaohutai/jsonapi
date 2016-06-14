@@ -9,8 +9,20 @@ use Bolt\Extension\Bolt\JsonApi\Response\ApiResponse;
 use Bolt\Storage\Query\QueryResultset;
 use Symfony\Component\HttpFoundation\Request;
 
+/**
+ * Class SingleAction
+ * @package Bolt\Extension\Bolt\JsonApi\Action
+ */
 class SingleAction extends FetchAction
 {
+    /**
+     * @param $contentType
+     * @param $slug
+     * @param $relatedContentType
+     * @param Request $request
+     * @param ParameterCollection $parameters
+     * @return array|ApiResponse
+     */
     public function handle($contentType, $slug, $relatedContentType, Request $request, ParameterCollection $parameters)
     {
         $queryParameters = array_merge($parameters->getQueryParameters(), ['returnsingle' => true, 'id' => $slug]);

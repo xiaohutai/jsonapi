@@ -6,6 +6,10 @@ namespace Bolt\Extension\Bolt\JsonApi\Exception;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Exception;
 
+/**
+ * Class ApiException
+ * @package Bolt\Extension\Bolt\JsonApi\Exception
+ */
 class ApiException extends HttpException
 {
     /**
