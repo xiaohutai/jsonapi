@@ -1,6 +1,6 @@
 <?php
-namespace Bolt\Extension\Bolt\JsonApi\Config;
 
+namespace Bolt\Extension\Bolt\JsonApi\Config;
 
 use Bolt\Application;
 use Symfony\Component\HttpFoundation\Request;
@@ -65,14 +65,14 @@ class Config
 
     public function __construct($config, Application $app)
     {
-        if(isset($config['base'])) {
+        if (isset($config['base'])) {
             $this->base = $config['base'];
         }
-
-        $this->setBasePath($app['paths']['canonical'] . $this->base);
+        
+        $this->setBasePath($app['paths']['hosturl'] . $this->base);
         $this->setContentTypes($config['contenttypes']);
         $this->setReplacements($config['replacements']);
-        $this->setPaginationNumberKey('page');
+        $this->setPaginationNumberKey('page[number]');
         $this->setPaginationSizeKey('limit');
         $this->setThumbnail($config['thumbnail']);
         $this->setDateIso($config['date-iso-8601']);
@@ -254,5 +254,57 @@ class Config
     public function setJsonOptions($jsonOptions)
     {
         $this->jsonOptions = $jsonOptions;
+    }
+
+    /**
+     * @param $contentType
+     * @return array
+     */
+    public function getWhereClauses($contentType)
+    {
+        if (isset($this->contentTypes[$contentType]['where-clause'])) {
+            return $this->contentTypes[$contentType]['where-clause'];
+        }
+
+        return [];
+    }
+
+    /**
+     * @param $contentType
+     * @return array
+     */
+    public function getListFields($contentType)
+    {
+        if (isset($this->contentTypes[$contentType]['list-fields'])) {
+            return $this->contentTypes[$contentType]['list-fields'];
+        }
+
+        return [];
+    }
+
+    /**
+     * @param $contentType
+     * @return array
+     */
+    public function getItemFields($contentType)
+    {
+        if (isset($this->contentTypes[$contentType]['item-fields'])) {
+            return $this->contentTypes[$contentType]['item-fields'];
+        }
+
+        return [];
+    }
+
+    /**
+     * @param $contentType
+     * @return array
+     */
+    public function getAllowedFields($contentType)
+    {
+        if (isset($this->contentTypes[$contentType]['allowed-fields'])) {
+            return $this->contentTypes[$contentType]['allowed-fields'];
+        }
+
+        return [];
     }
 }

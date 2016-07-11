@@ -1,0 +1,81 @@
+<?php
+
+
+namespace Bolt\Extension\Bolt\JsonApi\Storage\Query\Handler;
+
+use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type\Page;
+use Bolt\Extension\Bolt\JsonApi\Storage\Query\PagingResultSet;
+use Bolt\Storage\Query\ContentQueryParser;
+use Bolt\Storage\Query\SearchQuery;
+use Doctrine\DBAL\Query\QueryBuilder;
+
+/**
+ * Class PagingHandler
+ * @package Bolt\Extension\Bolt\JsonApi\Storage\Query\Handler
+ */
+class PagingHandler
+{
+
+    public function __invoke(ContentQueryParser $contentQuery)
+    {
+        $set = new PagingResultSet();
+
+        foreach ($contentQuery->getContentTypes() as $contenttype) {
+            //Find out if we are searching or just doing a simple query
+            if ($searchParam = $contentQuery->getParameter('filter')) {
+                $query = $contentQuery->getService('search');
+            } else {
+                $query = $contentQuery->getService('select');
+            }
+
+            $repo = $contentQuery->getEntityManager()->getRepository($contenttype);
+            $query->setQueryBuilder($repo->createQueryBuilder($contenttype));
+            $query->setContentType($contenttype);
+            $query->setParameters($contentQuery->getParameters());
+
+            //Set the search parameter if searching
+            if ($query instanceof SearchQuery) {
+                $query->setSearch($searchParam);
+            }
+
+            //Get Page from the new directive handler that allows pagination
+            $paginate = $contentQuery->getDirective('paginate');
+            
+            //Set the default limitto the pagination size, since it defaults to null
+            $contentQuery->setDirective('limit', $paginate->getSize());
+
+            //Run all of the directives to return the query
+            $contentQuery->runDirectives($query);
+
+            //Get the full query so we can manipulate the result with our count query.
+            $query = $repo->getQueryBuilderAfterMappings($query);
+
+            //Clone our query builder now to manipulate and find the results.
+            /** @var QueryBuilder $query2 */
+            $query2 = clone $query->getQueryBuilder();
+
+            /** @var QueryBuilder $qb */
+            $qb = clone $query->getQueryBuilder();
+
+            $query2
+                ->resetQueryParts(['groupBy', 'maxResults', 'firstResult'])
+                ->setFirstResult(null)
+                ->setMaxResults(null)
+                ->select("COUNT(*) as total");
+
+            $totalItems = $repo->findResult($query2);
+
+            $result = $repo->findResults($qb);
+            if ($result) {
+                $set->add($result, $contenttype);
+                $set->setTotalResults($totalItems);
+
+                /** @var Page $page */
+                $page = $contentQuery->getDirective('paginate');
+                $set->setTotalPages($totalItems, $page->getSize());
+            }
+
+            return $set;
+        }
+    }
+}

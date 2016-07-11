@@ -2,9 +2,18 @@
 
 namespace Bolt\Extension\Bolt\JsonApi\Provider;
 
+use Bolt\Extension\Bolt\JsonApi\Action\ContentListAction;
+use Bolt\Extension\Bolt\JsonApi\Action\MenuAction;
+use Bolt\Extension\Bolt\JsonApi\Action\SearchAction;
+use Bolt\Extension\Bolt\JsonApi\Action\SingleAction;
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
-use Bolt\Extension\Bolt\JsonApi\Helpers\APIHelper;
+use Bolt\Extension\Bolt\JsonApi\Converter\JSONAPIConverter;
+use Bolt\Extension\Bolt\JsonApi\Helpers\DataLinks;
 use Bolt\Extension\Bolt\JsonApi\Helpers\UtilityHelper;
+use Bolt\Extension\Bolt\JsonApi\Parser\Parser;
+use Bolt\Extension\Bolt\JsonApi\Storage\Query\Handler\Directive\PagerHandler;
+use Bolt\Extension\Bolt\JsonApi\Storage\Query\Handler\PagingHandler;
+use Bolt\Storage\Mapping\MetadataDriver;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 
@@ -37,23 +46,119 @@ class APIProvider implements ServiceProviderInterface
     public function register(Application $app)
     {
 
+        /**
+         * The main configuration class
+         */
         $app['jsonapi.config'] = $app->share(
             function ($app) {
                 return new Config($this->config, $app);
             }
         );
 
+        /**
+         * A helper when parsing field types
+         * @todo Refactor and remove when parsing individual items
+         */
         $app['jsonapi.utilityhelper'] = $app->share(
             function ($app) {
-                return new UtilityHelper($app);
+                return new UtilityHelper($app, $app['jsonapi.config']);
             }
         );
 
-        $app['jsonapi.apihelper'] = $app->share(
+        /**
+         * Param converter to handle JSONAPI spec.
+         * For example:
+         *  filters, contains, sort, includes, page[number], and page[size]
+         */
+        $app['jsonapi.converter'] = $app->share(
             function ($app) {
-                return new APIHelper($app, $app['jsonapi.config'], $app['jsonapi.utilityhelper']);
+                return new JSONAPIConverter(
+                    $app['jsonapi.config'],
+                    $app['storage.metadata']
+                );
             }
         );
+
+        /**
+         * Class to handle parsing of individual items
+         * @todo Refactor to include individual parsers based upon the field type
+         */
+        $app['jsonapi.parser'] = $app->share(
+            function ($app) {
+                return new Parser($app['jsonapi.config'], $app['jsonapi.utilityhelper']);
+            }
+        );
+
+        /**
+         * Simple class to handle linking to related items and the current content type
+         * @todo Refactor...
+         */
+        $app['jsonapi.datalinks'] = $app->share(
+            function ($app) {
+                return new DataLinks($app['jsonapi.config']);
+            }
+        );
+
+        /**
+         * Add controller actions to DI container
+         */
+        $app['jsonapi.action.contentlist'] = $app->share(
+            function ($app) {
+                return new ContentListAction(
+                    $app['query'],
+                    $app['jsonapi.parser'],
+                    $app['jsonapi.datalinks'],
+                    $app['jsonapi.config']
+                );
+            }
+        );
+
+        $app['jsonapi.action.search'] = $app->share(
+            function ($app) {
+                return new SearchAction(
+                    $app['query'],
+                    $app['jsonapi.parser'],
+                    $app['jsonapi.datalinks'],
+                    $app['jsonapi.config']
+                );
+            }
+        );
+
+        $app['jsonapi.action.single'] = $app->share(
+            function ($app) {
+                return new SingleAction(
+                    $app['query'],
+                    $app['jsonapi.parser'],
+                    $app['jsonapi.datalinks'],
+                    $app['jsonapi.config']
+                );
+            }
+        );
+
+        $app['jsonapi.action.menu'] = $app->share(
+            function ($app) {
+                return new MenuAction(
+                    $app['config'],
+                    $app['jsonapi.config']
+                );
+            }
+        );
+
+        /**
+         * Add repository and query parsers to handle pagination to DI
+         */
+        $app['storage.content_repository'] = $app->protect(
+            function ($classMetadata) use ($app) {
+                $repoClass = 'Bolt\Extension\Bolt\JsonApi\Storage\Repository';
+                $repo = new $repoClass($app['storage'], $classMetadata);
+                $repo->setLegacyService($app['storage.legacy_service']);
+                return $repo;
+            }
+        );
+
+        $app['query.parser']->addDirectiveHandler('paginate', new PagerHandler());
+        $app['query.parser']->addHandler('pager', new PagingHandler());
+        $app['query.parser']->addOperation('pager');
 
     }
 

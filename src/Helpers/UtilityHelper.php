@@ -1,7 +1,8 @@
 <?php
 namespace Bolt\Extension\Bolt\JsonApi\Helpers;
-use Silex\Application;
 
+use Bolt\Extension\Bolt\JsonApi\Config\Config;
+use Silex\Application;
 
 /**
  * Class UtilityHelper
@@ -15,13 +16,18 @@ class UtilityHelper
      */
     private $app;
 
+    /** @var Config $config */
+    private $config;
+
     /**
      * UtilityHelper constructor.
      * @param Application $app
+     * @param Config $config
      */
-    public function __construct(Application $app)
+    public function __construct(Application $app, Config $config)
     {
         $this->app = $app;
+        $this->config = $config;
     }
 
     /**
@@ -40,8 +46,9 @@ class UtilityHelper
      */
     public function makeAbsolutePathToImage($filename = '')
     {
-        return sprintf('%s%s%s',
-            $this->app['paths']['canonical'],
+        return sprintf(
+            '%s%s%s',
+            $this->app['paths']['hosturl'],
             $this->app['paths']['files'],
             $filename
         );
@@ -53,11 +60,11 @@ class UtilityHelper
      */
     public function makeAbsolutePathToThumbnail($filename = '')
     {
-        $config = $this->app['extensions']->getEnabled()['JSON API']->getConfig();
-        return sprintf('%s/thumbs/%sx%s/%s',
-            $this->app['paths']['canonical'],
-            $config['thumbnail']['width'],
-            $config['thumbnail']['height'],
+        return sprintf(
+            '%s/thumbs/%sx%s/%s',
+            $this->app['paths']['hosturl'],
+            $this->config->getThumbnail()['width'],
+            $this->config->getThumbnail()['height'],
             $filename
         );
     }
