@@ -23,7 +23,7 @@ class ParameterCollection extends ArrayCollection
 
         //Loop through the parameters and add them to an array
         foreach ($this as $key => $value) {
-            if (in_array($key, ['order', 'filters', 'contains', 'page'])) {
+            if (in_array($key, ['sort', 'filters', 'contains', 'page'])) {
                 $queryParameters = array_merge($value->getParameter(), $queryParameters);
             }
         }

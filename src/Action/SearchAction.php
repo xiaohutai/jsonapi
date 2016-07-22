@@ -47,7 +47,7 @@ class SearchAction extends FetchAction
 
         if ($contentType === null) {
             //Remove search order off of id, since ambigious...
-            unset($queryParameters['order']);
+            unset($queryParameters['sort']);
         }
 
         /** @var PagingResultSet $results */
