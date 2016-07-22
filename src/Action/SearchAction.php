@@ -45,11 +45,6 @@ class SearchAction extends FetchAction
 
         $queryParameters = array_merge($parameters->getQueryParameters(), $parameters->getParametersByType('search'));
 
-        if ($contentType === null) {
-            //Remove search order off of id, since ambigious...
-            unset($queryParameters['sort']);
-        }
-
         /** @var PagingResultSet $results */
         $set = $this->query
             ->getContent($baselink, $queryParameters);
