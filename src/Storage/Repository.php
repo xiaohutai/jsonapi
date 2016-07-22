@@ -47,21 +47,4 @@ class Repository extends ContentRepository
             return false;
         }
     }
-
-    /**
-     * Since the queries are built already, we don't need to run all of the other mappings
-     * before. Now we can just fetch the results of the query instead of running everything else.
-     * This fetches a single result (count) and returns the total.
-     * @param QueryBuilder $query
-     * @return bool|mixed
-     */
-    public function findResult(QueryBuilder $query)
-    {
-        $result = $query->execute()->fetch();
-        if ($result) {
-            return $result['total'];
-        } else {
-            return false;
-        }
-    }
 }
