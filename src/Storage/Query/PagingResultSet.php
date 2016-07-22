@@ -15,7 +15,7 @@ class PagingResultSet extends QueryResultset
 {
 
     /** @var int $totalResults */
-    protected $totalResults;
+    protected $totalResults = 0;
 
     /** @var int $totalPages */
     protected $totalPages;
@@ -61,7 +61,7 @@ class PagingResultSet extends QueryResultset
      */
     public function setTotalResults($totalResults)
     {
-        $this->totalResults = $totalResults;
+        $this->totalResults += $totalResults;
         return $this;
     }
 }
