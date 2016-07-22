@@ -19,11 +19,12 @@ class PagingHandler
     public function __invoke(ContentQueryParser $contentQuery)
     {
         $set = new PagingResultSet();
+        $cleanSearchQuery = $contentQuery->getService('search');
 
         foreach ($contentQuery->getContentTypes() as $contenttype) {
             //Find out if we are searching or just doing a simple query
             if ($searchParam = $contentQuery->getParameter('filter')) {
-                $query = $contentQuery->getService('search');
+                $query = clone $cleanSearchQuery;
             } else {
                 $query = $contentQuery->getService('select');
             }
@@ -40,7 +41,7 @@ class PagingHandler
 
             //Get Page from the new directive handler that allows pagination
             $paginate = $contentQuery->getDirective('paginate');
-            
+
             //Set the default limitto the pagination size, since it defaults to null
             $contentQuery->setDirective('limit', $paginate->getSize());
 
@@ -58,24 +59,25 @@ class PagingHandler
             $qb = clone $query->getQueryBuilder();
 
             $query2
-                ->resetQueryParts(['groupBy', 'maxResults', 'firstResult'])
+                ->resetQueryParts(['maxResults', 'firstResult', 'orderBy'])
                 ->setFirstResult(null)
                 ->setMaxResults(null)
                 ->select("COUNT(*) as total");
 
-            $totalItems = $repo->findResult($query2);
+            $totalItems = count($repo->findResults($query2));
 
             $result = $repo->findResults($qb);
             if ($result) {
                 $set->add($result, $contenttype);
-                $set->setTotalResults($totalItems);
+                $set->setTotalResults((int) $totalItems);
 
                 /** @var Page $page */
                 $page = $contentQuery->getDirective('paginate');
                 $set->setTotalPages($totalItems, $page->getSize());
             }
-
-            return $set;
         }
+
+        return $set;
+
     }
 }
