@@ -3,24 +3,25 @@
 
 namespace Bolt\Extension\Bolt\JsonApi\Parser\Field\Type;
 
-class Taxonomy
+class Taxonomy extends AbstractType
 {
-
-    /** @var \Bolt\Storage\Collection\Taxonomy[] $taxonomy */
-    protected $taxonomy;
-
-    public function __construct(\Bolt\Storage\Collection\Taxonomy $taxonomy)
+    public function render()
     {
-        $this->taxonomy = $taxonomy;
-    }
+        /** @var \Bolt\Storage\Collection\Taxonomy $taxonomies */
+        $taxonomies = $this->getValue();
 
-    public function parseTaxonomies()
-    {
-        foreach ($this->taxonomy as $taxonomy) {
+        foreach ($taxonomies as $taxonomy) {
             $type = $taxonomy->getTaxonomytype();
             $slug = $taxonomy->getSlug();
             $route = '/' . $type . '/' . $slug;
-            $attributes['taxonomy'][$type][$route] = $taxonomy->getName();
+            $attributes[$route] = $taxonomy->getName();
         }
+
+        return $attributes;
+    }
+
+    public function isTaxonomy()
+    {
+        return true;
     }
 }
