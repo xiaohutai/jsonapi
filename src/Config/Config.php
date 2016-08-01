@@ -307,4 +307,16 @@ class Config
 
         return [];
     }
+
+    /**
+     * @return string
+     */
+    public function getSort($contentType)
+    {
+        if (isset($this->contentTypes[$contentType]['order'])) {
+            return $this->contentTypes[$contentType]['order'];
+        }
+
+        return '';
+    }
 }
