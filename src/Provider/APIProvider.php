@@ -9,11 +9,9 @@ use Bolt\Extension\Bolt\JsonApi\Action\SingleAction;
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
 use Bolt\Extension\Bolt\JsonApi\Converter\JSONAPIConverter;
 use Bolt\Extension\Bolt\JsonApi\Helpers\DataLinks;
-use Bolt\Extension\Bolt\JsonApi\Helpers\UtilityHelper;
 use Bolt\Extension\Bolt\JsonApi\Parser\Parser;
 use Bolt\Extension\Bolt\JsonApi\Storage\Query\Handler\Directive\PagerHandler;
 use Bolt\Extension\Bolt\JsonApi\Storage\Query\Handler\PagingHandler;
-use Bolt\Storage\Mapping\MetadataDriver;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 
@@ -56,16 +54,6 @@ class APIProvider implements ServiceProviderInterface
         );
 
         /**
-         * A helper when parsing field types
-         * @todo Refactor and remove when parsing individual items
-         */
-        $app['jsonapi.utilityhelper'] = $app->share(
-            function ($app) {
-                return new UtilityHelper($app, $app['jsonapi.config']);
-            }
-        );
-
-        /**
          * Param converter to handle JSONAPI spec.
          * For example:
          *  filters, contains, sort, includes, page[number], and page[size]
@@ -85,7 +73,10 @@ class APIProvider implements ServiceProviderInterface
          */
         $app['jsonapi.parser'] = $app->share(
             function ($app) {
-                return new Parser($app['jsonapi.config'], $app['jsonapi.utilityhelper']);
+                return new Parser(
+                    $app['jsonapi.config'],
+                    $app['resources']
+                );
             }
         );
 
