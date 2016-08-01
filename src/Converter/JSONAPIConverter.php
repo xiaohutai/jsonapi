@@ -50,7 +50,11 @@ class JSONAPIConverter
 
         if (! $this->isSearch($parameters)) {
             //Get content type if it isn't a search...
-            $parameters['contentType'] = $request->attributes->get('contentType');
+            $parameters['contentType'] = $request->attributes->get('relatedContentType');
+
+            if (! $parameters['contentType']) {
+                $parameters['contentType'] = $request->attributes->get('contentType');
+            }
         }
 
         $parameters['page']['size'] = $request->query->get('page[size]', false, true);
