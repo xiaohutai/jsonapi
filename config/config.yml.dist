@@ -19,6 +19,8 @@ contenttypes:
         # query parameter.
         where-clause:
             status: 'published'
+        # The `order` clause allows you to set the default order by when querying results
+        order: -datepublish
     pages:
         # To use the defaults for a contenttype, just leave its entry empty.
         # This will include all user-defined fields and taxonomies in the

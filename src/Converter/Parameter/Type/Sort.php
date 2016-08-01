@@ -29,7 +29,7 @@ class Sort extends AbstractParameter
 
     public function findConfigValues()
     {
-
+        return $this->config->getSort($this->contentType);
     }
 
     /**
@@ -45,6 +45,10 @@ class Sort extends AbstractParameter
      */
     public function getSort()
     {
+        if (! empty($this->findConfigValues())) {
+            return $this->findConfigValues() . ',' . $this->sort;
+        }
+
         return $this->sort;
     }
 
