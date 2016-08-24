@@ -79,7 +79,12 @@ class FieldFactory
                 if (in_array($field, self::$fileTypes)) {
                     $type = new File($field, $data, $resourceManager, $config);
                 } else {
-                    $type = new Generic($field, $data);
+                    //We need to check if the label is an int. If it isn't then we'll use that for type (repeaters).
+                    if (is_int($label)) {
+                        $type = new Generic($field, $data);
+                    } else {
+                        $type = new Generic($label, $data);
+                    }
                 }
             }
 
