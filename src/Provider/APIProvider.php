@@ -75,7 +75,8 @@ class APIProvider implements ServiceProviderInterface
             function ($app) {
                 return new Parser(
                     $app['jsonapi.config'],
-                    $app['resources']
+                    $app['resources'],
+                    $app['storage.metadata']
                 );
             }
         );
