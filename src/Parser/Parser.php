@@ -51,8 +51,12 @@ class Parser
         ];
         $fields = array_unique($fields);
 
+        //Get field type information
+        $metadata = $this->metadata->getClassMetadata($contentType);
+
         /** @var FieldCollection $fieldCollection */
         $fieldCollection = FieldFactory::build(
+            $metadata,
             $this->resourceManager,
             $this->config,
             $fields,

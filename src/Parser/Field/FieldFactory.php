@@ -32,6 +32,7 @@ class FieldFactory
      * of the same attributes. It loads classes based upon the field type.
      */
     public static function build(
+        $metadata,
         ResourceManager $resourceManager,
         Config $config,
         $fields,
@@ -48,6 +49,11 @@ class FieldFactory
                 $field = $field->getFieldtype();
             } else {
                 $data = $item->get($field);
+                if (isset($metadata['fields'])) {
+                    if (isset($metadata['fields'][$field])) {
+                        $fieldType = $metadata['fields'][$field]['data']['type'];
+                    }
+                }
             }
 
             if ($data instanceof Taxonomy) {
@@ -57,6 +63,7 @@ class FieldFactory
                     $repeatingFieldCollection = new RepeatingFieldCollection([]);
                     /** @var RepeatingFieldCollection[] $collection */
                     $repeatingFieldCollection = self::build(
+                        $metadata,
                         $resourceManager,
                         $config,
                         $fields,
@@ -78,6 +85,7 @@ class FieldFactory
             } elseif (!$data instanceof Relations) {
                 if (in_array($field, self::$fileTypes)) {
                     $type = new File($field, $data, $resourceManager, $config);
+                    $type->setFieldType($fieldType);
                 } else {
                     //We need to check if the label is an int. If it isn't then we'll use that for type (repeaters).
                     if (is_int($label)) {
