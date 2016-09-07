@@ -36,6 +36,10 @@ class File extends AbstractType
 
     public function render()
     {
+        if (empty($this->getValue())) {
+            return $this->getValue();
+        }
+
         $values = [];
 
         if ($this->getFieldType() == 'imagelist') {
