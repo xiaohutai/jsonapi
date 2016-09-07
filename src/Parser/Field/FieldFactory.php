@@ -83,6 +83,7 @@ class FieldFactory
             } elseif ($data instanceof Carbon) {
                 $type = new Date($field, $data, $config);
             } elseif (!$data instanceof Relations) {
+                //Check to see if image, imagelist, file, or filelist to handle unique rendering.
                 if (in_array($fieldType, self::$fileTypes)) {
                     $type = new File($field, $data, $resourceManager, $config);
                     $type->setFieldType($fieldType);

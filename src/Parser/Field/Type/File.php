@@ -36,6 +36,7 @@ class File extends AbstractType
 
     public function render()
     {
+        //Check to see if value is empty to avoid showing an empty link or adding empty values
         if (empty($this->getValue())) {
             return $this->getValue();
         }
