@@ -14,6 +14,8 @@ class File extends AbstractType
     /** @var Config $config */
     protected $config;
 
+    protected $fieldType;
+
     /**
      * File constructor.
      * @param $type
@@ -34,9 +36,14 @@ class File extends AbstractType
 
     public function render()
     {
+        //Check to see if value is empty to avoid showing an empty link or adding empty values
+        if (empty($this->getValue())) {
+            return $this->getValue();
+        }
+
         $values = [];
 
-        if ($this->getType() == 'imagelist') {
+        if ($this->getFieldType() == 'imagelist') {
             foreach ($this->getValue() as &$image) {
                 $image['url'] = $this->makeAbsoluteLinkToResource($image['filename']);
                 $image['thumbnail'] = $this->makeAbsoluteLinkToThumbnail($image['filename']);
@@ -45,20 +52,20 @@ class File extends AbstractType
         }
 
 
-        if ($this->getType() == 'filelist') {
+        if ($this->getFieldType() == 'filelist') {
             foreach ($this->getValue() as &$file) {
                 $file['url'] = $this->makeAbsoluteLinkToResource($file['filename']);
                 $values[] = $file;
             }
         }
 
-        if ($this->getType() === 'image') {
+        if ($this->getFieldType() === 'image') {
             $values = $this->getValue();
             $values['url'] = $this->makeAbsoluteLinkToResource($values['file']);
             $values['thumbnail'] = $this->makeAbsoluteLinkToThumbnail($values['file']);
         }
 
-        if ($this->getType() === 'file') {
+        if ($this->getFieldType() === 'file') {
             $values['file'] = $this->getValue();
             $values['url'] = $this->makeAbsoluteLinkToResource($values['file']);
         }
@@ -95,5 +102,23 @@ class File extends AbstractType
             $this->config->getThumbnail()['height'],
             $filename
         );
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getFieldType()
+    {
+        return $this->fieldType;
+    }
+
+    /**
+     * @param mixed $fieldType
+     * @return File
+     */
+    public function setFieldType($fieldType)
+    {
+        $this->fieldType = $fieldType;
+        return $this;
     }
 }

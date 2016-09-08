@@ -8,6 +8,7 @@ use Bolt\Extension\Bolt\JsonApi\Config\Config;
 use Bolt\Extension\Bolt\JsonApi\Parser\Field\FieldFactory;
 use Bolt\Extension\Bolt\JsonApi\Parser\Field\FieldCollection;
 use Bolt\Storage\EntityProxy;
+use Bolt\Storage\Mapping\MetadataDriver;
 
 class Parser
 {
@@ -18,10 +19,14 @@ class Parser
     /** @var ResourceManager $resourceManager */
     protected $resourceManager;
 
-    public function __construct(Config $config, ResourceManager $resourceManager)
+    /** @var MetadataDriver $metadata */
+    protected $metadata;
+
+    public function __construct(Config $config, ResourceManager $resourceManager, MetadataDriver $metadata)
     {
         $this->config = $config;
         $this->resourceManager = $resourceManager;
+        $this->metadata = $metadata;
     }
 
     public function parseItem($item, $fields = [])
@@ -46,8 +51,12 @@ class Parser
         ];
         $fields = array_unique($fields);
 
+        //Get field type information
+        $metadata = $this->metadata->getClassMetadata($contentType);
+
         /** @var FieldCollection $fieldCollection */
         $fieldCollection = FieldFactory::build(
+            $metadata,
             $this->resourceManager,
             $this->config,
             $fields,
