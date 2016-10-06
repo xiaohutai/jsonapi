@@ -72,18 +72,21 @@ class FieldFactory
                     );
                     //We want to append repeating fields to a repeating collection if it is the same type
                     if ($repeatingCollection) {
-                        $repeatingCollection->add([$repeatingFieldCollection]);
+                        //Check to see if the repeating field is a different repeater to create a new instance of it and not overwrite the other repeater
+                        if ($repeatingCollection->getType() === $field) {
+                            $repeatingCollection->add([$repeatingFieldCollection]);
+                        } else {
+                            $repeatingCollection = self::createRepeatingCollection($field, $repeatingFieldCollection);
+                            $fieldCollection->add($repeatingCollection);
+                        }
                     } else {
-                        $repeatingCollection = new RepeatingCollection();
-                        $repeatingCollection->setType($field);
-                        $repeatingCollection->add([$repeatingFieldCollection]);
+                        $repeatingCollection = self::createRepeatingCollection($field, $repeatingFieldCollection);
                         $fieldCollection->add($repeatingCollection);
                     }
                 }
             } elseif ($data instanceof Carbon) {
                 $type = new Date($field, $data, $config);
             } elseif (!$data instanceof Relations) {
-                //Check to see if image, imagelist, file, or filelist to handle unique rendering.
                 if (in_array($fieldType, self::$fileTypes)) {
                     $type = new File($field, $data, $resourceManager, $config);
                     $type->setFieldType($fieldType);
@@ -105,5 +108,14 @@ class FieldFactory
         }
 
         return $fieldCollection;
+    }
+
+    protected static function createRepeatingCollection($field, RepeatingFieldCollection $repeatingFieldCollection)
+    {
+        $repeatingCollection = new RepeatingCollection();
+        $repeatingCollection->setType($field);
+        $repeatingCollection->add([$repeatingFieldCollection]);
+
+        return $repeatingCollection;
     }
 }
