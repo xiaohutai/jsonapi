@@ -27,6 +27,7 @@ class SingleAction extends FetchAction
     {
         $additionalParameters = ['returnsingle' => true];
 
+        //Check to see if ID or SLUG
         if (is_numeric($slug)) {
             $additionalParameters['id'] = $slug;
         } else {
