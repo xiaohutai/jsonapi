@@ -25,7 +25,15 @@ class SingleAction extends FetchAction
      */
     public function handle($contentType, $slug, $relatedContentType, Request $request, ParameterCollection $parameters)
     {
-        $queryParameters = array_merge($parameters->getQueryParameters(), ['returnsingle' => true, 'id' => $slug]);
+        $additionalParameters = ['returnsingle' => true];
+
+        if (is_numeric($slug)) {
+            $additionalParameters['id'] = $slug;
+        } else {
+            $additionalParameters['slug'] = $slug;
+        }
+
+        $queryParameters = array_merge($parameters->getQueryParameters(), $additionalParameters);
 
         /** @var QueryResultset $results */
         $results = $this->query->getContent($contentType, $queryParameters);
