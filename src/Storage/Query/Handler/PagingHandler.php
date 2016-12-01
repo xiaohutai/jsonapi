@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Bolt\Extension\Bolt\JsonApi\Storage\Query\Handler;
 
 use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type\Page;
@@ -11,11 +10,11 @@ use Doctrine\DBAL\Query\QueryBuilder;
 
 /**
  * Class PagingHandler
+ *
  * @package Bolt\Extension\Bolt\JsonApi\Storage\Query\Handler
  */
 class PagingHandler
 {
-
     public function __invoke(ContentQueryParser $contentQuery)
     {
         $set = new PagingResultSet();
@@ -62,7 +61,7 @@ class PagingHandler
                 ->resetQueryParts(['maxResults', 'firstResult', 'orderBy'])
                 ->setFirstResult(null)
                 ->setMaxResults(null)
-                ->select("COUNT(*) as total");
+                ->select('COUNT(*) as total');
 
             $totalItems = count($repo->findResults($query2));
 
@@ -78,6 +77,5 @@ class PagingHandler
         }
 
         return $set;
-
     }
 }

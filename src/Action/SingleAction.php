@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Bolt\Extension\Bolt\JsonApi\Action;
 
 use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\ParameterCollection;
@@ -11,6 +10,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class SingleAction
+ *
  * @package Bolt\Extension\Bolt\JsonApi\Action
  */
 class SingleAction extends FetchAction
@@ -19,8 +19,9 @@ class SingleAction extends FetchAction
      * @param $contentType
      * @param $slug
      * @param $relatedContentType
-     * @param Request $request
+     * @param Request             $request
      * @param ParameterCollection $parameters
+     *
      * @return array|ApiResponse
      */
     public function handle($contentType, $slug, $relatedContentType, Request $request, ParameterCollection $parameters)
@@ -62,13 +63,13 @@ class SingleAction extends FetchAction
                 'links' => [
                     'self' => $this->config->getBasePath() .
                         "/$contentType/$slug/$relatedContentType" .
-                        $this->dataLinks->makeQueryParameters($request->query->all())
+                        $this->dataLinks->makeQueryParameters($request->query->all()),
                 ],
                 'meta' => [
-                    "count" => count($items),
-                    "total" => count($items)
+                    'count' => count($items),
+                    'total' => count($items),
                 ],
-                'data' => $items
+                'data' => $items,
             ], $this->config);
         } else {
             //$allFields = $this->APIHelper->getAllFieldNames($contentType);
@@ -81,7 +82,7 @@ class SingleAction extends FetchAction
 
             $defaultQueryString = $this->dataLinks->makeQueryParameters($request->query->all());
             $links = [
-                'self' => $values['links']['self'] . $defaultQueryString
+                'self' => $values['links']['self'] . $defaultQueryString,
             ];
 
             // optional: This adds additional relationships links in the root
@@ -118,7 +119,7 @@ class SingleAction extends FetchAction
 
             $response = [
                 'links' => $links,
-                'data' => $values,
+                'data'  => $values,
             ];
 
             if (!empty($included)) {

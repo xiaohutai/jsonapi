@@ -4,6 +4,7 @@ namespace Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type;
 
 /**
  * Class Sort
+ *
  * @package Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type
  */
 class Sort extends AbstractParameter
@@ -15,6 +16,7 @@ class Sort extends AbstractParameter
 
     /**
      * Parameter example: sort=id,-body
+     *
      * @return $this
      */
     public function convertRequest()
@@ -54,6 +56,7 @@ class Sort extends AbstractParameter
 
     /**
      * @param string $sort
+     *
      * @return Sort
      */
     public function setSort($sort)

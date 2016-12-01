@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Bolt\Extension\Bolt\JsonApi\Parser\Field\Type;
 
 class Taxonomy extends AbstractType

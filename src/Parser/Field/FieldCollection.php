@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Bolt\Extension\Bolt\JsonApi\Parser\Field;
 
 use Bolt\Extension\Bolt\JsonApi\Parser\Field\Type\AbstractType;
@@ -10,8 +9,8 @@ class FieldCollection extends ArrayCollection
 {
     /**
      * @return array
-     * This function gets all items of a collection and calls
-     * render, which is unique based upon the field type.
+     *               This function gets all items of a collection and calls
+     *               render, which is unique based upon the field type.
      */
     public function getAttributes()
     {
@@ -30,7 +29,6 @@ class FieldCollection extends ArrayCollection
             } else {
                 $attributes[$type] =  $data;
             }
-
         }
 
         return $attributes;

@@ -17,11 +17,11 @@ use Silex\ServiceProviderInterface;
 
 /**
  * Class APIProvider
+ *
  * @package JSONAPI\Provider
  */
 class APIProvider implements ServiceProviderInterface
 {
-
     /** @var array */
     private $config;
     /**
@@ -39,6 +39,7 @@ class APIProvider implements ServiceProviderInterface
      *
      * This method should only be used to configure services and parameters.
      * It should not get services.
+     *
      * @param Application $app
      */
     public function register(Application $app)
@@ -69,6 +70,7 @@ class APIProvider implements ServiceProviderInterface
 
         /**
          * Class to handle parsing of individual items
+         *
          * @todo Refactor to include individual parsers based upon the field type
          */
         $app['jsonapi.parser'] = $app->share(
@@ -83,6 +85,7 @@ class APIProvider implements ServiceProviderInterface
 
         /**
          * Simple class to handle linking to related items and the current content type
+         *
          * @todo Refactor...
          */
         $app['jsonapi.datalinks'] = $app->share(
@@ -144,6 +147,7 @@ class APIProvider implements ServiceProviderInterface
                 $repoClass = 'Bolt\Extension\Bolt\JsonApi\Storage\Repository';
                 $repo = new $repoClass($app['storage'], $classMetadata);
                 $repo->setLegacyService($app['storage.legacy_service']);
+
                 return $repo;
             }
         );
@@ -151,7 +155,6 @@ class APIProvider implements ServiceProviderInterface
         $app['query.parser']->addDirectiveHandler('paginate', new PagerHandler());
         $app['query.parser']->addHandler('pager', new PagingHandler());
         $app['query.parser']->addOperation('pager');
-
     }
 
     /**
@@ -160,6 +163,7 @@ class APIProvider implements ServiceProviderInterface
      * This method is called after all services are registered
      * and should be used for "dynamic" configuration (whenever
      * a service must be requested).
+     *
      * @param Application $app
      */
     public function boot(Application $app)

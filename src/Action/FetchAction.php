@@ -24,10 +24,11 @@ class FetchAction
 
     /**
      * FetchAction constructor.
-     * @param Query $query
-     * @param Parser $parser
+     *
+     * @param Query     $query
+     * @param Parser    $parser
      * @param DataLinks $dataLinks
-     * @param Config $config
+     * @param Config    $config
      */
     public function __construct(
         Query $query,

@@ -21,7 +21,6 @@ class Order extends AbstractParameter
 
     public function findConfigValues()
     {
-
     }
 
     public function getParameter()
@@ -39,6 +38,7 @@ class Order extends AbstractParameter
 
     /**
      * @param string $order
+     *
      * @return Order
      */
     public function setOrder($order)

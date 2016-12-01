@@ -6,11 +6,11 @@ use Bolt\Extension\Bolt\JsonApi\Config\Config;
 
 /**
  * Class ApiErrorResponse
+ *
  * @package Bolt\Extension\Bolt\JsonApi\Response
  */
 class ApiErrorResponse extends ApiResponse
 {
-
     /**
      * @var string
      */
@@ -23,9 +23,10 @@ class ApiErrorResponse extends ApiResponse
 
     /**
      * ApiErrorResponse constructor.
+     *
      * @param string $status
      * @param string $title
-     * @param array $data
+     * @param array  $data
      * @param Config $config
      */
     public function __construct($status, $title, array $data, Config $config)
@@ -38,6 +39,7 @@ class ApiErrorResponse extends ApiResponse
 
     /**
      * @param array $content
+     *
      * @return \Symfony\Component\HttpFoundation\Response
      */
     public function setContent($content)
@@ -46,7 +48,7 @@ class ApiErrorResponse extends ApiResponse
         $content['title'] = $this->title;
 
         return parent::setContent([
-            'errors' => $content
+            'errors' => $content,
         ]);
     }
 }

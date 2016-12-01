@@ -1,13 +1,11 @@
 <?php
 
-
 namespace Bolt\Extension\Bolt\JsonApi\Parser\Field\Type;
 
 use Doctrine\Common\Collections\ArrayCollection;
 
 class RepeatingCollection extends ArrayCollection implements TypeInterface
 {
-
     protected $type;
 
     protected $value;
@@ -22,11 +20,13 @@ class RepeatingCollection extends ArrayCollection implements TypeInterface
 
     /**
      * @param mixed $type
+     *
      * @return RepeatingCollection
      */
     public function setType($type)
     {
         $this->type = $type;
+
         return $this;
     }
 
@@ -40,11 +40,13 @@ class RepeatingCollection extends ArrayCollection implements TypeInterface
 
     /**
      * @param mixed $value
+     *
      * @return RepeatingCollection
      */
     public function setValue($value)
     {
         $this->value = $value;
+
         return $this;
     }
 

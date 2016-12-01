@@ -11,7 +11,6 @@
 namespace Bolt\Extension\Bolt\JsonApi;
 
 use Bolt\Extension\Bolt\JsonApi\Controllers\ContentController;
-use Bolt\Extension\Bolt\JsonApi\Controllers\MenuController;
 use Bolt\Extension\Bolt\JsonApi\Exception\ApiException;
 use Bolt\Extension\Bolt\JsonApi\Provider\APIProvider;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiErrorResponse;
@@ -34,7 +33,7 @@ class JSONAPIExtension extends SimpleExtension
     {
         return [
             $this,
-            new APIProvider($this->getConfig())
+            new APIProvider($this->getConfig()),
         ];
     }
 
@@ -72,6 +71,7 @@ class JSONAPIExtension extends SimpleExtension
     /**
      * Listener to handle all exceptions thrown of type ApiException. It converts
      * the exception into an ApiErrorResponse.
+     *
      * @param GetResponseForExceptionEvent $response
      */
     public function error(GetResponseForExceptionEvent $response)

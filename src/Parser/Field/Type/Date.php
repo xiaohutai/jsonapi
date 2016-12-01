@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Bolt\Extension\Bolt\JsonApi\Parser\Field\Type;
 
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
@@ -13,6 +12,7 @@ class Date extends AbstractType
 
     /**
      * Date constructor.
+     *
      * @param $type
      * @param $value
      * @param Config $config

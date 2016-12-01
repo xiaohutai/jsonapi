@@ -6,6 +6,7 @@ use Bolt\Extension\Bolt\JsonApi\Exception\ApiInvalidRequestException;
 
 /**
  * Class Contains
+ *
  * @package Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type
  */
 class Contains extends AbstractParameter
@@ -15,6 +16,7 @@ class Contains extends AbstractParameter
 
     /**
      * Parameter example: contains[body]=test,test2
+     *
      * @return $this
      */
     public function convertRequest()
@@ -68,6 +70,7 @@ class Contains extends AbstractParameter
 
     /**
      * @param array $contains
+     *
      * @return Contains
      */
     public function setContains($contains)

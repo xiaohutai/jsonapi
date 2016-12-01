@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Bolt\Extension\Bolt\JsonApi\Storage;
 
 use Bolt\Storage\Query\QueryInterface;
@@ -9,16 +8,18 @@ use Doctrine\DBAL\Query\QueryBuilder;
 
 /**
  * Class Repository
+ *
  * @package Bolt\Extension\Bolt\JsonApi\Storage
  */
 class Repository extends ContentRepository
 {
-
     /**
      * This method is used to load all of the default query builder information and return
      *  a query builder back to manipulate the query. This allows for easier pagination and
      *  manipulating queries before fetching.
+     *
      * @param QueryInterface $query
+     *
      * @return QueryInterface
      */
     public function getQueryBuilderAfterMappings(QueryInterface $query)
@@ -35,7 +36,9 @@ class Repository extends ContentRepository
     /**
      * Since the queries are built already, we don't need to run all of the other mappings
      * before. Now we can just fetch the results of the query instead of running everything else.
+     *
      * @param QueryBuilder $query
+     *
      * @return bool|mixed
      */
     public function findResults(QueryBuilder $query)

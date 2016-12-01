@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Bolt\Extension\Bolt\JsonApi\Parser\Field\Type;
 
 use Bolt\Configuration\ResourceManager;
@@ -18,10 +17,11 @@ class File extends AbstractType
 
     /**
      * File constructor.
+     *
      * @param $type
      * @param $value
      * @param ResourceManager $resourceManager
-     * @param Config $config
+     * @param Config          $config
      */
     public function __construct(
         $type,
@@ -51,7 +51,6 @@ class File extends AbstractType
             }
         }
 
-
         if ($this->getFieldType() == 'filelist') {
             foreach ($this->getValue() as &$file) {
                 $file['url'] = $this->makeAbsoluteLinkToResource($file['filename']);
@@ -77,6 +76,7 @@ class File extends AbstractType
 
     /**
      * @param string $filename
+     *
      * @return string
      */
     protected function makeAbsoluteLinkToResource($filename = '')
@@ -91,6 +91,7 @@ class File extends AbstractType
 
     /**
      * @param string $filename
+     *
      * @return string
      */
     protected function makeAbsoluteLinkToThumbnail($filename = '')
@@ -114,11 +115,13 @@ class File extends AbstractType
 
     /**
      * @param mixed $fieldType
+     *
      * @return File
      */
     public function setFieldType($fieldType)
     {
         $this->fieldType = $fieldType;
+
         return $this;
     }
 }
