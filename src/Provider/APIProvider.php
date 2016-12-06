@@ -14,6 +14,8 @@ use Bolt\Extension\Bolt\JsonApi\Storage\Query\Handler\Directive\PagerHandler;
 use Bolt\Extension\Bolt\JsonApi\Storage\Query\Handler\PagingHandler;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
+use Bolt\Storage\Query\ContentQueryParser;
+
 
 /**
  * Class APIProvider
@@ -152,9 +154,13 @@ class APIProvider implements ServiceProviderInterface
             }
         );
 
-        $app['query.parser']->addDirectiveHandler('paginate', new PagerHandler());
-        $app['query.parser']->addHandler('pager', new PagingHandler());
-        $app['query.parser']->addOperation('pager');
+        $app->extend('query.parser', function (ContentQueryParser $parser) {
+            $parser->addDirectiveHandler('paginate', new PagerHandler());
+            $parser->addHandler('pager', new PagingHandler());
+            $parser->addOperation('pager');
+
+            return $parser;
+        });
     }
 
     /**
