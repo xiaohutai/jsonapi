@@ -6,11 +6,11 @@ use Bolt\Extension\Bolt\JsonApi\Exception\ApiNotFoundException;
 
 /**
  * Class ContentType
+ *
  * @package Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type
  */
 class ContentType extends AbstractParameter
 {
-
     /** @var string $contentType */
     protected $contentType;
 
@@ -33,7 +33,6 @@ class ContentType extends AbstractParameter
 
     public function findConfigValues()
     {
-
     }
 
     /**
@@ -54,6 +53,7 @@ class ContentType extends AbstractParameter
 
     /**
      * @param string $contentType
+     *
      * @return ContentType
      */
     public function setContentType($contentType)

@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Bolt\Extension\Bolt\JsonApi\Action;
 
 use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\ParameterCollection;
@@ -11,14 +10,16 @@ use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class SearchAction
+ *
  * @package Bolt\Extension\Bolt\JsonApi\Action
  */
 class SearchAction extends FetchAction
 {
     /**
-     * @param null $contentType
-     * @param Request $request
+     * @param null                $contentType
+     * @param Request             $request
      * @param ParameterCollection $parameters
+     *
      * @return ApiResponse
      */
     public function handle($contentType = null, Request $request, ParameterCollection $parameters)
@@ -27,7 +28,7 @@ class SearchAction extends FetchAction
 
         if (! $search) {
             throw new ApiInvalidRequestException(
-                "No query parameter q specified."
+                'No query parameter q specified.'
             );
         }
 
@@ -70,8 +71,8 @@ class SearchAction extends FetchAction
                 $request
             ),
             'meta' => [
-                "count" => count($items),
-                "total" => $set->getTotalResults()
+                'count' => count($items),
+                'total' => $set->getTotalResults(),
             ],
             'data' => $items,
         ], $this->config);

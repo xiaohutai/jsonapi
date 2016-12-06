@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Bolt\Extension\Bolt\JsonApi\Parser\Field;
 
 use Bolt\Configuration\ResourceManager;
@@ -22,14 +21,15 @@ class FieldFactory
 
     /**
      * @param ResourceManager $resourceManager
-     * @param Config $config
+     * @param Config          $config
      * @param $fields
-     * @param Entity|null $item
+     * @param Entity|null                   $item
      * @param RepeatingFieldCollection|null $fieldCollection
+     *
      * @return FieldCollection|
-     * The function goes and builds AbstractTypes. RepeatingFieldCollection
-     * is a unique case and doesn't extend AbstractTypes, but does have some
-     * of the same attributes. It loads classes based upon the field type.
+     *                          The function goes and builds AbstractTypes. RepeatingFieldCollection
+     *                          is a unique case and doesn't extend AbstractTypes, but does have some
+     *                          of the same attributes. It loads classes based upon the field type.
      */
     public static function build(
         $metadata,

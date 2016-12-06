@@ -1,20 +1,14 @@
 <?php
 namespace Bolt\Extension\Bolt\JsonApi\Controllers;
 
-use Bolt\Content;
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
-use Bolt\Extension\Bolt\JsonApi\Exception\ApiNotFoundException;
-use Bolt\Extension\Bolt\JsonApi\Response\ApiInvalidRequestResponse;
-use Bolt\Extension\Bolt\JsonApi\Response\ApiNotFoundResponse;
-use Bolt\Extension\Bolt\JsonApi\Response\ApiResponse;
 use Silex\Application;
 use Silex\ControllerCollection;
 use Silex\ControllerProviderInterface;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class ContentController
+ *
  * @package JSONAPI\Controllers
  */
 class ContentController implements ControllerProviderInterface
@@ -26,6 +20,7 @@ class ContentController implements ControllerProviderInterface
 
     /**
      * ContentController constructor.
+     *
      * @param Config $config
      */
     public function __construct(Config $config)
@@ -47,24 +42,24 @@ class ContentController implements ControllerProviderInterface
          */
         $ctr = $app['controllers_factory'];
 
-        $ctr->get("/menu", [$app['jsonapi.action.menu'], "handle"])
+        $ctr->get('/menu', [$app['jsonapi.action.menu'], 'handle'])
             ->bind('jsonapi.menu');
 
-        $ctr->get("/search", [$app['jsonapi.action.search'], "handle"])
+        $ctr->get('/search', [$app['jsonapi.action.search'], 'handle'])
             ->bind('jsonapi.searchAll')
             ->convert('parameters', 'jsonapi.converter:grabParameters');
 
-        $ctr->get("/{contentType}/search", [$app['jsonapi.action.search'], "handle"])
+        $ctr->get('/{contentType}/search', [$app['jsonapi.action.search'], 'handle'])
             ->bind('jsonapi.searchContent')
             ->convert('parameters', 'jsonapi.converter:grabParameters');
 
-        $ctr->get("/{contentType}/{slug}/{relatedContentType}", [$app['jsonapi.action.single'], 'handle'])
+        $ctr->get('/{contentType}/{slug}/{relatedContentType}', [$app['jsonapi.action.single'], 'handle'])
             ->value('relatedContentType', null)
             ->assert('slug', '[a-zA-Z0-9_\-]+')
             ->bind('jsonapi.singleContent')
             ->convert('parameters', 'jsonapi.converter:grabParameters');
 
-        $ctr->get("/{contentType}", [$app['jsonapi.action.contentlist'], "handle"])
+        $ctr->get('/{contentType}', [$app['jsonapi.action.contentlist'], 'handle'])
             ->bind('jsonapi.listContent')
             ->convert('parameters', 'jsonapi.converter:grabParameters');
 

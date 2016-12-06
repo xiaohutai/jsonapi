@@ -1,17 +1,16 @@
 <?php
 
-
 namespace Bolt\Extension\Bolt\JsonApi\Parser\Field\Type;
 
 abstract class AbstractType implements TypeInterface
 {
-
     protected $type;
 
     protected $value;
 
     /**
      * AbstractType constructor.
+     *
      * @param $type
      * @param $value
      */
@@ -31,11 +30,13 @@ abstract class AbstractType implements TypeInterface
 
     /**
      * @param string $type
+     *
      * @return AbstractType
      */
     public function setType($type)
     {
         $this->type = $type;
+
         return $this;
     }
 
@@ -49,17 +50,19 @@ abstract class AbstractType implements TypeInterface
 
     /**
      * @param mixed $value
+     *
      * @return AbstractType
      */
     public function setValue($value)
     {
         $this->value = $value;
+
         return $this;
     }
 
     /**
      * @return mixed
-     * Internal function used to display the json representation
+     *               Internal function used to display the json representation
      */
     abstract public function render();
 

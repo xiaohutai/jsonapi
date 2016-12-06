@@ -7,11 +7,10 @@ use Symfony\Component\HttpFoundation\Request;
 
 class Config
 {
-
     /**
      * @var string
      */
-    private $base = "/json";
+    private $base = '/json';
 
     /**
      * @var string
@@ -258,6 +257,7 @@ class Config
 
     /**
      * @param $contentType
+     *
      * @return array
      */
     public function getWhereClauses($contentType)
@@ -271,6 +271,7 @@ class Config
 
     /**
      * @param $contentType
+     *
      * @return array
      */
     public function getListFields($contentType)
@@ -284,6 +285,7 @@ class Config
 
     /**
      * @param $contentType
+     *
      * @return array
      */
     public function getItemFields($contentType)
@@ -297,6 +299,7 @@ class Config
 
     /**
      * @param $contentType
+     *
      * @return array
      */
     public function getAllowedFields($contentType)

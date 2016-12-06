@@ -1,24 +1,21 @@
 <?php
 
-
 namespace Bolt\Extension\Bolt\JsonApi\Converter;
 
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
 use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\ParameterFactory;
 use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\ParameterInterface;
-use Bolt\Extension\Bolt\JsonApi\Response\ApiInvalidRequestResponse;
-use Bolt\Extension\Bolt\JsonApi\Response\ApiNotFoundResponse;
 use Bolt\Storage\Mapping\MetadataDriver;
 use Doctrine\Common\Collections\Collection;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class JSONAPIConverter
+ *
  * @package Bolt\Extension\Bolt\JsonApi\Converter
  */
 class JSONAPIConverter
 {
-
     /** @var Config $config */
     protected $config;
 
@@ -27,7 +24,8 @@ class JSONAPIConverter
 
     /**
      * JSONAPIConverter constructor.
-     * @param Config $config
+     *
+     * @param Config         $config
      * @param MetadataDriver $metadata
      */
     public function __construct(Config $config, MetadataDriver $metadata)
@@ -38,8 +36,10 @@ class JSONAPIConverter
 
     /**
      * Create an array of parameters to be handled by our ParameterFactory class
+     *
      * @param $converter
      * @param Request $request
+     *
      * @return Collection|ParameterInterface[]
      */
     public function grabParameters($converter, Request $request)
@@ -72,6 +72,7 @@ class JSONAPIConverter
 
     /**
      * @param $parameters
+     *
      * @return mixed
      */
     protected function isSearch($parameters)

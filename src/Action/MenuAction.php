@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Bolt\Extension\Bolt\JsonApi\Action;
 
 use Bolt\Config;
@@ -10,6 +9,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class MenuAction
+ *
  * @package Bolt\Extension\Bolt\JsonApi\Action
  */
 class MenuAction
@@ -22,7 +22,8 @@ class MenuAction
 
     /**
      * MenuAction constructor.
-     * @param Config $boltConfig
+     *
+     * @param Config                                     $boltConfig
      * @param \Bolt\Extension\Bolt\JsonApi\Config\Config $extensionConfig
      */
     public function __construct(Config $boltConfig, \Bolt\Extension\Bolt\JsonApi\Config\Config $extensionConfig)
@@ -33,6 +34,7 @@ class MenuAction
 
     /**
      * @param Request $request
+     *
      * @return ApiResponse
      */
     public function handle(Request $request)
@@ -41,7 +43,7 @@ class MenuAction
             $name = "/$name";
         }
 
-        $menu = $this->boltConfig->get('menu'.$name, false);
+        $menu = $this->boltConfig->get('menu' . $name, false);
         
         if (! $menu) {
             throw new ApiNotFoundException(
@@ -50,7 +52,7 @@ class MenuAction
         }
 
         return new ApiResponse([
-            'data' => $menu
+            'data' => $menu,
         ], $this->extensionConfig);
     }
 }

@@ -6,6 +6,7 @@ use Bolt\Extension\Bolt\JsonApi\Exception\ApiInvalidRequestException;
 
 /**
  * Class Includes
+ *
  * @package Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type
  */
 class Includes extends AbstractParameter
@@ -18,6 +19,7 @@ class Includes extends AbstractParameter
 
     /**
      * Parameter example: includes=pages,entries,...
+     *
      * @return $this
      */
     public function convertRequest()
@@ -51,6 +53,7 @@ class Includes extends AbstractParameter
     /**
      * @param $contentType
      * @param $fields
+     *
      * @return $this
      */
     public function setFields($contentType, $fields)
@@ -62,6 +65,7 @@ class Includes extends AbstractParameter
 
     /**
      * @param $contentType
+     *
      * @return mixed
      */
     public function getFieldsByContentType($contentType)
@@ -87,6 +91,7 @@ class Includes extends AbstractParameter
 
     /**
      * @param array $includes
+     *
      * @return Includes
      */
     public function setIncludes($includes)

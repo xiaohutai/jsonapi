@@ -4,6 +4,7 @@ namespace Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type;
 
 /**
  * Class Page
+ *
  * @package Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type
  */
 class Page extends AbstractParameter
@@ -19,6 +20,7 @@ class Page extends AbstractParameter
 
     /**
      * Parameter example: page[number]=1&page[size]=5
+     *
      * @return $this
      */
     public function convertRequest()
@@ -38,7 +40,6 @@ class Page extends AbstractParameter
 
     public function findConfigValues()
     {
-
     }
 
     /**
@@ -59,6 +60,7 @@ class Page extends AbstractParameter
 
     /**
      * @param int $size
+     *
      * @return Page
      */
     public function setSize($size)
@@ -78,6 +80,7 @@ class Page extends AbstractParameter
 
     /**
      * @param int $number
+     *
      * @return Page
      */
     public function setNumber($number)

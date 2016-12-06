@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Bolt\Extension\Bolt\JsonApi\Action;
 
 use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\ParameterCollection;
@@ -11,14 +10,16 @@ use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class ContentListAction
+ *
  * @package Bolt\Extension\Bolt\JsonApi\Action
  */
 class ContentListAction extends FetchAction
 {
     /**
      * @param $contentType
-     * @param Request $request
+     * @param Request             $request
      * @param ParameterCollection $parameters
+     *
      * @return ApiResponse
      */
     public function handle($contentType, Request $request, ParameterCollection $parameters)
@@ -34,7 +35,7 @@ class ContentListAction extends FetchAction
 
         $results = $set->get($contentType);
 
-        $this->throwErrorOnNoResults($results, "Bad request: There were no results based upon your criteria!");
+        $this->throwErrorOnNoResults($results, 'Bad request: There were no results based upon your criteria!');
 
         $this->fetchIncludes(
             $parameters->getParametersByType('includes'),
@@ -58,8 +59,8 @@ class ContentListAction extends FetchAction
                 $request
             ),
             'meta' => [
-                "count" => count($items),
-                "total" => $set->getTotalResults()
+                'count' => count($items),
+                'total' => $set->getTotalResults(),
             ],
             'data' => $items,
         ];

@@ -1,18 +1,15 @@
 <?php
 
-
 namespace Bolt\Extension\Bolt\JsonApi\Parser;
 
 use Bolt\Configuration\ResourceManager;
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
-use Bolt\Extension\Bolt\JsonApi\Parser\Field\FieldFactory;
 use Bolt\Extension\Bolt\JsonApi\Parser\Field\FieldCollection;
-use Bolt\Storage\EntityProxy;
+use Bolt\Extension\Bolt\JsonApi\Parser\Field\FieldFactory;
 use Bolt\Storage\Mapping\MetadataDriver;
 
 class Parser
 {
-
     /** @var Config $config */
     protected $config;
 
@@ -46,7 +43,7 @@ class Parser
 
         $id = $item->getId();
         $values = [
-            'id' => strval($id),
+            'id'   => strval($id),
             'type' => $contentType,
         ];
         $fields = array_unique($fields);
@@ -80,7 +77,6 @@ class Parser
                         $item = str_replace($from, $to, $item);
                     }
                 }
-
             });
 
             $values['attributes'] = $attributes;
@@ -107,15 +103,15 @@ class Parser
 
                 $data[] = [
                     'type' => $fromType,
-                    'id' => $id
+                    'id'   => $id,
                 ];
 
                 $relationships[$toType] = [
                     'links' => [
                         // 'self' -- this is irrelevant for now
-                        'related' => $this->config->getBasePath()."/$fromType/$id/$toType"
+                        'related' => $this->config->getBasePath() . "/$fromType/$id/$toType",
                     ],
-                    'data' => $data
+                    'data' => $data,
                 ];
             }
             $values['relationships'] = $relationships;

@@ -4,6 +4,7 @@ namespace Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type;
 
 /**
  * Class Fields
+ *
  * @package Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type
  */
 class Fields extends AbstractParameter
@@ -13,6 +14,7 @@ class Fields extends AbstractParameter
 
     /**
      * Parameter example: fields[pages]=title,teaser
+     *
      * @return $this
      */
     public function convertRequest()
@@ -48,7 +50,6 @@ class Fields extends AbstractParameter
 
     public function findConfigValues()
     {
-
     }
 
     /**
@@ -69,6 +70,7 @@ class Fields extends AbstractParameter
 
     /**
      * @param array $fields
+     *
      * @return Fields
      */
     public function setFields($fields)

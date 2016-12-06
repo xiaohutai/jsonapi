@@ -6,6 +6,7 @@ use Bolt\Extension\Bolt\JsonApi\Exception\ApiInvalidRequestException;
 
 /**
  * Class Filters
+ *
  * @package Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type
  */
 class Filters extends AbstractParameter
@@ -15,6 +16,7 @@ class Filters extends AbstractParameter
 
     /**
      * Parameter example: filter[id]=1,2
+     *
      * @return $this
      */
     public function convertRequest()
@@ -38,6 +40,7 @@ class Filters extends AbstractParameter
 
     /**
      * Grab default configuration values
+     *
      * @return array
      */
     public function findConfigValues()
@@ -63,6 +66,7 @@ class Filters extends AbstractParameter
 
     /**
      * @param array $filters
+     *
      * @return Filters
      */
     public function setFilters($filters)

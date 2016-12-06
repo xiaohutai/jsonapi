@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type;
 
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
@@ -9,11 +8,11 @@ use Bolt\Storage\Mapping\MetadataDriver;
 
 /**
  * Class AbstractParameter
+ *
  * @package Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type
  */
 abstract class AbstractParameter implements ParameterInterface
 {
-
     /** @var string $contentType */
     protected $contentType;
 
@@ -28,9 +27,10 @@ abstract class AbstractParameter implements ParameterInterface
 
     /**
      * AbstractParameter constructor.
+     *
      * @param $contentType
      * @param $values
-     * @param Config $config
+     * @param Config         $config
      * @param MetadataDriver $metadata
      */
     public function __construct($contentType, $values, Config $config, MetadataDriver $metadata)
@@ -43,10 +43,12 @@ abstract class AbstractParameter implements ParameterInterface
 
     /**
      * Method to create instance of self statically...
+     *
      * @param $contentType
      * @param $values
-     * @param Config $config
+     * @param Config         $config
      * @param MetadataDriver $metadata
+     *
      * @return static
      */
     public static function initialize($contentType, $values, Config $config, MetadataDriver $metadata)
@@ -70,6 +72,7 @@ abstract class AbstractParameter implements ParameterInterface
 
     /**
      * @param $key
+     *
      * @return bool
      */
     protected function isValidField($key)
@@ -79,6 +82,7 @@ abstract class AbstractParameter implements ParameterInterface
 
     /**
      * @param $ct
+     *
      * @return bool
      */
     protected function isValidContentType($ct)

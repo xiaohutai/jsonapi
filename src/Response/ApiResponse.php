@@ -7,6 +7,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Class ApiResponse
+ *
  * @package Bolt\Extension\Bolt\JsonApi\Response
  */
 class ApiResponse extends Response
@@ -18,7 +19,8 @@ class ApiResponse extends Response
 
     /**
      * ApiResponse constructor.
-     * @param array $data
+     *
+     * @param array  $data
      * @param Config $config
      */
     public function __construct(array $data, Config $config)
@@ -32,11 +34,11 @@ class ApiResponse extends Response
      * encodes the data and sets the json options from the config object
      *
      * @param array $content
+     *
      * @return Response
      */
     public function setContent($content)
     {
-
         if ($this->config->getJsonOptions()) {
             $json_encodeOptions = $this->config->getJsonOptions();
         } else {
@@ -48,7 +50,6 @@ class ApiResponse extends Response
 
         return parent::setContent($json);
     }
-
 
     /**
      * Adds the headers to the response based on the config
@@ -62,9 +63,9 @@ class ApiResponse extends Response
         }
     }
 
-
     /**
      * Checks the data for 'errors' key and sets a status code based on
+     *
      * @param array $data
      */
     private function setStatusCodeFromData(array $data)
