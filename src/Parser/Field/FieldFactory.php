@@ -9,7 +9,7 @@ use Bolt\Extension\Bolt\JsonApi\Parser\Field\Type\File;
 use Bolt\Extension\Bolt\JsonApi\Parser\Field\Type\Generic;
 use Bolt\Extension\Bolt\JsonApi\Parser\Field\Type\RepeatingCollection;
 use Bolt\Extension\Bolt\JsonApi\Parser\Field\Type\RepeatingFieldCollection;
-use Bolt\Storage\Collection\Relations;
+use Bolt\Storage\Collection\LazyCollection;
 use Bolt\Storage\Collection\Taxonomy;
 use Bolt\Storage\Entity\Entity;
 use Carbon\Carbon;
@@ -86,7 +86,7 @@ class FieldFactory
                 }
             } elseif ($data instanceof Carbon) {
                 $type = new Date($field, $data, $config);
-            } elseif (!$data instanceof Relations) {
+            } elseif (!$data instanceof LazyCollection) {
                 if (in_array($fieldType, self::$fileTypes)) {
                     $type = new File($field, $data, $resourceManager, $config);
                     $type->setFieldType($fieldType);
