@@ -92,7 +92,7 @@ class SingleAction extends FetchAction
                 $links[$ct] = $link;
             }
 
-            $this->fetchIncludes(
+            $included = $this->fetchIncludes(
                 $parameters->getParametersByType('includes'),
                 $results,
                 $parameters
