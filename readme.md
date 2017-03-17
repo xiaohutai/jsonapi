@@ -129,12 +129,14 @@ parameters appended to the URL):
 Besides the basic JSON API features, below are some additional Bolt specific
 queries that you may find useful:
 
-| URL                     | Description                                        |
-|-------------------------|----------------------------------------------------|
-|`/{ct}/search?q={query}` | Searches for `{query}` in a specific `contenttype`.|
-|`/search?q={query}`      | Searches for `{query}` in all contenttypes.        |
-|`/menu`                  | Returns a list of all menus defined in `menu.yml`. |
-|`/menu?q={name}`         | Returns the menu with the specified name.          |
+| URL                     | Description                                                 |
+|-------------------------|-------------------------------------------------------------|
+|`/{ct}/search?q={query}` | Searches for `{query}` in a specific `contenttype`.         |
+|`/search?q={query}`      | Searches for `{query}` in all contenttypes.                 |
+|`/menu`                  | Returns a list of all menus defined in `menu.yml`.          |
+|`/menu?q={name}`         | Returns the menu with the specified name.                   |
+|`/taxonomy`              | Returns a list of all taxonomies defined in `taxonomy.yml`. |
+|`/taxonomy?q={name}`     | Returns the taxonomy with the specified name.               |
 
 ### Road Map
 
