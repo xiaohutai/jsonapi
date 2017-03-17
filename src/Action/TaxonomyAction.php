@@ -47,7 +47,7 @@ class TaxonomyAction
 
         if (! $taxonomy) {
             throw new ApiNotFoundException(
-                "Menu with name [$name] not found."
+                "Taxonomy with name [$name] not found."
             );
         }
 
