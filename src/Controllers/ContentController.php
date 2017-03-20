@@ -45,6 +45,9 @@ class ContentController implements ControllerProviderInterface
         $ctr->get('/menu', [$app['jsonapi.action.menu'], 'handle'])
             ->bind('jsonapi.menu');
 
+        $ctr->get('/taxonomy', [$app['jsonapi.action.taxonomy'], 'handle'])
+            ->bind('jsonapi.taxonomy');
+
         $ctr->get('/search', [$app['jsonapi.action.search'], 'handle'])
             ->bind('jsonapi.searchAll')
             ->convert('parameters', 'jsonapi.converter:grabParameters');

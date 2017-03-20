@@ -6,6 +6,7 @@ use Bolt\Extension\Bolt\JsonApi\Action\ContentListAction;
 use Bolt\Extension\Bolt\JsonApi\Action\MenuAction;
 use Bolt\Extension\Bolt\JsonApi\Action\SearchAction;
 use Bolt\Extension\Bolt\JsonApi\Action\SingleAction;
+use Bolt\Extension\Bolt\JsonApi\Action\TaxonomyAction;
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
 use Bolt\Extension\Bolt\JsonApi\Converter\JSONAPIConverter;
 use Bolt\Extension\Bolt\JsonApi\Helpers\DataLinks;
@@ -135,6 +136,15 @@ class APIProvider implements ServiceProviderInterface
         $app['jsonapi.action.menu'] = $app->share(
             function ($app) {
                 return new MenuAction(
+                    $app['config'],
+                    $app['jsonapi.config']
+                );
+            }
+        );
+
+        $app['jsonapi.action.taxonomy'] = $app->share(
+            function ($app) {
+                return new TaxonomyAction(
                     $app['config'],
                     $app['jsonapi.config']
                 );
