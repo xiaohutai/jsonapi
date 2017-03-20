@@ -5,6 +5,7 @@ namespace Bolt\Extension\Bolt\JsonApi\Action;
 use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\ParameterCollection;
 use Bolt\Extension\Bolt\JsonApi\Exception\ApiNotFoundException;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiResponse;
+use Bolt\Storage\Entity\Content;
 use Bolt\Storage\Query\QueryResultset;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -37,13 +38,13 @@ class SingleAction extends FetchAction
 
         $queryParameters = array_merge($parameters->getQueryParameters(), $additionalParameters);
 
-        /** @var QueryResultset $results */
+        /** @var Content $results */
         $results = $this->query->getContent($contentType, $queryParameters);
 
         $this->throwErrorOnNoResults($results, "No [$contentType] found with id/slug: [$slug].");
 
         if ($relatedContentType !== null) {
-            $relatedItemsTotal = $results->getRelation()->getField($relatedContentType)->count();
+            $relatedItemsTotal = $results->getRelation($relatedContentType)->count();
             if ($relatedItemsTotal <= 0) {
                 throw new ApiNotFoundException(
                     "No related items of type [$relatedContentType] found for [$contentType] with id/slug: [$slug]."
