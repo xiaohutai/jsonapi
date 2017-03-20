@@ -4,8 +4,10 @@ namespace Bolt\Extension\Bolt\JsonApi\Parser;
 
 use Bolt\Configuration\ResourceManager;
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
+use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type\Fields;
 use Bolt\Extension\Bolt\JsonApi\Parser\Field\FieldCollection;
 use Bolt\Extension\Bolt\JsonApi\Parser\Field\FieldFactory;
+use Bolt\Storage\Entity\Relations;
 use Bolt\Storage\Mapping\MetadataDriver;
 
 class Parser
@@ -97,26 +99,46 @@ class Parser
             $relationships = [];
             foreach ($item->getRelation() as $relatedType) {
                 $data = [];
-                $id = $relatedType->getFromId();
-                $fromType = $relatedType->getFromContenttype();
-                $toType = $relatedType->getToContenttype();
-
-                $data[] = [
-                    'type' => $fromType,
-                    'id'   => $id,
-                ];
-
-                $relationships[$toType] = [
-                    'links' => [
-                        // 'self' -- this is irrelevant for now
-                        'related' => $this->config->getBasePath() . "/$fromType/$id/$toType",
-                    ],
-                    'data' => $data,
-                ];
+                $relationships[] = $this->relatedJSONParser($relatedType, $data, $contentType);
             }
             $values['relationships'] = $relationships;
         }
 
         return $values;
     }
+
+    /**
+     * @param Relations $relatedType
+     */
+    protected function relatedJSONParser($relatedType, $data, $contentType)
+    {
+        $toID = $relatedType->getToId();
+        $fromID = $relatedType->getFromId();
+        $fromType = $relatedType->getFromContenttype();
+        $toType = $relatedType->getToContenttype();
+
+        if ($contentType === $fromType) {
+            $toContentType = $toType;
+            $id = $toID;
+        } else {
+            $toContentType = $fromType;
+            $id = $fromID;
+        }
+
+        $data[] = [
+            'type' => $toContentType,
+            'id'   => $id,
+        ];
+
+        $relationships[$toContentType] = [
+            'links' => [
+                'self' => $this->config->getBasePath() . "/$toContentType/$id",
+                'related' => $this->config->getBasePath() . "/$toContentType/$id/$contentType"
+            ],
+            'data' => $data,
+        ];
+
+        return $relationships;
+    }
+
 }

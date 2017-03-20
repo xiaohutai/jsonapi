@@ -71,15 +71,15 @@ class FetchAction
             if (is_array($results)) {
                 foreach ($results as $key => $item) {
                     //Loop through all relationships
-                    foreach ($item->getRelation($include) as $related) {
-                        $included = $this->storeRelatedContent($parameters, $include, $related, $key);
+                    foreach ($item->relation[$include] as $related) {
+                        $included[$key] = $this->storeRelatedContent($parameters, $include, $related);
                     }
                 }
                 //Must be a single content type
             } elseif ($results instanceof Content) {
                 //Loop through all relationships
                 foreach ($results->getRelation($include) as $key => $related) {
-                    $included = $this->storeRelatedContent($parameters, $include, $related, $key);
+                    $included[$key] = $this->storeRelatedContent($parameters, $include, $related);
                 }
             }
 
@@ -95,12 +95,12 @@ class FetchAction
      * @param $key
      * @return mixed
      */
-    protected function storeRelatedContent($parameters, $include, $related, $key)
+    protected function storeRelatedContent($parameters, $include, $related)
     {
         /** @var Fields $fields */
         $fields = $parameters->get('includes')->getFieldsByContentType($include);
 
-        $included[$key] = $this->parser->parseItem($related, $fields);
+        $included = $this->parser->parseItem($related, $fields->getFields());
 
         return $included;
     }
