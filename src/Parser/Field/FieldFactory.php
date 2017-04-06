@@ -47,6 +47,7 @@ class FieldFactory
             if ($fieldCollection instanceof RepeatingFieldCollection) {
                 $data = $field->getValue();
                 $field = $field->getFieldtype();
+                $fieldType = $field;
             } else {
                 $data = $item->get($field);
                 if (isset($metadata['fields'])) {
