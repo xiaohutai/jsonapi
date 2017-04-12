@@ -2,6 +2,8 @@
 
 namespace Bolt\Extension\Bolt\JsonApi\Provider;
 
+use Bolt\Composer\Package;
+use Bolt\Composer\PackageCollection;
 use Bolt\Extension\Bolt\JsonApi\Action\ContentListAction;
 use Bolt\Extension\Bolt\JsonApi\Action\MenuAction;
 use Bolt\Extension\Bolt\JsonApi\Action\SearchAction;
@@ -16,6 +18,7 @@ use Bolt\Extension\Bolt\JsonApi\Storage\Query\Handler\PagingHandler;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 use Bolt\Storage\Query\ContentQueryParser;
+use Bolt\Extension\Bolt\JsonApi\Action\RootAction;
 
 
 /**
@@ -138,6 +141,25 @@ class APIProvider implements ServiceProviderInterface
                 return new MenuAction(
                     $app['config'],
                     $app['jsonapi.config']
+                );
+            }
+        );
+
+        $app['jsonapi.action.root'] = $app->share(
+            function ($app) {
+                $boltVersion = $app['bolt_version'];
+                /** @var PackageCollection $jsonapiVersion */
+                $jsonAPIVersion = $app['extend.manager']->getAllPackages();
+                /** @var Package $jsonapiVersion */
+                $jsonAPIVersion = $jsonAPIVersion->get('bolt/jsonapi');
+                //Get exact version
+                $jsonAPIVersion = $jsonAPIVersion->jsonSerialize()['version'];
+
+                return new RootAction(
+                    $app['config'],
+                    $app['jsonapi.config'],
+                    $boltVersion,
+                    $jsonAPIVersion
                 );
             }
         );
