@@ -2,9 +2,11 @@
 namespace Bolt\Extension\Bolt\JsonApi\Controllers;
 
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
+use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\ParameterCollection;
 use Silex\Application;
 use Silex\ControllerCollection;
 use Silex\ControllerProviderInterface;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class ContentController
@@ -42,33 +44,119 @@ class ContentController implements ControllerProviderInterface
          */
         $ctr = $app['controllers_factory'];
 
-        $ctr->get('/', [$app['jsonapi.action.root'], 'handle'])
+        $ctr->get('/', 'root')
             ->bind('jsonapi');
 
-        $ctr->get('/menu', [$app['jsonapi.action.menu'], 'handle'])
+        $ctr->get('/menu', 'menu')
             ->bind('jsonapi.menu');
 
-        $ctr->get('/taxonomy', [$app['jsonapi.action.taxonomy'], 'handle'])
+        $ctr->get('/taxonomy', 'taxonomy')
             ->bind('jsonapi.taxonomy');
 
-        $ctr->get('/search', [$app['jsonapi.action.search'], 'handle'])
+        $ctr->get('/search', 'searchAll')
             ->bind('jsonapi.searchAll')
             ->convert('parameters', 'jsonapi.converter:grabParameters');
 
-        $ctr->get('/{contentType}/search', [$app['jsonapi.action.search'], 'handle'])
+        $ctr->get('/{contentType}/search', 'searchContent')
             ->bind('jsonapi.searchContent')
             ->convert('parameters', 'jsonapi.converter:grabParameters');
 
-        $ctr->get('/{contentType}/{slug}/{relatedContentType}', [$app['jsonapi.action.single'], 'handle'])
+        $ctr->get('/{contentType}/{slug}/{relatedContentType}', 'singleContent')
             ->value('relatedContentType', null)
             ->assert('slug', '[a-zA-Z0-9_\-]+')
             ->bind('jsonapi.singleContent')
             ->convert('parameters', 'jsonapi.converter:grabParameters');
 
-        $ctr->get('/{contentType}', [$app['jsonapi.action.contentlist'], 'handle'])
+        $ctr->get('/{contentType}', 'listContent')
             ->bind('jsonapi.listContent')
             ->convert('parameters', 'jsonapi.converter:grabParameters');
 
         return $ctr;
+    }
+
+    /**
+     * @param Application $app
+     * @param Request     $request
+     *
+     * @return mixed
+     */
+    public function root(Application $app, Request $request)
+    {
+        return $app['jsonapi.action.root']->handle($request);
+    }
+
+    /**
+     * @param Application $app
+     * @param Request     $request
+     *
+     * @return mixed
+     */
+    public function menu(Application $app, Request $request)
+    {
+        return $app['jsonapi.action.menu']->handle($request);
+    }
+
+    /**
+     * @param Application $app
+     * @param Request     $request
+     *
+     * @return mixed
+     */
+    public function taxonomy(Application $app, Request $request)
+    {
+        return $app['jsonapi.action.taxonomy']->handle($request);
+    }
+
+    /**
+     * @param Application         $app
+     * @param Request             $request
+     * @param ParameterCollection $parameters
+     *
+     * @return mixed
+     */
+    public function searchAll(Application $app, Request $request, ParameterCollection $parameters)
+    {
+        return $app['jsonapi.action.search']->handle(null, $request, $parameters);
+    }
+
+    /**
+     * @param Application         $app
+     * @param Request             $request
+     * @param string              $contentType
+     * @param ParameterCollection $parameters
+     *
+     * @return mixed
+     */
+    public function searchContent(Application $app, Request $request, $contentType, ParameterCollection $parameters)
+    {
+        return $app['jsonapi.action.search']->handle($contentType, $request, $parameters);
+    }
+
+    /**
+     * @param Application         $app
+     * @param Request             $request
+     * @param string              $contentType
+     * @param string              $slug
+     * @param string              $relatedContentType
+     * @param ParameterCollection $parameters
+     *
+     * @return mixed
+     */
+    public function singleContent(Application $app, Request $request, $contentType, $slug, $relatedContentType, ParameterCollection $parameters)
+    {
+        return $app['jsonapi.action.single']->handle($contentType, $slug, $relatedContentType, $request, $parameters);
+    }
+
+    /**
+     * @param Application         $app
+     * @param Request             $request
+     * @param string              $contentType
+     * @param ParameterCollection $parameters
+     *
+     * @return mixed
+     */
+    public function listContent(Application $app, Request $request, $contentType, ParameterCollection $parameters)
+    {
+        return $app['jsonapi.action.contentlist']->handle($contentType, $request, $parameters);
     }
 }
