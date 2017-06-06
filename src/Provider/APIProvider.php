@@ -186,13 +186,15 @@ class APIProvider implements ServiceProviderInterface
             }
         );
 
-        $app->extend('query.parser', function (ContentQueryParser $parser) {
-            $parser->addDirectiveHandler('paginate', new PagerHandler());
-            $parser->addHandler('pager', new PagingHandler());
-            $parser->addOperation('pager');
+        $app['query.parser'] = $app->share(
+            $app->extend('query.parser', function (ContentQueryParser $parser) {
+                $parser->addDirectiveHandler('paginate', new PagerHandler());
+                $parser->addHandler('pager', new PagingHandler());
+                $parser->addOperation('pager');
 
-            return $parser;
-        });
+                return $parser;
+            })
+        );
     }
 
     /**
