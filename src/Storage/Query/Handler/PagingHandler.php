@@ -22,7 +22,7 @@ class PagingHandler
 
         foreach ($contentQuery->getContentTypes() as $contenttype) {
             //Find out if we are searching or just doing a simple query
-            if ($searchParam = $contentQuery->getParameter('filter')) {
+            if ($contentQuery->hasParameter('filter')) {
                 $query = clone $cleanSearchQuery;
             } else {
                 $query = $contentQuery->getService('select');
@@ -35,7 +35,7 @@ class PagingHandler
 
             //Set the search parameter if searching
             if ($query instanceof SearchQuery) {
-                $query->setSearch($searchParam);
+                $query->setSearch($contentQuery->getParameter('filter'));
             }
 
             //Get Page from the new directive handler that allows pagination
@@ -57,8 +57,11 @@ class PagingHandler
             /** @var QueryBuilder $qb */
             $qb = clone $query->getQueryBuilder();
 
+            // Get an intersection of current keys, and the ones we need to remove
+            $removeparts = array_intersect(array_keys($query2->getQueryParts()), ['maxResults', 'firstResult', 'orderBy']);
+
             $query2
-                ->resetQueryParts(['maxResults', 'firstResult', 'orderBy'])
+                ->resetQueryParts($removeparts)
                 ->setFirstResult(null)
                 ->setMaxResults(null)
                 ->select('COUNT(*) as total');
