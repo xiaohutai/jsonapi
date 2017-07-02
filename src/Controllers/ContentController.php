@@ -44,30 +44,30 @@ class ContentController implements ControllerProviderInterface
          */
         $ctr = $app['controllers_factory'];
 
-        $ctr->get('/', 'root')
+        $ctr->get('/', [$this, 'root'])
             ->bind('jsonapi');
 
-        $ctr->get('/menu', 'menu')
+        $ctr->get('/menu', [$this, 'menu'])
             ->bind('jsonapi.menu');
 
-        $ctr->get('/taxonomy', 'taxonomy')
+        $ctr->get('/taxonomy', [$this, 'taxonomy'])
             ->bind('jsonapi.taxonomy');
 
-        $ctr->get('/search', 'searchAll')
+        $ctr->get('/search', [$this, 'searchAll'])
             ->bind('jsonapi.searchAll')
             ->convert('parameters', 'jsonapi.converter:grabParameters');
 
-        $ctr->get('/{contentType}/search', 'searchContent')
+        $ctr->get('/{contentType}/search', [$this, 'searchContent'])
             ->bind('jsonapi.searchContent')
             ->convert('parameters', 'jsonapi.converter:grabParameters');
 
-        $ctr->get('/{contentType}/{slug}/{relatedContentType}', 'singleContent')
+        $ctr->get('/{contentType}/{slug}/{relatedContentType}', [$this, 'singleContent'])
             ->value('relatedContentType', null)
             ->assert('slug', '[a-zA-Z0-9_\-]+')
             ->bind('jsonapi.singleContent')
             ->convert('parameters', 'jsonapi.converter:grabParameters');
 
-        $ctr->get('/{contentType}', 'listContent')
+        $ctr->get('/{contentType}', [$this, 'listContent'])
             ->bind('jsonapi.listContent')
             ->convert('parameters', 'jsonapi.converter:grabParameters');
 
