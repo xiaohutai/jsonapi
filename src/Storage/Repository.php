@@ -33,21 +33,4 @@ class Repository extends ContentRepository
         return $query;
     }
 
-    /**
-     * Since the queries are built already, we don't need to run all of the other mappings
-     * before. Now we can just fetch the results of the query instead of running everything else.
-     *
-     * @param QueryBuilder $query
-     *
-     * @return bool|mixed
-     */
-    public function findResults(QueryBuilder $query)
-    {
-        $result = $query->execute()->fetchAll();
-        if ($result) {
-            return $this->hydrateAll($result, $query);
-        } else {
-            return false;
-        }
-    }
 }

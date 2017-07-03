@@ -66,9 +66,9 @@ class PagingHandler
                 ->setMaxResults(null)
                 ->select('COUNT(*) as total');
 
-            $totalItems = count($repo->findResults($query2));
+            $totalItems = count($repo->findWith($query2));
 
-            $result = $repo->findResults($qb);
+            $result = $repo->findWith($qb);
             if ($result) {
                 $set->add($result, $contenttype);
                 $set->setTotalResults((int) $totalItems);
