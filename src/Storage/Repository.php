@@ -33,4 +33,21 @@ class Repository extends ContentRepository
         return $query;
     }
 
+    /**
+     *  This method is used to run the query without loading the mappings again
+     *
+     * @param QueryBuilder $query
+     *
+     * @return array
+     */
+    public function queryWithLoaded(QueryBuilder $query)
+    {
+        $result = $query->execute()->fetchAll();
+        if ($result) {
+            return $this->hydrateAll($result, $query);
+        }
+
+        return [];
+    }
+
 }
