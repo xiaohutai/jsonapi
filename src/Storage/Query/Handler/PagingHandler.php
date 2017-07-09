@@ -29,7 +29,7 @@ class PagingHandler
             }
 
             $repo = $contentQuery->getEntityManager()->getRepository($contenttype);
-            $query->setQueryBuilder($repo->createQueryBuilder($contenttype));
+            $query->setQueryBuilder($repo->createQueryBuilder('_' . $contenttype));
             $query->setContentType($contenttype);
             $query->setParameters($contentQuery->getParameters());
 
@@ -66,9 +66,9 @@ class PagingHandler
                 ->setMaxResults(null)
                 ->select('COUNT(*) as total');
 
-            $totalItems = count($repo->findWith($query2));
+            $totalItems = count($query2->execute()->fetchAll());
 
-            $result = $repo->findWith($qb);
+            $result = $repo->queryWithLoaded($qb);
             if ($result) {
                 $set->add($result, $contenttype);
                 $set->setTotalResults((int) $totalItems);
