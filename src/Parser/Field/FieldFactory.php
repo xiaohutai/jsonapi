@@ -43,6 +43,9 @@ class FieldFactory
             $fieldCollection = new FieldCollection([]);
         }
 
+        $repeatingFieldCollection = null;
+        $repeatingCollection = null;
+
         foreach ($fields as $label => $field) {
             if ($fieldCollection instanceof RepeatingFieldCollection) {
                 $data = $field->getValue();
@@ -102,8 +105,7 @@ class FieldFactory
             }
 
             //Must NOT be a repeater
-            if (!isset($repeatingFieldCollection) || !$repeatingFieldCollection) {
-                $repeatingFieldCollection = null;
+            if (!$repeatingFieldCollection) {
                 $fieldCollection->add($type);
             }
         }
