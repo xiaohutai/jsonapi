@@ -34,20 +34,20 @@ class Repository extends ContentRepository
     }
 
     /**
-     * Since the queries are built already, we don't need to run all of the other mappings
-     * before. Now we can just fetch the results of the query instead of running everything else.
+     *  This method is used to run the query without loading the mappings again
      *
      * @param QueryBuilder $query
      *
-     * @return bool|mixed
+     * @return array
      */
-    public function findResults(QueryBuilder $query)
+    public function queryWithLoaded(QueryBuilder $query)
     {
         $result = $query->execute()->fetchAll();
         if ($result) {
             return $this->hydrateAll($result, $query);
-        } else {
-            return false;
         }
+
+        return [];
     }
+
 }

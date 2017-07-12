@@ -9,6 +9,8 @@ class Taxonomy extends AbstractType
         /** @var \Bolt\Storage\Collection\Taxonomy $taxonomies */
         $taxonomies = $this->getValue();
 
+        $attributes = [];
+
         foreach ($taxonomies as $taxonomy) {
             $type = $taxonomy->getTaxonomytype();
             $slug = $taxonomy->getSlug();
