@@ -62,7 +62,7 @@ contenttypes:
         allowed-fields: [ title, slug, teaser, image ]
         where-clause:
             status: 'published'
-        order: title,-datepublished    
+        order: title,-datepublish    
     pages:
         # use 'default' settings
 ```
