@@ -66,7 +66,7 @@ class ContentListAction extends FetchAction
         ];
 
         if (!empty($included)) {
-            $response['included'] = $included;
+            $response['included'] = array_values($included);
         }
 
         return new ApiResponse($response, $this->config);
