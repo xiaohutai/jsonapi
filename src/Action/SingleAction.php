@@ -124,7 +124,7 @@ class SingleAction extends FetchAction
             ];
 
             if (!empty($included)) {
-                $response['included'] = array_values($included);
+                $response['included'] = $included;
             }
 
             $response = new ApiResponse($response, $this->config);

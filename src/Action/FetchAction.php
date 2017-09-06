@@ -85,7 +85,7 @@ class FetchAction
 
         }
 
-        return $included;
+        return array_values($included);
     }
 
     /**
