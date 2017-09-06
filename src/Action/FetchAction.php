@@ -71,20 +71,20 @@ class FetchAction
             if (is_array($results)) {
                 foreach ($results as $key => $item) {
                     //Loop through all relationships
-                    foreach ($item->relation[$include] as $related) {
-                        $included[$key] = $this->storeRelatedContent($parameters, $include, $related);
+                    foreach ($item->getRelation($include) as $related) {
+                        $included[] = $this->storeRelatedContent($parameters, $include, $related);
                     }
                 }
                 //Must be a single content type
             } elseif ($results instanceof Content) {
                 //Loop through all relationships
-                foreach ($results->getRelation($include) as $key => $related) {
-                    $included[$key] = $this->storeRelatedContent($parameters, $include, $related);
+                foreach ($results->getRelation($include) as $related) {
+                    $included[] = $this->storeRelatedContent($parameters, $include, $related);
                 }
             }
-
         }
 
+        $included = array_unique($included, SORT_REGULAR);
         return array_values($included);
     }
 
