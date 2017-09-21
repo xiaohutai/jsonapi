@@ -91,7 +91,7 @@ class FieldFactory
             } elseif ($data instanceof Carbon) {
                 $type = new Date($field, $data, $config);
             } elseif (!$data instanceof LazyCollection) {
-                if (in_array($fieldType, self::$fileTypes)) {
+                if (($fieldType !== null) && in_array($fieldType, self::$fileTypes)) {
                     $type = new File($field, $data, $resourceManager, $config);
                     $type->setFieldType($fieldType);
                 } else {
