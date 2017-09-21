@@ -53,10 +53,10 @@ class FieldFactory
                 $fieldType = $field;
             } else {
                 $data = $item->get($field);
-                if (isset($metadata['fields'])) {
-                    if (isset($metadata['fields'][$field]) && isset($metadata['fields'][$field]['data']['type'])) {
-                        $fieldType = $metadata['fields'][$field]['data']['type'];
-                    }
+                if (isset($metadata['fields'][$field]['data']['type'])) {
+                    $fieldType = $metadata['fields'][$field]['data']['type'];
+                } else {
+                    $fieldType = null;
                 }
             }
 
