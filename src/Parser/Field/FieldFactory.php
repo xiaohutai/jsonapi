@@ -53,10 +53,10 @@ class FieldFactory
                 $fieldType = $field;
             } else {
                 $data = $item->get($field);
-                if (isset($metadata['fields'])) {
-                    if (isset($metadata['fields'][$field]) && isset($metadata['fields'][$field]['data']['type'])) {
-                        $fieldType = $metadata['fields'][$field]['data']['type'];
-                    }
+                if (isset($metadata['fields'][$field]['data']['type'])) {
+                    $fieldType = $metadata['fields'][$field]['data']['type'];
+                } else {
+                    $fieldType = null;
                 }
             }
 
@@ -91,7 +91,7 @@ class FieldFactory
             } elseif ($data instanceof Carbon) {
                 $type = new Date($field, $data, $config);
             } elseif (!$data instanceof LazyCollection) {
-                if (in_array($fieldType, self::$fileTypes)) {
+                if (($fieldType !== null) && in_array($fieldType, self::$fileTypes)) {
                     $type = new File($field, $data, $resourceManager, $config);
                     $type->setFieldType($fieldType);
                 } else {
