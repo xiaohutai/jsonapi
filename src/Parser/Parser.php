@@ -79,8 +79,9 @@ class Parser
                 }
 
                 // Handle replacements.
-                if (!empty($this->config->getReplacements())) {
-                    foreach ($this->config->getReplacements() as $from => $to) {
+                $replacements = $this->config->getReplacements();
+                if (!empty($replacements)) {
+                    foreach ($replacements as $from => $to) {
                         $item = str_replace($from, $to, $item);
                     }
                 }

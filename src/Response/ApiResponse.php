@@ -56,8 +56,9 @@ class ApiResponse extends Response
      */
     private function setHeadersFromConfig()
     {
-        if (!empty($this->config->getHeaders()) && is_array($this->config->getHeaders())) {
-            foreach ($this->config->getHeaders() as $header => $value) {
+        $headers = $this->config->getHeaders();
+        if (!empty($headers) && is_array($headers)) {
+            foreach ($headers as $header => $value) {
                 $this->headers->set($header, $value);
             }
         }
