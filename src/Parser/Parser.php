@@ -66,6 +66,11 @@ class Parser
         $attributes = $fieldCollection->getAttributes();
 
         if (!empty($attributes)) {
+            // Check for TemplateFields and show it properly
+            if (isset($attributes['templatefields']) && !empty($attributes['templatefields'])) {
+                $attributes['templatefields'] = $attributes['templatefields']->jsonSerialize();
+            }
+
             // Recursively walk the array..
             array_walk_recursive($attributes, function (&$item) {
                 // Make sure that any \Twig_Markup objects are cast to plain strings.
