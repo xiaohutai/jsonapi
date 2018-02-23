@@ -46,6 +46,19 @@ class FieldFactory
         $repeatingFieldCollection = null;
         $repeatingCollection = null;
 
+        // If we have a named repeater, then add the name of the set to the values
+        if ($fields instanceof \Bolt\Storage\Field\Collection\LazyFieldCollection) {
+            $block = $fields->getBlock();
+            if ($block !== null) {
+                $fields->add(
+                    new \Bolt\Storage\Entity\FieldValue([
+                        'fieldname' => '_block',
+                        'value'     => $block,
+                    ])
+                );
+            }
+        }
+
         foreach ($fields as $label => $field) {
             if ($fieldCollection instanceof RepeatingFieldCollection) {
                 $data = $field->getValue();
