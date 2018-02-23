@@ -50,7 +50,7 @@ class FetchAction
      */
     protected function throwErrorOnNoResults($results, $message)
     {
-        if (! $results || count($results) === 0) {
+        if (! $results || (is_array($results) && count($results) === 0)) {
             throw new ApiInvalidRequestException(
                 $message
             );
