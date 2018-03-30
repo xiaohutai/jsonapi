@@ -10,12 +10,14 @@
 
 namespace Bolt\Extension\Bolt\JsonApi;
 
+use Bolt\Controller\Zone;
 use Bolt\Extension\Bolt\JsonApi\Controllers\ContentController;
 use Bolt\Extension\Bolt\JsonApi\Exception\ApiException;
 use Bolt\Extension\Bolt\JsonApi\Provider\APIProvider;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiErrorResponse;
 use Bolt\Extension\SimpleExtension;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Event\FilterControllerEvent;
 use Symfony\Component\HttpKernel\Event\GetResponseForExceptionEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
@@ -63,9 +65,39 @@ class JSONAPIExtension extends SimpleExtension
             KernelEvents::EXCEPTION => [
                 ['error', 515],
             ],
+            KernelEvents::CONTROLLER => [
+                ['disableFrontend', -1025]
+            ]
         ];
 
         return $parentEvents + $localEvents;
+    }
+
+    public function disableFrontend(FilterControllerEvent $event)
+    {
+        $request = $event->getRequest();
+        //$response = $event->getResponse();
+
+        $container = $this->getContainer();
+
+        //Get route name
+        $routeName = $request->get('_route');
+
+        //Check if request is to frontend
+        if (Zone::isFrontend($request)) {
+            //Check if we should disable frontend based upon the configuration
+            if ($container['jsonapi.config']->isDisableFrontend()) {
+                //Only disable frontend routes, don't disable json routes
+                if (strpos($routeName, 'jsonapi') === false) {
+                    $event->stopPropagation();
+                    $event->setController(
+                        function() {
+                            return new Response('', 200);
+                        }
+                    );
+                }
+            }
+        }
     }
 
     /**

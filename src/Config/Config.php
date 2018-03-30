@@ -62,12 +62,17 @@ class Config
      */
     private $jsonOptions;
 
+    /**
+     * @var boolean
+     */
+    private $disableFrontend;
+
     public function __construct($config, Application $app)
     {
         if (isset($config['base'])) {
             $this->base = $config['base'];
         }
-        
+
         $this->setBasePath($app['paths']['hosturl'] . $this->base);
         $this->setContentTypes($config['contenttypes']);
         $this->setReplacements($config['replacements']);
@@ -77,6 +82,7 @@ class Config
         $this->setDateIso($config['date-iso-8601']);
         $this->setHeaders($config['headers']);
         $this->setJsonOptions($config['jsonoptions']);
+        $this->setDisableFrontend($config['disablefrontend']);
     }
 
     /**
@@ -321,5 +327,25 @@ class Config
         }
 
         return '';
+    }
+
+    /**
+     * @return bool
+     */
+    public function isDisableFrontend()
+    {
+        return $this->disableFrontend;
+    }
+
+    /**
+     * @param bool $disableFrontend
+     *
+     * @return Config
+     */
+    public function setDisableFrontend($disableFrontend)
+    {
+        $this->disableFrontend = $disableFrontend;
+
+        return $this;
     }
 }
