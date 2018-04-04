@@ -66,7 +66,7 @@ class JSONAPIExtension extends SimpleExtension
                 ['error', 515],
             ],
             KernelEvents::CONTROLLER => [
-                ['disableFrontend', -1025]
+                ['disableFrontend', 10]
             ]
         ];
 
