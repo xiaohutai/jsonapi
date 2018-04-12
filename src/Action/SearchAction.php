@@ -54,8 +54,6 @@ class SearchAction extends FetchAction
 
         $page = $parameters->getParametersByType('page');
 
-        $this->throwErrorOnNoResults($results, "No search results found for query [$search]");
-
         foreach ($results as $key => $item) {
             // optimize this part...
             $fields = $parameters->get('fields')->getFields();

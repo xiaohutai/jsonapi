@@ -41,8 +41,10 @@ class SingleAction extends FetchAction
         /** @var Content $results */
         $results = $this->query->getContent($contentType, $queryParameters);
 
-        $this->throwErrorOnNoResults($results, "No [$contentType] found with id/slug: [$slug].");
-
+        if (! $results) {
+            throw new ApiNotFoundException("No [$contentType] found with id/slug: [$slug].");
+        }
+ 
         if ($relatedContentType !== null) {
             $relatedItemsTotal = $results->getRelation($relatedContentType)->count();
             if ($relatedItemsTotal <= 0) {

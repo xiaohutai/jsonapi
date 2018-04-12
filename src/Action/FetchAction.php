@@ -4,7 +4,6 @@ namespace Bolt\Extension\Bolt\JsonApi\Action;
 
 use Bolt\Extension\Bolt\JsonApi\Config\Config;
 use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type\Fields;
-use Bolt\Extension\Bolt\JsonApi\Exception\ApiInvalidRequestException;
 use Bolt\Extension\Bolt\JsonApi\Helpers\DataLinks;
 use Bolt\Extension\Bolt\JsonApi\Parser\Parser;
 use Bolt\Storage\Entity\Content;
@@ -42,19 +41,6 @@ class FetchAction
         $this->parser = $parser;
         $this->dataLinks = $dataLinks;
         $this->config = $config;
-    }
-
-    /**
-     * @param $results
-     * @param $message
-     */
-    protected function throwErrorOnNoResults($results, $message)
-    {
-        if (! $results || (is_array($results) && count($results) === 0)) {
-            throw new ApiInvalidRequestException(
-                $message
-            );
-        }
     }
 
     /**

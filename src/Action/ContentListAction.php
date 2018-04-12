@@ -35,8 +35,6 @@ class ContentListAction extends FetchAction
 
         $results = $set->get($contentType);
 
-        $this->throwErrorOnNoResults($results, 'Bad request: There were no results based upon your criteria!');
-
         $included = $this->fetchIncludes(
             $parameters->getParametersByType('includes'),
             $results,
