@@ -52,11 +52,11 @@ class RepeatingCollection extends ArrayCollection implements TypeInterface
 
     public function render()
     {
-        $attributes = [];
         $multidimensional = [];
 
         foreach ($this as $repeatingFields) {
             foreach ($repeatingFields as $fieldCollection) {
+                $attributes = [];
                 foreach ($fieldCollection as $field) {
                     $attributes[$field->getType()] = $field->render();
                 }
