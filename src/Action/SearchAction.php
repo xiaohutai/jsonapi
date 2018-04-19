@@ -3,6 +3,7 @@
 namespace Bolt\Extension\Bolt\JsonApi\Action;
 
 use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\ParameterCollection;
+use Bolt\Extension\Bolt\JsonApi\Converter\Parameter\Type\Page;
 use Bolt\Extension\Bolt\JsonApi\Exception\ApiInvalidRequestException;
 use Bolt\Extension\Bolt\JsonApi\Response\ApiResponse;
 use Bolt\Extension\Bolt\JsonApi\Storage\Query\PagingResultSet;
@@ -52,22 +53,24 @@ class SearchAction extends FetchAction
 
         $results = $set->get($contentType);
 
-        $page = $parameters->getParametersByType('page');
+        /** @var Page $page */
+        $page = $parameters->get('page');
 
         $this->throwErrorOnNoResults($results, "No search results found for query [$search]");
 
         foreach ($results as $key => $item) {
+            $contentType = (string) $item->getContenttype();
             // optimize this part...
-            $fields = $parameters->get('fields')->getFields();
+            $fields = $parameters->get('fields')->getFields($contentType);
             $items[$key] = $this->parser->parseItem($item, $fields);
         }
 
         return new ApiResponse([
             'links' => $this->dataLinks->makeLinks(
                 $searchContentType,
-                $page['number'],
+                $page->getNumber(),
                 $set->getTotalPages(),
-                $page['limit'],
+                $page->getSize(),
                 $request
             ),
             'meta' => [

@@ -21,32 +21,45 @@ class Fields extends AbstractParameter
     {
         $this->fields = [];
 
-        if ($this->config->getAllowedFields($this->contentType)) {
-            $allowedFields = $this->config->getAllowedFields($this->contentType);
+        if (! isset($this->contentType)) {
+            $allContentTypes = array_keys($this->config->getContentTypes());
+            foreach ($allContentTypes as $contentType) {
+                $this->getFieldsForContentType($contentType);
+            }
         } else {
-            $allowedFields = array_keys($this->getAllFieldNames());
+            $this->getFieldsForContentType($this->contentType);
         }
 
-        if (isset($this->values[$this->contentType])) {
-            $values = explode(',', $this->values[$this->contentType]);
+        return $this;
+    }
+
+    protected function getFieldsForContentType($contentType)
+    {
+        if ($this->config->getAllowedFields($contentType)) {
+            $allowedFields = $this->config->getAllowedFields($contentType);
+        } else {
+            $allowedFields = array_keys($this->getAllFieldNames($contentType));
+        }
+
+        if (isset($this->values[$contentType])) {
+            $values = explode(',', $this->values[$contentType]);
             foreach ($values as $v) {
                 if (in_array($v, $allowedFields)) {
-                    $this->fields[] = $v;
+                    $this->fields[$contentType] = $v;
                 }
             }
         }
 
         // Default on the default/fallback fields defined in the config.
-        if (empty($this->fields)) {
-            $this->fields = $allowedFields;
-            if ($this->config->getListFields($this->contentType)) {
-                $this->fields = $this->config->getListFields(($this->contentType));
+        if (empty($this->fields[$contentType])) {
+            $this->fields[$contentType] = $allowedFields;
+            if ($this->config->getListFields($contentType)) {
+                $this->fields[$contentType] = $this->config->getListFields($contentType);
                 // todo: do we need to filter these through 'allowed-fields'?
             }
         }
-
-        return $this;
     }
+
 
     public function findConfigValues()
     {
@@ -63,9 +76,13 @@ class Fields extends AbstractParameter
     /**
      * @return array
      */
-    public function getFields()
+    public function getFields($contentType = null)
     {
-        return $this->fields;
+        if (! $contentType) {
+            return $this->fields[$this->contentType];
+        }
+
+        return $this->fields[$contentType];
     }
 
     /**
