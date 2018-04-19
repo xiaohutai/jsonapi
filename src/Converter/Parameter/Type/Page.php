@@ -26,8 +26,8 @@ class Page extends AbstractParameter
     public function convertRequest()
     {
         //False will return 0, which will be less than 1, so it should default correctly.
-        $size = intval($this->values['size']);
-        $number = intval($this->values['number']);
+        $size = (int) $this->values['size'];
+        $number = (int) $this->values['number'];
 
         // Get limit for query
         $this->size = $size >= 1 ? $size : self::DEFAULT_PAGE_SIZE;
