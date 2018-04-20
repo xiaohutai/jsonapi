@@ -50,3 +50,6 @@ date-iso-8601: true
 # -   0 for no options (recommended for production)
 # - 128 for pretty print (recommended for testing/development)
 jsonoptions: 0
+
+# Set this to true to disable frontend completely and display an empty page
+disablefrontend: false
