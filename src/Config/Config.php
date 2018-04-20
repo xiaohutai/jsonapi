@@ -82,7 +82,9 @@ class Config
         $this->setDateIso($config['date-iso-8601']);
         $this->setHeaders($config['headers']);
         $this->setJsonOptions($config['jsonoptions']);
-        $this->setDisableFrontend($config['disablefrontend']);
+
+        $disablefrontend = isset($config['disablefrontend']) ? $config['disablefrontend'] : false;
+        $this->setDisableFrontend($disablefrontend);
     }
 
     /**
