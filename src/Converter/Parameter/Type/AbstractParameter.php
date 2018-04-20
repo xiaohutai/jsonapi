@@ -65,9 +65,13 @@ abstract class AbstractParameter implements ParameterInterface
     /**
      * Returns all field names for the given contenttype.
      */
-    protected function getAllFieldNames()
+    protected function getAllFieldNames($contentType = null)
     {
-        return $this->metadata->getClassMetadata($this->contentType)['fields'];
+        if (!$contentType) {
+            return $this->metadata->getClassMetadata($this->contentType)['fields'];
+        }
+
+        return $this->metadata->getClassMetadata($contentType)['fields'];
     }
 
     /**

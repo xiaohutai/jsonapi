@@ -26,7 +26,7 @@ class ParameterFactory
      */
     public static function build($parameters, Config $config, MetadataDriver $metadata)
     {
-        $contentType = $parameters['contentType'];
+        $contentType = (empty($parameters['contentType']) ? null : $parameters['contentType']);
 
         foreach ($parameters as $key => $value) {
             //Get FQDN
