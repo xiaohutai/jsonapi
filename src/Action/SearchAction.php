@@ -56,6 +56,9 @@ class SearchAction extends FetchAction
         /** @var Page $page */
         $page = $parameters->get('page');
 
+        /** @var array $items */
+        $items = [];
+
         foreach ($results as $key => $item) {
             $contentType = (string) $item->getContenttype();
             // optimize this part...
