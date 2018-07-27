@@ -67,6 +67,15 @@ class Config
      */
     private $disableFrontend;
 
+    /**
+     * @var boolean
+     */
+    private $enableDisplayNames;
+
+    /**
+     * @param array       $config
+     * @param Application $app
+     */
     public function __construct($config, Application $app)
     {
         if (isset($config['base'])) {
@@ -85,6 +94,9 @@ class Config
 
         $disablefrontend = isset($config['disablefrontend']) ? $config['disablefrontend'] : false;
         $this->setDisableFrontend($disablefrontend);
+
+        $enableDisplayNames = isset($config['enabledisplaynames']) ? $config['enabledisplaynames'] : false;
+        $this->setEnableDisplayNames($enableDisplayNames);
     }
 
     /**
@@ -347,6 +359,26 @@ class Config
     public function setDisableFrontend($disableFrontend)
     {
         $this->disableFrontend = $disableFrontend;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isEnableDisplayNames()
+    {
+        return $this->enableDisplayNames;
+    }
+
+    /**
+     * @param bool $enableDisplayNames
+     *
+     * @return Config
+     */
+    public function setEnableDisplayNames($enableDisplayNames)
+    {
+        $this->enableDisplayNames = $enableDisplayNames;
 
         return $this;
     }

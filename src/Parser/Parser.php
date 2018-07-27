@@ -9,6 +9,7 @@ use Bolt\Extension\Bolt\JsonApi\Parser\Field\FieldCollection;
 use Bolt\Extension\Bolt\JsonApi\Parser\Field\FieldFactory;
 use Bolt\Storage\Entity\Relations;
 use Bolt\Storage\Mapping\MetadataDriver;
+use Bolt\Users;
 
 class Parser
 {
@@ -21,11 +22,15 @@ class Parser
     /** @var MetadataDriver $metadata */
     protected $metadata;
 
-    public function __construct(Config $config, ResourceManager $resourceManager, MetadataDriver $metadata)
+    /** @var Users $users */
+    protected $users;
+
+    public function __construct(Config $config, ResourceManager $resourceManager, MetadataDriver $metadata, Users $users)
     {
         $this->config = $config;
         $this->resourceManager = $resourceManager;
         $this->metadata = $metadata;
+        $this->users = $users;
     }
 
     public function parseItem($item, $fields = [])
@@ -88,6 +93,15 @@ class Parser
             });
 
             $values['attributes'] = $attributes;
+        }
+
+        if ($this->config->isEnableDisplayNames() && isset($values['attributes']['ownerid'])) {
+            $ownerid = $values['attributes']['ownerid'];
+            $owner = $this->users->getUser($ownerid);
+
+            if ($owner) {
+                $values['attributes']['ownerdisplayname'] = $owner['displayname'];
+            }
         }
 
         $values['links'] = [
