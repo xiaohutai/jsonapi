@@ -45,7 +45,7 @@ class Fields extends AbstractParameter
             $values = explode(',', $this->values[$contentType]);
             foreach ($values as $v) {
                 if (in_array($v, $allowedFields)) {
-                    $this->fields[$contentType] = $v;
+                    $this->fields[$contentType][] = $v;
                 }
             }
         }
