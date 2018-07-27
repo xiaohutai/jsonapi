@@ -62,7 +62,7 @@ contenttypes:
         allowed-fields: [ title, slug, teaser, image ]
         where-clause:
             status: 'published'
-        order: title,-datepublish    
+        order: title,-datepublish
     pages:
         # use 'default' settings
 ```
@@ -138,17 +138,22 @@ queries that you may find useful:
 |`/taxonomy`              | Returns a list of all taxonomies defined in `taxonomy.yml`. |
 |`/taxonomy?q={name}`     | Returns the taxonomy with the specified name.               |
 
-### Road Map
+
+Bolt Translate integration
+--------------------------
+
+In order to use this extension with [bolt/translate](https://github.com/BoltTranslate/Translate).
+Set up the translate as usual. Then, for every query, add a `_locale` parameter, e.g. `/pages?_locale=en`.
+
+
+Road Map
+--------
 
   * Better handling of menus.
   * Better handling of taxonomies.
-  * More documentation.
-  * Optimize queries.
   * Better search.
-  * Split the `Extension.php` in multiple classes (i.e. `Helper`, `Response`).
   * Handle specific fieldtypes:
     * Handle JSON fields.
     * Handle select-contenttype fields.
   * Add hooks for handling specific fieldtypes.
   * Add i18n for `detail` field in error messages.
-  * Add integration/hooks with other extensions, such as [`RelatedContentByTags`](https://github.com/xiaohutai/bolt-relatedcontentbytags).
