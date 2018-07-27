@@ -141,7 +141,8 @@ class APIProvider implements ServiceProviderInterface
             function ($app) {
                 return new MenuAction(
                     $app['config'],
-                    $app['jsonapi.config']
+                    $app['jsonapi.config'],
+                    $app['jsonapi.datalinks']
                 );
             }
         );
