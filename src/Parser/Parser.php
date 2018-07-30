@@ -25,11 +25,21 @@ class Parser
     /** @var Users $users */
     protected $users;
 
-    public function __construct(Config $config, ResourceManager $resourceManager, MetadataDriver $metadata, Users $users)
+    public function __construct(Config $config, ResourceManager $resourceManager, MetadataDriver $metadata)
     {
         $this->config = $config;
         $this->resourceManager = $resourceManager;
         $this->metadata = $metadata;
+    }
+
+    /**
+     * @param Users $users
+     *
+     * @deprecated Probably to be removed in next major version.
+     *             Only use is in `\Bolt\Extension\Bolt\JsonApi\Provider`.
+     */
+    public function setUsers($users)
+    {
         $this->users = $users;
     }
 
@@ -95,7 +105,9 @@ class Parser
             $values['attributes'] = $attributes;
         }
 
-        if ($this->config->isEnableDisplayNames() && isset($values['attributes']['ownerid'])) {
+        // Use $this->config->isEnableDisplayNames() instead of isset($this->users),
+        // if `$users` is mandatory via constructor.
+        if (isset($this->users) && isset($values['attributes']['ownerid'])) {
             $ownerid = $values['attributes']['ownerid'];
             $owner = $this->users->getUser($ownerid);
 

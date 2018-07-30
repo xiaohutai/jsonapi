@@ -81,12 +81,20 @@ class APIProvider implements ServiceProviderInterface
          */
         $app['jsonapi.parser'] = $app->share(
             function ($app) {
-                return new Parser(
-                    $app['jsonapi.config'],
+                /** @var \Bolt\Extension\Bolt\JsonApi\Config\Config $jsonApiConfig */
+                $jsonApiConfig = $app['jsonapi.config'];
+
+                $parser = new Parser(
+                    $jsonApiConfig,
                     $app['resources'],
-                    $app['storage.metadata'],
-                    $app['users']
+                    $app['storage.metadata']
                 );
+
+                if ($jsonApiConfig->isEnableDisplayNames()) {
+                    $parser->setUsers($app['users']);
+                }
+
+                return $parser;
             }
         );
 
