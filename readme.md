@@ -62,7 +62,7 @@ contenttypes:
         allowed-fields: [ title, slug, teaser, image ]
         where-clause:
             status: 'published'
-        order: title,-datepublish    
+        order: title,-datepublish
     pages:
         # use 'default' settings
 ```
@@ -129,14 +129,14 @@ parameters appended to the URL):
 Besides the basic JSON API features, below are some additional Bolt specific
 queries that you may find useful:
 
-| URL                     | Description                                                 |
-|-------------------------|-------------------------------------------------------------|
-|`/{ct}/search?q={query}` | Searches for `{query}` in a specific `contenttype`.         |
-|`/search?q={query}`      | Searches for `{query}` in all contenttypes.                 |
-|`/menu`                  | Returns a list of all menus defined in `menu.yml`.          |
-|`/menu?q={name}`         | Returns the menu with the specified name.                   |
-|`/taxonomy`              | Returns a list of all taxonomies defined in `taxonomy.yml`. |
-|`/taxonomy?q={name}`     | Returns the taxonomy with the specified name.               |
+| URL                                   | Description                                                 |
+|---------------------------------------|-------------------------------------------------------------|
+|`/{ct}/search?q={query}`               | Searches for `{query}` in a specific `contenttype`.         |
+|`/search?q={query}`                    | Searches for `{query}` in all contenttypes.                 |
+|`/menu`                                | Returns a list of all menus defined in `menu.yml`.          |
+|`/menu?q={name}` or `/menu/{name}`     | Returns the menu with the specified name.                   |
+|`/taxonomy`                            | Returns a list of all taxonomies defined in `taxonomy.yml`. |
+|`/taxonomy?q={name}` or `/menu/{name}` | Returns the taxonomy with the specified name.               |
 
 ### Road Map
 
@@ -151,4 +151,4 @@ queries that you may find useful:
     * Handle select-contenttype fields.
   * Add hooks for handling specific fieldtypes.
   * Add i18n for `detail` field in error messages.
-  * Add integration/hooks with other extensions, such as [`RelatedContentByTags`](https://github.com/xiaohutai/bolt-relatedcontentbytags).
+  * Add integration/hooks with other extensions.

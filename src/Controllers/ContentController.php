@@ -50,6 +50,9 @@ class ContentController implements ControllerProviderInterface
         $ctr->get('/menu', [$this, 'menu'])
             ->bind('jsonapi.menu');
 
+        $ctr->get('/menu/{q}', [$this, 'menu'])
+            ->bind('jsonapi.singleMenu');
+
         $ctr->get('/taxonomy', [$this, 'taxonomy'])
             ->bind('jsonapi.taxonomy');
 

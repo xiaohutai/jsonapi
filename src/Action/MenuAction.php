@@ -46,8 +46,10 @@ class MenuAction
      */
     public function handle(Request $request)
     {
+        $singleMenu = '';
         if ($name = $request->get('q', '')) {
             $data = $this->singleMenu($name);
+            $singleMenu = "/$name";
         } else {
             $data = $this->allMenus();
         }
@@ -56,6 +58,7 @@ class MenuAction
             'links' => [
                 'self' => $this->extensionConfig->getBasePath() .
                     "/menu" .
+                    $singleMenu .
                     $this->dataLinks->makeQueryParameters($request->query->all())
             ],
             'data' => $data,
@@ -109,7 +112,7 @@ class MenuAction
                 'items' => $menu,
             ],
             'links' => [
-                'self' => $this->extensionConfig->getBasePath() . "/menu?q=" . $name
+                'self' => $this->extensionConfig->getBasePath() . "/menu/" . $name
             ]
         ];
     }
