@@ -38,7 +38,7 @@ headers:
 replacements:
     'src="//': 'src="http://'
     'href="//': 'href="http://'
-    
+
 # The base url where the API is accessible.
 base: '/json'
 
@@ -53,3 +53,6 @@ jsonoptions: 0
 
 # Set this to true to disable frontend completely and display an empty page
 disablefrontend: false
+
+# Adds a `ownerdisplayname` which has the record's ownerid's display name
+enabledisplaynames: false

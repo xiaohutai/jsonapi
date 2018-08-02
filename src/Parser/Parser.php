@@ -9,6 +9,7 @@ use Bolt\Extension\Bolt\JsonApi\Parser\Field\FieldCollection;
 use Bolt\Extension\Bolt\JsonApi\Parser\Field\FieldFactory;
 use Bolt\Storage\Entity\Relations;
 use Bolt\Storage\Mapping\MetadataDriver;
+use Bolt\Users;
 
 class Parser
 {
@@ -21,11 +22,25 @@ class Parser
     /** @var MetadataDriver $metadata */
     protected $metadata;
 
+    /** @var Users $users */
+    protected $users;
+
     public function __construct(Config $config, ResourceManager $resourceManager, MetadataDriver $metadata)
     {
         $this->config = $config;
         $this->resourceManager = $resourceManager;
         $this->metadata = $metadata;
+    }
+
+    /**
+     * @param Users $users
+     *
+     * @deprecated Probably to be removed in next major version.
+     *             Only use is in `\Bolt\Extension\Bolt\JsonApi\Provider`.
+     */
+    public function setUsers($users)
+    {
+        $this->users = $users;
     }
 
     public function parseItem($item, $fields = [])
@@ -88,6 +103,17 @@ class Parser
             });
 
             $values['attributes'] = $attributes;
+        }
+
+        // Use $this->config->isEnableDisplayNames() instead of isset($this->users),
+        // if `$users` is mandatory via constructor.
+        if (isset($this->users) && isset($values['attributes']['ownerid'])) {
+            $ownerid = $values['attributes']['ownerid'];
+            $owner = $this->users->getUser($ownerid);
+
+            if ($owner) {
+                $values['attributes']['ownerdisplayname'] = $owner['displayname'];
+            }
         }
 
         $values['links'] = [
