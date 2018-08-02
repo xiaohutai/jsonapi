@@ -44,15 +44,19 @@ class MenuAction
         }
 
         $menu = $this->boltConfig->get('menu' . $name, false);
-        
+
         if (! $menu) {
             throw new ApiNotFoundException(
                 "Menu with name [$name] not found."
             );
         }
 
-        return new ApiResponse([
+        $response = new ApiResponse([
             'data' => $menu,
         ], $this->extensionConfig);
+
+        $response->headers->set('Content-Type', 'application/json');
+
+        return $response;
     }
 }

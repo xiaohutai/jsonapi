@@ -51,8 +51,12 @@ class TaxonomyAction
             );
         }
 
-        return new ApiResponse([
+        $response = new ApiResponse([
             'data' => $taxonomy,
         ], $this->extensionConfig);
+
+        $response->headers->set('Content-Type', 'application/json');
+
+        return $response;
     }
 }
