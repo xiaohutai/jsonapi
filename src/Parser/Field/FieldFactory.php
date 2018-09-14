@@ -105,7 +105,7 @@ class FieldFactory
                 $type = new Date($field, $data, $config);
             } elseif (!$data instanceof LazyCollection) {
                 if (($fieldType !== null) && in_array($fieldType, self::$fileTypes)) {
-                    $type = new File($field, $data, $resourceManager, $config);
+                    $type = new File($label, $data, $resourceManager, $config);
                     $type->setFieldType($fieldType);
                 } else {
                     //We need to check if the label is an int. If it isn't then we'll use that for type (repeaters).
