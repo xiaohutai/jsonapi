@@ -87,6 +87,7 @@ class FieldFactory
                         null,
                         $repeatingFieldCollection
                     );
+
                     //We want to append repeating fields to a repeating collection if it is the same type
                     if ($repeatingCollection) {
                         //Check to see if the repeating field is a different repeater to create a new instance of it and not overwrite the other repeater
@@ -102,7 +103,11 @@ class FieldFactory
                     }
                 }
             } elseif ($data instanceof Carbon) {
-                $type = new Date($field, $data, $config);
+                if (is_int($label)) {
+                    $type = new Date($field, $data, $config);
+                } else {
+                    $type = new Date($label, $data, $config);
+                }
             } elseif (!$data instanceof LazyCollection) {
                 if (($fieldType !== null) && in_array($fieldType, self::$fileTypes)) {
                     if (is_int($label)) {
